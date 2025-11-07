@@ -196,9 +196,13 @@ def s_curve_comparison_plots(df_final_y_dat, df_y_data_synthetic, df_x_data, df_
     plt.close()
 
     # second plot looks at the final y data compared the fully synthetic y data
-    # get the original y data and the synthetic to timeseries. trim the synthetic to the dates we have for the original y data
+    # get the original y data and the synthetic to timeseries
     df_y_data_timeseries = monthly_to_timeseries(df_y_data)
-    df_y_data_synthetic_timeseries = monthly_to_timeseries(df_y_data_synthetic).loc[df_y_data_timeseries.index]
+    df_y_data_synthetic_timeseries = monthly_to_timeseries(df_y_data_synthetic)
+
+    # trim the dataframes to only have the common dates
+    df_y_data_timeseries = df_y_data_timeseries.loc[df_y_data_timeseries.index.isin(df_y_data_synthetic_timeseries.index)]
+    df_y_data_synthetic_timeseries = df_y_data_synthetic_timeseries.loc[df_y_data_synthetic_timeseries.index.isin(df_y_data_timeseries.index)]
 
     plt.figure(figsize=(10, 5))
     plt.fill_between(df_y_data_timeseries.index, df_y_data_timeseries['TAF'], color='royalblue', label='Historical')
@@ -648,10 +652,10 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
     """
 
     # data frame to hold data straight from USGS
-    df_gauge_data_original = pd.DataFrame(columns=sl_stations)
+    df_gauge_data_original = pd.DataFrame()
 
     # data frame to hold the monthly data in TAF
-    df_gauge_data_monthly_taf = pd.DataFrame(columns=sl_stations)
+    df_gauge_data_monthly_taf = pd.DataFrame()
 
     # loop through the stations
     for station in sl_stations:
@@ -665,7 +669,7 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
         print(f"Pulled USGS data for: {station}")
 
         # add the unaltered data to the dataframe with the original data
-        df_gauge_data_original[station] = df_current.iloc[:,1]
+        df_gauge_data_original = df_gauge_data_original.join(df_current.iloc[:,1].to_frame(station), how='outer')
 
         # depending on the units, we convert differently
         # 00054 is storage in AF and 00060 is discharge in CFS, both need to be in TAF
@@ -675,7 +679,7 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
             df_current = df_current.iloc[:, 1]
 
             # for AF, we want the last day of the month data divided by 1000
-            df_gauge_data_monthly_taf[station] = df_current.resample('ME').last() / 1000
+            df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join(df_current.resample('ME').last().to_frame(station) / 1000, how='outer')
 
         elif '00060' in df_current.columns[1]:
 
@@ -687,7 +691,7 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
             df_current = df_current.groupby(pd.Grouper(freq='ME')).mean()
 
             # CFS -> TAF
-            df_gauge_data_monthly_taf[station] = df_current * df_current.index.day *  24 * 60 * 60 / (220 * 22 * 9 * 1000)
+            df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current * df_current.index.day *  24 * 60 * 60 / (220 * 22 * 9 * 1000)).to_frame(station), how='outer')
 
         else:
             raise Exception(f'Cannot convert to TAF. Columns: {df_current.columns}')
@@ -709,10 +713,10 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
     s_end_date = datetime.strptime(s_end_date, '%Y-%m-%d').strftime('%Y-%m')
 
     # data frame to hold data straight from CDEC
-    df_gauge_data_original = pd.DataFrame(columns=sl_stations)
+    df_gauge_data_original = pd.DataFrame()
 
     # data frame to hold the monthly data in TAF
-    df_gauge_data_monthly_taf = pd.DataFrame(columns=sl_stations)
+    df_gauge_data_monthly_taf = pd.DataFrame()
 
     for station in sl_stations:
 
@@ -742,11 +746,11 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
         # read this in like a CSV with only the date and value
         df_current = pd.read_csv(io.StringIO(o_outflow_file.text), index_col=0, parse_dates=True, sep=',', header=0, usecols=['DATE TIME', 'VALUE'])
 
-        df_gauge_data_original[station] = df_current['VALUE']
+        df_gauge_data_original = df_gauge_data_original.join(df_current['VALUE'].to_frame(station), how='outer')
 
         # this data is monthly so it just needs to be moved to the end of the month and divided by 1000
         # groupby and mean in case its more than monthly or not exactly on the first of the month but this should just move the data to the end of the month
-        df_gauge_data_monthly_taf[station] = df_current.groupby(pd.Grouper(freq='ME')).mean()['VALUE'] / 1000
+        df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current.groupby(pd.Grouper(freq='ME')).mean()['VALUE'] / 1000).to_frame(station), how='outer')
 
     # remove the name from the index for both data frames
     df_gauge_data_original.index.name = None
