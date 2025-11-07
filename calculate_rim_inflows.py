@@ -1,0 +1,110 @@
+import os
+
+from extension_functions import *
+from unimpairment_functions import *
+from rim_inflow_functions import *
+from evaporation_functions import *
+
+if __name__ == "__main__":
+    # this holds the already extended evap rates (not properly done right now...)
+    s_evap_dss_path = r".\Inputs\7_ReservoirEvaporationData_Sac_EXTENDED.dss"
+
+    # this holds the USGS data (sometimes gap filled) from the previous extension
+    s_previous_data = r".\Inputs\2022_extension_data.csv"
+
+    # USGS stations to pull data for
+    sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
+                        '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350']
+    sl_cdec_stations = ['AMF']
+
+    # time range to pull USGS data for
+    s_start_date = '2021-10-01'
+    s_end_date = '2024-09-30'
+
+    # first if the needed output folders don't exist, create them
+    os.makedirs('./Intermediate', exist_ok=True)
+    os.makedirs('./Figures', exist_ok=True)
+    os.makedirs('./Outputs', exist_ok=True)
+
+    # pull USGS data
+    df_usgs_data_original, df_usgs_data_monthly_taf = pull_usgs_data(sl_usgs_stations, s_start_date, s_end_date)
+
+    # pull the cdec data
+    df_cdec_data_original, df_cdec_data_monthly_taf = pull_cdec_data(sl_cdec_stations, s_start_date, s_end_date)
+
+    # combine all the gauge data
+    df_gauge_data_original = pd.merge(df_usgs_data_original, df_cdec_data_original, how='outer', left_index=True, right_index=True)
+    df_gauge_data_monthly_taf = pd.merge(df_usgs_data_monthly_taf, df_cdec_data_monthly_taf, how='outer', left_index=True, right_index=True)
+
+    # save to csvs
+    df_gauge_data_original.to_csv('./Intermediate/gauge_data_original.csv')
+    df_gauge_data_monthly_taf.to_csv('./Intermediate/gauge_data_monthly_taf.csv')
+
+    # combine the new data with the previous data
+    df_full_data = read_previous_data(s_previous_data, df_gauge_data_monthly_taf)
+
+    # save to a csv
+    df_full_data.to_csv('./Intermediate/full_gauge_data.csv')
+
+    # calculate the evaporation amounts for all of our reservoirs
+    # calculate_evap_multiple(df_full_data, c_reservoirs, s_evap_dss_path)
+    calc_evap_11427400(s_evap_dss_path, df_full_data)
+    calc_evap_11436950(s_evap_dss_path, df_full_data)
+    calc_evap_11435900(s_evap_dss_path, df_full_data)
+    calc_evap_11434900(s_evap_dss_path, df_full_data)
+    calc_evap_11428700(s_evap_dss_path, df_full_data)
+    calc_evap_11429350(s_evap_dss_path, df_full_data)
+
+    df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
+
+    ### unimpairing the data
+    df_unimpaired_data = pd.DataFrame()
+
+    df_unimpaired_data['11439501'] = unimpaired_11439501(df_full_data)
+    df_unimpaired_data['11427500'] = unimpaired_11427500(df_full_data)
+    df_unimpaired_data['11427760'] = unimpaired_11427760(df_full_data)
+    df_unimpaired_data['11428000'] = unimpaired_11428000(df_full_data)
+    df_unimpaired_data['11428400'] = unimpaired_11428400(df_full_data)
+    df_unimpaired_data['11428800'] = unimpaired_11428800(df_full_data)
+    # df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
+
+    # drop the first row which is only for calculating storage differences
+    df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
+
+    # save to csv
+    df_unimpaired_data.to_csv('./Intermediate/unimpaired_data.csv')
+
+    # redistribute negatives
+    df_pos_unimpaired_data = remove_negatives_timeseries(df_unimpaired_data)
+
+    # save to csv
+    df_pos_unimpaired_data.to_csv('./Intermediate/unimpaired_data_pos.csv')
+
+    df_extended_data = pd.DataFrame()
+    df_synthetic_data = pd.DataFrame()
+
+    # extend all with the s-curve disaggregation
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11439501'], df_extended_data, df_synthetic_data, 1923, 2024, False, '11439501')
+    extend_data(df_extended_data['11439501'], df_full_data['11427700'], df_extended_data, df_synthetic_data, 1961, 2024, False, '11427700')
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427500'], df_extended_data, df_synthetic_data, 1966, 2007,True, '11427500')
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427760'], df_extended_data, df_synthetic_data, 1966, 2007, False, '11427760')
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428000'], df_extended_data, df_synthetic_data, 1957, 1986, False, '11428000')
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11428400'], df_extended_data, df_synthetic_data, 1991, 2015, False, '11428400')
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428800'], df_extended_data, df_synthetic_data, 1966, 2007, True, '11428800')
+
+    # save to csv
+    df_extended_data.to_csv('./Intermediate/extended_data.csv')
+    df_synthetic_data.to_csv('./Intermediate/synthetic_data.csv')
+
+    # final rim inflows
+    df_rim_inflows = pd.DataFrame()
+
+    I_DCC010(df_extended_data, df_rim_inflows)
+    I_FRMDW(df_extended_data, df_rim_inflows)
+    I_MFA036(df_extended_data, df_rim_inflows)
+    I_RUB047(df_extended_data, df_rim_inflows)
+    I_LRB004(df_extended_data, df_rim_inflows)
+    I_HHOLE(df_extended_data, df_rim_inflows)
+
+
+    df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
