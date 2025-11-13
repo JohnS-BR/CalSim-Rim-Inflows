@@ -383,6 +383,9 @@ def calc_evap_11429350(s_dss_file, df_storage_data):
     # again fill first row (lowest elevation) with zeros
     df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
 
+    # make sure none of the areas are above a maximum of 1450
+    df_area_capacity.loc[df_area_capacity['Area'] > 1450, 'Area'] = 1450
+
     # calculate and set the evaporation
     df_storage_data['11429350_evap'] = calculate_evap_data(df_storage_data['11429350'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
 

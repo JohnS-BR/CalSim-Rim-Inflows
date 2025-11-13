@@ -203,12 +203,25 @@ def unimpaired_11429500(df_gauge_data):
     # 11429350: Look Lake
     # 11428300: Buck Look Tunnel
 
-    df_unimpaired = unimpaired_flows(df_gauge_data['11429500'],
+    # this will be when there is data for 11429340
+    df_unimpaired_all = unimpaired_flows(df_gauge_data['11429500'],
                                      fl_storages=[df_gauge_data['11429350'].fillna(0)],
                                      fl_additions=[df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11429340'].fillna(0)],
-                                     fl_subtractions=[df_gauge_data['11428300'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11428300_LL'].fillna(0)],
                                      )
-    df_unimpaired = np.where(~df_gauge_data['11429500'].isna() & ((df_gauge_data['11429350'].isna()) | (df_gauge_data['11429350'] == 0)),
-                             df_gauge_data['11429500'],
-                             df_unimpaired)
+
+    # this will be when there is no data for 11429340 but is reservoir data
+    df_unimpaired_no_ph = unimpaired_flows(df_gauge_data['11429500'],
+                                         fl_storages=[df_gauge_data['11429350'].fillna(0)],
+                                         fl_additions=[df_gauge_data['11429350_evap'].fillna(0)],
+                                         fl_subtractions=[df_gauge_data['11428300_LL'].fillna(0)],
+                                         )
+
+    # combine these with the gauge data used when it is the only data
+    df_unimpaired = np.where(~df_gauge_data['11429340'].isna(),
+                             df_unimpaired_all,
+                             np.where(~df_gauge_data['11429500'].isna() & ((df_gauge_data['11429350'].isna()) | (df_gauge_data['11429350'] == 0)),
+                                      df_gauge_data['11429500'],
+                                      df_unimpaired_no_ph))
+
     return df_unimpaired

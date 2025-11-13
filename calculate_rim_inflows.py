@@ -66,7 +66,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11428000'] = unimpaired_11428000(df_full_data)
     df_unimpaired_data['11428400'] = unimpaired_11428400(df_full_data)
     df_unimpaired_data['11428800'] = unimpaired_11428800(df_full_data)
-    # df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
+    df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -91,6 +91,7 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428000'], df_extended_data, df_synthetic_data, 1957, 1986, False, '11428000')
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11428400'], df_extended_data, df_synthetic_data, 1991, 2015, False, '11428400')
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428800'], df_extended_data, df_synthetic_data, 1966, 2007, True, '11428800')
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11429500'], df_extended_data, df_synthetic_data, 1963, 2024, False, '11429500')
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -105,6 +106,7 @@ if __name__ == "__main__":
     I_RUB047(df_extended_data, df_rim_inflows)
     I_LRB004(df_extended_data, df_rim_inflows)
     I_HHOLE(df_extended_data, df_rim_inflows)
+    I_LOONL(df_extended_data, df_rim_inflows)
 
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
