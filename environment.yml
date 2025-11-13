@@ -1,0 +1,12 @@
+name: extension
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - pip:
+      - pydsstools
+  - scikit-learn
+  - pandas=2.3.3
+  - numpy=1.26.4
+  - matplotlib
+  - dataretrieval
