@@ -241,7 +241,7 @@ def unimpaired_11430000(df_gauge_data):
         Unpaired flow for current station
     """
 
-    # Adds in Loon Lake storage differences and Loon Lake evaporation and subtracts Buck Look Tunnel
+    # Adds in Gerle Reservoir evap and Robbs Peak powerhouse and subtracts Gerle Creek below Loon Lake and Loon Lake powerhouse
 
     # 11430000: SF Rubicon River below Gerle Creek (what we are unimpairing)
     # 11429600: Gerle Reservoir

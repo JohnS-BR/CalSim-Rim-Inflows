@@ -415,7 +415,7 @@ def calc_evap_11429600(s_dss_file, df_storage_data):
     # get the TAF capacity
     df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
 
-    # the sheet gets the averages for each neighboring set of points and uses those, not sure why, but we will replicate
+    # uses straight data not averages
     df_area_capacity['Elevation'] = df_area_capacity['Elevation (ft)']
     df_area_capacity['Capacity'] = df_area_capacity['TAF']
 
@@ -429,7 +429,7 @@ def calc_evap_11429600(s_dss_file, df_storage_data):
     # again fill first row (lowest elevation) with zeros
     df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
 
-    # make sure none of the areas are above a maximum of 1450
+    # make sure none of the areas are above a maximum of 50
     df_area_capacity.loc[df_area_capacity['Area'] > 50, 'Area'] = 50
 
     # calculate and set the evaporation
