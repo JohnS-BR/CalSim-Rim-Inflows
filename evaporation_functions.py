@@ -434,3 +434,41 @@ def calc_evap_11429600(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11429600_evap'] = calculate_evap_data(df_storage_data['11429600'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
+
+
+def calc_evap_EDN(s_dss_file, df_storage_data):
+    """
+    Calculate the evaporation amount for CDEC EDN STUMPY MEADOWS RESERVOIR (MARK EDSON DAM). Follows the logic in CS3_I_STMPY_Rev2022G
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+
+    Returns
+    -------
+    None
+    """
+
+    # get the evap rates from the dss file
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_STMPY')
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/EDN_AC.csv")
+
+    # get the TAF capacity
+    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # the sheet just uses the provided values
+    df_area_capacity['Capacity'] = df_area_capacity['TAF']
+    df_area_capacity['Area'] = df_area_capacity['Area (acres)']
+
+    # make sure none of the areas are above a maximum of 330
+    df_area_capacity.loc[df_area_capacity['Area'] > 330, 'Area'] = 330
+
+    df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [20.0001, 330]
+
+    # calculate and set the evaporation
+    df_storage_data['EDN_evap'] = calculate_evap_data(df_storage_data['EDN'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)

@@ -333,3 +333,38 @@ def I_GERLE(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1963, 2022)), 'I_GERLE')
+
+
+def I_STMPY(df_extended_data, df_rim_inflows):
+    """
+        Calculate the final rim inflow for CalSim. Location: I_SFA066
+
+        Parameters
+        ----------
+        df_extended_data: dataframe
+            Dataframe of extended (and unimpaired where relevant) data to pull from
+        df_rim_inflows: dataframe
+            Dataframe of rim inflows that have been calculated already
+
+        Returns
+        -------
+        None
+        """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11433040']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # scaled by the water shed factors
+    df_location = df_location * 0.716
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_STMPY'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1962, 2018)) + list(range(2019, 2025)), 'I_STMPY')

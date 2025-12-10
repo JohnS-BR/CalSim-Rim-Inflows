@@ -257,3 +257,32 @@ def unimpaired_11430000(df_gauge_data):
 
 
     return df_unimpaired
+
+def unimpaired_11419340(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433040 PILOT C BL MUTTON CANYON NR GEORGETOWN CA. Follows the logic from CS3_I_STMPY_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # Adds in Stumpy Meadows storage differences, Stumpy Meadows evaporation and Georgetown divide ditch
+
+    # 11433040: Pilot Creek below Mutton Canyon
+    # EDN: Stumpy Meadows Reservoir
+    # 11432000: Georgetown divide ditch
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433040'],
+                                     fl_storages=[df_gauge_data['EDN'].fillna(0)],
+                                     fl_additions=[df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11432000'].fillna(0)]
+                                     )
+
+    return df_unimpaired

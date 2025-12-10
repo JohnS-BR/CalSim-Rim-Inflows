@@ -14,8 +14,9 @@ if __name__ == "__main__":
 
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
-                        '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340']
-    sl_cdec_stations = ['AMF']
+                        '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
+                        '11432000']
+    sl_cdec_stations = ['AMF', 'EDN']
 
     # time range to pull USGS data for
     s_start_date = '2021-10-01'
@@ -55,6 +56,8 @@ if __name__ == "__main__":
     calc_evap_11428700(s_evap_dss_path, df_full_data)
     calc_evap_11429350(s_evap_dss_path, df_full_data)
     calc_evap_11429600(s_evap_dss_path, df_full_data)
+    calc_evap_EDN(s_evap_dss_path, df_full_data)
+
 
     df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
 
@@ -69,6 +72,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11428800'] = unimpaired_11428800(df_full_data)
     df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
     df_unimpaired_data['11430000'] = unimpaired_11430000(df_full_data)
+    df_unimpaired_data['11433040'] = unimpaired_11419340(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -95,6 +99,7 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428800'], df_extended_data, df_synthetic_data, 1966, 2007, True, '11428800')
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11429500'], df_extended_data, df_synthetic_data, 1963, 2024, False, '11429500')
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11430000'], df_extended_data, df_synthetic_data, 1963, 2021, False, '11430000')
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11433040'], df_extended_data, df_synthetic_data, 1962, 2017, True, '11433040')
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -112,6 +117,7 @@ if __name__ == "__main__":
     I_LOONL(df_extended_data, df_rim_inflows)
     I_SFR006(df_extended_data, df_rim_inflows)
     I_GERLE(df_extended_data, df_rim_inflows)
+    I_STMPY(df_extended_data, df_rim_inflows)
 
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
