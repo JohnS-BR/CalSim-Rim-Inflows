@@ -6,8 +6,8 @@ from rim_inflow_functions import *
 from evaporation_functions import *
 
 if __name__ == "__main__":
-    # this holds the already extended evap rates (not properly done right now...)
-    s_evap_dss_path = r".\Inputs\7_ReservoirEvaporationData_Sac_EXTENDED.dss"
+    # this holds the already extended evap rates
+    s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
     # this holds the USGS data (sometimes gap filled) from the previous extension
     s_previous_data = r".\Inputs\2022_extension_data.csv"
