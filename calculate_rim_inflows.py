@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
-                        '11432000']
+                        '11432000', '11433100']
     sl_cdec_stations = ['AMF', 'EDN']
 
     # time range to pull USGS data for
@@ -73,6 +73,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
     df_unimpaired_data['11430000'] = unimpaired_11430000(df_full_data)
     df_unimpaired_data['11433040'] = unimpaired_11419340(df_full_data)
+    df_unimpaired_data['11433100'] = unimpaired_11433100(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -100,6 +101,7 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11429500'], df_extended_data, df_synthetic_data, 1963, 2024, False, '11429500')
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11430000'], df_extended_data, df_synthetic_data, 1963, 2021, False, '11430000')
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11433040'], df_extended_data, df_synthetic_data, 1962, 2017, True, '11433040')
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11433100'], df_extended_data, df_synthetic_data, 1967, 1992, False, '11433100')
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -119,5 +121,6 @@ if __name__ == "__main__":
     I_GERLE(df_extended_data, df_rim_inflows)
     I_STMPY(df_extended_data, df_rim_inflows)
     I_PLC007(df_extended_data, df_rim_inflows)
+    I_NLC003(df_extended_data, df_full_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

@@ -1,3 +1,4 @@
+import pandas as pd
 from extension_functions import create_final_flow_plots, area_scale
 
 def I_DCC010(df_extended_data, df_rim_inflows):
@@ -403,3 +404,44 @@ def I_PLC007(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1962, 2018)) + list(range(2019, 2025)), 'I_PLC007')
+
+
+def I_NLC003(df_extended_data, df_gauge_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NLC003
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11433100']
+
+    # scaled by the water shed factors
+    df_location = df_location * 0.15
+
+    # we want the max of the scaled unimpared data and this gauge location
+    df_location = pd.concat([df_location, df_gauge_data['11433080']], axis=1).max(axis=1)
+
+    # trim off the first date that gets added
+    df_location = df_location.iloc[1:]
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NLC003'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1967, 1993)), 'I_NLC003')

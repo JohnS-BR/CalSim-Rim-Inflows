@@ -286,3 +286,32 @@ def unimpaired_11419340(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_11433100(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433100 LONG CANYON C NR FRENCH MEADOWS CA. Follows the logic from CS3_I_NCL003_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # Adds in North and South Fork Long Canyon Canal Diversions
+
+    # 11433100: Long Canyon Creek near French Meadows
+    # 11433060: South Fork Long Canyon Canal diversions
+    # 11433080: North Fork Long Canyon Canal Diversions
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433100'],
+                                     fl_additions=[df_gauge_data['11433060'].fillna(0), df_gauge_data['11433080'].fillna(0)]
+                                     )
+
+    return df_unimpaired
