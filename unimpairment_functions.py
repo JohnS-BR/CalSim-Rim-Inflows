@@ -225,3 +225,35 @@ def unimpaired_11429500(df_gauge_data):
                                       df_unimpaired_no_ph))
 
     return df_unimpaired
+
+def unimpaired_11430000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11430000 SF RUBICON R BL GERLE C NR GEORGETOWN CA. Follows the logic from CS3_I_LOONL_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # Adds in Loon Lake storage differences and Loon Lake evaporation and subtracts Buck Look Tunnel
+
+    # 11430000: SF Rubicon River below Gerle Creek (what we are unimpairing)
+    # 11429600: Gerle Reservoir
+    # 11429300: Robbs Peak Powerhouse
+    # 11429500: Gerle Creek below Loon Lake
+    # 11419340: Look Lake Powerhouse
+
+    # this will be when there is data for 11429340
+    df_unimpaired = unimpaired_flows(df_gauge_data['11430000'],
+                                     fl_additions=[df_gauge_data['11429600_evap'].fillna(0), df_gauge_data['11429300'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429500'], df_gauge_data['11429340'].fillna(0)],
+                                     )
+
+
+    return df_unimpaired
