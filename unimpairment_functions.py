@@ -247,7 +247,7 @@ def unimpaired_11430000(df_gauge_data):
     # 11429600: Gerle Reservoir
     # 11429300: Robbs Peak Powerhouse
     # 11429500: Gerle Creek below Loon Lake
-    # 11429340: Look Lake Powerhouse
+    # 11429340: Loon Lake Powerhouse
 
     # if 11429600_evap, 11429300, or 11429340 are nans, just skip. so fill with zeros
     df_unimpaired = unimpaired_flows(df_gauge_data['11430000'],
