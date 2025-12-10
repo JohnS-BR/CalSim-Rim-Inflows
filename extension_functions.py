@@ -733,11 +733,30 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
                 break
             except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
                 time.sleep(1)
-                o_outflow_file = None
+                o_outflow_file = ''
                 continue
 
+        # we if have something too short to be real, try again with a different url
+        if len(o_outflow_file.text) < 100:
+
+            # construct the url to get the CDEC data
+            s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=15&dur_code=M&Start={s_start_date}&End={s_end_date}"
+
+            # get the data
+            # Make the request, retrying up to 5 times if connection fails
+            i_num_tries = 0
+            while i_num_tries <= 5:
+                try:
+                    i_num_tries += 1
+                    o_outflow_file = requests.get(s_url, allow_redirects=True, timeout=60, verify=False)
+                    break
+                except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
+                    time.sleep(1)
+                    o_outflow_file = ''
+                    continue
+
         # if the connection never worked, skip this station
-        if o_outflow_file is None:
+        if o_outflow_file == '':
             print(f"Failed to pull CDEC data for: {station}")
             continue
 
