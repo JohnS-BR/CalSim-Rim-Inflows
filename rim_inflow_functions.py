@@ -297,4 +297,4 @@ def I_SFR006(df_extended_data, df_rim_inflows):
     df_rim_inflows['I_SFR006'] = df_location
 
     # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1963, 2025)), 'I_SFR006')
+    create_final_flow_plots(df_location, list(range(1963, 2022)), 'I_SFR006')
