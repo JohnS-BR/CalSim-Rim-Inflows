@@ -111,6 +111,7 @@ if __name__ == "__main__":
     I_HHOLE(df_extended_data, df_rim_inflows)
     I_LOONL(df_extended_data, df_rim_inflows)
     I_SFR006(df_extended_data, df_rim_inflows)
+    I_GERLE(df_extended_data, df_rim_inflows)
 
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
