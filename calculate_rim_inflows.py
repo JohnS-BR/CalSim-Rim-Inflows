@@ -127,5 +127,6 @@ if __name__ == "__main__":
     I_NLC003(df_extended_data, df_full_data, df_rim_inflows)
     I_SLC003(df_extended_data, df_full_data, df_rim_inflows)
     I_LNG012(df_extended_data, df_rim_inflows)
+    I_RUB002(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

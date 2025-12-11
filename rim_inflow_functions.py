@@ -518,3 +518,24 @@ def I_LNG012(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1967, 1993)), 'I_LNG012')
+
+
+def I_RUB002(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_RUB002
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # these are just all zero
+    df_rim_inflows['I_RUB002'] = 0
+
