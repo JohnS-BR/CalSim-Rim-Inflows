@@ -1,5 +1,5 @@
 import pandas as pd
-from extension_functions import create_final_flow_plots, area_scale
+from extension_functions import create_final_flow_plots, area_scale, remove_negatives_timeseries
 
 def I_DCC010(df_extended_data, df_rim_inflows):
     """
@@ -388,7 +388,7 @@ def I_PLC007(df_extended_data, df_rim_inflows):
         """
 
     # pull out the relevant station
-    df_location = df_extended_data['11433040']
+    df_location = df_extended_data['11433040_ALTERED']
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
