@@ -124,5 +124,6 @@ if __name__ == "__main__":
     I_STMPY(df_extended_data, df_rim_inflows)
     I_PLC007(df_extended_data, df_rim_inflows)
     I_NLC003(df_extended_data, df_full_data, df_rim_inflows)
+    I_SLC003(df_extended_data, df_full_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
