@@ -59,10 +59,25 @@ def I_FRMDW(df_extended_data, df_rim_inflows):
     df_location = df_location.round(2)
 
     # add into the rim inflow dataframe
-    df_rim_inflows['I_FRMDW'] = df_location
+    df_rim_inflows['I_FRMDW_G'] = df_location
 
     # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1966, 2008)) + list(range(2009, 2024)), 'I_FRMDW')
+    create_final_flow_plots(df_location, list(range(1966, 2008)) + list(range(2009, 2024)), 'I_FRMDW_G')
+
+    # pull out the relevant station
+    df_location = df_extended_data['11427500_ALTERED']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_FRMDW_F'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1966, 2008)) + list(range(2009, 2024)), 'I_FRMDW_F')
 
 
 def I_MFA036(df_extended_data, df_rim_inflows):
@@ -85,7 +100,7 @@ def I_MFA036(df_extended_data, df_rim_inflows):
     df_location = df_extended_data['11427760']
 
     # subtract upstream
-    df_location = df_location - df_rim_inflows['I_FRMDW'] - df_rim_inflows['I_DCC010']
+    df_location = df_location - df_rim_inflows['I_FRMDW_G'] - df_rim_inflows['I_DCC010']
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
@@ -569,4 +584,48 @@ def I_NMA003(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1966, 1986)), 'I_NMA003')
+
+
+def I_MFA025(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_MFA025
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11433300']
+
+    # subtract upstream
+    df_location = (df_location - df_rim_inflows['I_FRMDW_F'] - df_rim_inflows['I_RUB002'] - df_rim_inflows['I_PLC007'] - df_rim_inflows['I_STMPY'] - df_rim_inflows['I_LNG012'] -
+                   df_rim_inflows['I_SLC003'] - df_rim_inflows['I_NLC003'] - df_rim_inflows['I_SFR006'] - df_rim_inflows['I_LOONL'] - df_rim_inflows['I_LRB004'] - df_rim_inflows['I_RUB047']
+                   - df_rim_inflows['I_HHOLE'] - df_rim_inflows['I_NMA003'] - df_rim_inflows['I_MFA036'] - df_rim_inflows['I_DCC010'] - df_rim_inflows['I_GERLE'])
+
+    # redistribute any negatives
+    df_location = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
+
+    # watershed factor
+    df_location = df_location * 0.853
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_MFA025'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1959, 2025)), 'I_MFA025')
+
 
