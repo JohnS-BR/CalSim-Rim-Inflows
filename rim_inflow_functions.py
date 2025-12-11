@@ -629,3 +629,37 @@ def I_MFA025(df_extended_data, df_rim_inflows):
     create_final_flow_plots(df_location, list(range(1959, 2025)), 'I_MFA025')
 
 
+def I_MFA023(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_MFA023
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_rim_inflows['I_MFA025']
+
+    # scale it based on area change
+    df_location = area_scale(df_location, d_area_1=0.147, d_area_2=0.853)
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_MFA023'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1959, 2025)), 'I_MFA023')
+

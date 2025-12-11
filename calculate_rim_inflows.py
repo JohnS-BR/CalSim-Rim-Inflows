@@ -135,5 +135,6 @@ if __name__ == "__main__":
     I_RUB002(df_extended_data, df_rim_inflows)
     I_NMA003(df_extended_data, df_rim_inflows)
     I_MFA025(df_extended_data, df_rim_inflows)
+    I_MFA023(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
