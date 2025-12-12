@@ -701,3 +701,40 @@ def I_MFA001(df_extended_data, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1921, 1986)), 'I_MFA001')
 
+
+def I_ALOHA(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_ALOHA
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11435100_B']
+
+    # first year gets the data from the A extension
+    df_location.iloc[:12] = df_extended_data['11435100_A'].iloc[:12]
+
+    # cale by watershed
+    df_location = df_location * 0.384
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_ALOHA'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(2012, 2022)), 'I_ALOHA')

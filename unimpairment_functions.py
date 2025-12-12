@@ -381,3 +381,30 @@ def unimpaired_11433500(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_11435100(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11435100 PYRAMID C A TWIN BRIDGES CA. Follows the logic from CS3_I_ALOHA_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11435100: Pyramid creek (what we are unimpairing)
+    # 11434900: Lake Aloha
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11435100'],
+                                     fl_storages=[df_gauge_data['11434900']],
+                                     fl_additions=[df_gauge_data['11434900_evap'].fillna(0)]
+                                     )
+
+    return df_unimpaired
