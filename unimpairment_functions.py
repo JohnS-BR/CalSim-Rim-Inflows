@@ -348,3 +348,36 @@ def unimpaired_11433300(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_11433500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433500 MF AMERICAN R NR AUBURN CA. Follows the logic from CS3_I_MFA001_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11433500: Middle Fork of the American near Auburn (what we are unimpairing)
+    # 11429350: Loon Lake
+    # 11428700: Hell Hole
+    # 11427400: French Meadows
+    # EDN: Stumpy Meadows
+    # 11432000: Georgetown divide ditch
+    # 11429300: Robbs Peak powerhouse
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433500'],
+                                     fl_storages=[df_gauge_data['11429350_MFA001'].fillna(0), df_gauge_data['11428700'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['EDN'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11429350_MFA001_evap'].fillna(0), df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
+                                                   df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11432000'], df_gauge_data['11429300'].fillna(0)]
+                                     )
+
+    return df_unimpaired

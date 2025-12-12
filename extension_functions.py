@@ -578,6 +578,12 @@ def create_final_flow_plots(df_final_flow, il_oberved_years, s_current_location)
     df_derived_month_avgs = df_derived.groupby('Month')['TAF'].mean()
     df_long_term_avgs = df_final_flow_plotting.groupby('Month')['TAF'].mean()
 
+    # if either of these are empty (no derived or no observed) set it to nans
+    if df_derived_month_avgs.empty:
+        df_derived_month_avgs = pd.Series(index=range(1, 13))
+    if df_observed_month_avgs.empty:
+        df_observed_month_avgs = pd.Series(index=range(1, 13))
+
     # set the bar width and month order to plot
     width=0.3
     il_month_order = [10, 11, 12, 1, 2, 3, 4, 5, 6 ,7 ,8, 9]
