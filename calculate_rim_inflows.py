@@ -7,7 +7,7 @@ from rim_inflow_functions import *
 from evaporation_functions import *
 
 if __name__ == "__main__":
-    i_final_year = 2024
+    i_final_year = 2021
 
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
@@ -145,5 +145,6 @@ if __name__ == "__main__":
     I_MFA023(df_extended_data, df_rim_inflows)
     I_MFA001(df_extended_data, df_rim_inflows)
     I_ALOHA(df_extended_data, df_rim_inflows)
+    I_PYR001(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
