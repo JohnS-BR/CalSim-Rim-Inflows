@@ -225,3 +225,186 @@ def unimpaired_11429500(df_gauge_data):
                                       df_unimpaired_no_ph))
 
     return df_unimpaired
+
+def unimpaired_11430000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11430000 SF RUBICON R BL GERLE C NR GEORGETOWN CA. Follows the logic from CS3_I_LOONL_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # Adds in Gerle Reservoir evap and Robbs Peak powerhouse and subtracts Gerle Creek below Loon Lake and Loon Lake powerhouse
+
+    # 11430000: SF Rubicon River below Gerle Creek (what we are unimpairing)
+    # 11429600: Gerle Reservoir
+    # 11429300: Robbs Peak Powerhouse
+    # 11429500: Gerle Creek below Loon Lake
+    # 11429340: Loon Lake Powerhouse
+
+    # if 11429600_evap, 11429300, or 11429340 are nans, just skip. so fill with zeros
+    df_unimpaired = unimpaired_flows(df_gauge_data['11430000'],
+                                     fl_additions=[df_gauge_data['11429600_evap'].fillna(0), df_gauge_data['11429300'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429500'], df_gauge_data['11429340'].fillna(0)],
+                                     )
+
+
+    return df_unimpaired
+
+def unimpaired_11419340(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433040 PILOT C BL MUTTON CANYON NR GEORGETOWN CA. Follows the logic from CS3_I_STMPY_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # Adds in Stumpy Meadows storage differences, Stumpy Meadows evaporation and Georgetown divide ditch
+
+    # 11433040: Pilot Creek below Mutton Canyon
+    # EDN: Stumpy Meadows Reservoir
+    # 11432000: Georgetown divide ditch
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433040'],
+                                     fl_storages=[df_gauge_data['EDN'].fillna(0)],
+                                     fl_additions=[df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11432000'].fillna(0)]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11433100(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433100 LONG CANYON C NR FRENCH MEADOWS CA. Follows the logic from CS3_I_NCL003_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # Adds in North and South Fork Long Canyon Canal Diversions
+
+    # 11433100: Long Canyon Creek near French Meadows
+    # 11433060: South Fork Long Canyon Canal diversions
+    # 11433080: North Fork Long Canyon Canal Diversions
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433100'],
+                                     fl_additions=[df_gauge_data['11433060'].fillna(0), df_gauge_data['11433080'].fillna(0)]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11433300(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433300 MF AMERICAN R NR FORESTHILL CA. Follows the logic from CS3_I_MFA025_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11433300: Middle Fork of the American near Foresthill (what we are unimpairing)
+    # 11429350: Loon Lake
+    # 11428700: Hell Hole
+    # 11427400: French Meadows
+    # EDN: Stumpy Meadows
+    # 11432000: Georgetown divide ditch
+    # 11429300: Robbs Peak powerhouse
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433300'],
+                                     fl_storages=[df_gauge_data['11429350'].fillna(0), df_gauge_data['11428700'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['EDN'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
+                                                   df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11432000'].fillna(0), df_gauge_data['11429300'].fillna(0)]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11433500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11433500 MF AMERICAN R NR AUBURN CA. Follows the logic from CS3_I_MFA001_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11433500: Middle Fork of the American near Auburn (what we are unimpairing)
+    # 11429350: Loon Lake
+    # 11428700: Hell Hole
+    # 11427400: French Meadows
+    # EDN: Stumpy Meadows
+    # 11432000: Georgetown divide ditch
+    # 11429300: Robbs Peak powerhouse
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11433500'],
+                                     fl_storages=[df_gauge_data['11429350_MFA001'].fillna(0), df_gauge_data['11428700'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['EDN'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11429350_MFA001_evap'].fillna(0), df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
+                                                   df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11432000'], df_gauge_data['11429300'].fillna(0)]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11435100(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11435100 PYRAMID C A TWIN BRIDGES CA. Follows the logic from CS3_I_ALOHA_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11435100: Pyramid creek (what we are unimpairing)
+    # 11434900: Lake Aloha
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11435100'],
+                                     fl_storages=[df_gauge_data['11434900']],
+                                     fl_additions=[df_gauge_data['11434900_evap'].fillna(0)]
+                                     )
+
+    return df_unimpaired

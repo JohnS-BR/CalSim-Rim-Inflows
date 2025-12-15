@@ -578,6 +578,12 @@ def create_final_flow_plots(df_final_flow, il_oberved_years, s_current_location)
     df_derived_month_avgs = df_derived.groupby('Month')['TAF'].mean()
     df_long_term_avgs = df_final_flow_plotting.groupby('Month')['TAF'].mean()
 
+    # if either of these are empty (no derived or no observed) set it to nans
+    if df_derived_month_avgs.empty:
+        df_derived_month_avgs = pd.Series(index=range(1, 13))
+    if df_observed_month_avgs.empty:
+        df_observed_month_avgs = pd.Series(index=range(1, 13))
+
     # set the bar width and month order to plot
     width=0.3
     il_month_order = [10, 11, 12, 1, 2, 3, 4, 5, 6 ,7 ,8, 9]
@@ -733,11 +739,30 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
                 break
             except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
                 time.sleep(1)
-                o_outflow_file = None
+                o_outflow_file = ''
                 continue
 
+        # we if have something too short to be real, try again with a different url
+        if len(o_outflow_file.text) < 100:
+
+            # construct the url to get the CDEC data
+            s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=15&dur_code=M&Start={s_start_date}&End={s_end_date}"
+
+            # get the data
+            # Make the request, retrying up to 5 times if connection fails
+            i_num_tries = 0
+            while i_num_tries <= 5:
+                try:
+                    i_num_tries += 1
+                    o_outflow_file = requests.get(s_url, allow_redirects=True, timeout=60, verify=False)
+                    break
+                except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
+                    time.sleep(1)
+                    o_outflow_file = ''
+                    continue
+
         # if the connection never worked, skip this station
-        if o_outflow_file is None:
+        if o_outflow_file == '':
             print(f"Failed to pull CDEC data for: {station}")
             continue
 
@@ -792,7 +817,7 @@ def read_previous_data(s_path, df_new_data):
 
 
 def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthetic_data,
-                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name):
+                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_final_year):
 
     """
     Extends data using the s-curve disaggregation. Also creates the plots and saves the data into dataframes.
@@ -815,6 +840,8 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
         Flag for if we want to use all of the y data instead of just the selected years
     s_name: str
         Name of current station
+    i_final_year: int
+        Final year for the x data
 
     Returns
     -------
@@ -824,7 +851,7 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     # do the s-curve disaggregation
     df_curr_final_data, df_curr_synthetic_data = s_curve_disaggregation(df_reference_data,
                                                                         df_current_data,
-                                                                        1922, 2024,
+                                                                        1922, i_final_year,
                                                                         i_y_start_year, i_y_end_year,
                                                                         b_use_all_y_data)
     # generate the comparison plots

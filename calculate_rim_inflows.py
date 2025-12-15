@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from extension_functions import *
@@ -6,16 +7,19 @@ from rim_inflow_functions import *
 from evaporation_functions import *
 
 if __name__ == "__main__":
-    # this holds the already extended evap rates (not properly done right now...)
-    s_evap_dss_path = r".\Inputs\7_ReservoirEvaporationData_Sac_EXTENDED.dss"
+    i_final_year = 2021
+
+    # this holds the already extended evap rates
+    s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
     # this holds the USGS data (sometimes gap filled) from the previous extension
     s_previous_data = r".\Inputs\2022_extension_data.csv"
 
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
-                        '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350']
-    sl_cdec_stations = ['AMF']
+                        '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
+                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100']
+    sl_cdec_stations = ['AMF', 'EDN']
 
     # time range to pull USGS data for
     s_start_date = '2021-10-01'
@@ -54,6 +58,10 @@ if __name__ == "__main__":
     calc_evap_11434900(s_evap_dss_path, df_full_data)
     calc_evap_11428700(s_evap_dss_path, df_full_data)
     calc_evap_11429350(s_evap_dss_path, df_full_data)
+    calc_evap_11429600(s_evap_dss_path, df_full_data)
+    calc_evap_EDN(s_evap_dss_path, df_full_data)
+    calc_evap_11429350_MFA001(s_evap_dss_path, df_full_data)
+
 
     df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
 
@@ -67,6 +75,12 @@ if __name__ == "__main__":
     df_unimpaired_data['11428400'] = unimpaired_11428400(df_full_data)
     df_unimpaired_data['11428800'] = unimpaired_11428800(df_full_data)
     df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
+    df_unimpaired_data['11430000'] = unimpaired_11430000(df_full_data)
+    df_unimpaired_data['11433040'] = unimpaired_11419340(df_full_data)
+    df_unimpaired_data['11433100'] = unimpaired_11433100(df_full_data)
+    df_unimpaired_data['11433300'] = unimpaired_11433300(df_full_data)
+    df_unimpaired_data['11433500'] = unimpaired_11433500(df_full_data)
+    df_unimpaired_data['11435100'] = unimpaired_11435100(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -84,14 +98,25 @@ if __name__ == "__main__":
     df_synthetic_data = pd.DataFrame()
 
     # extend all with the s-curve disaggregation
-    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11439501'], df_extended_data, df_synthetic_data, 1923, 2024, False, '11439501')
-    extend_data(df_extended_data['11439501'], df_full_data['11427700'], df_extended_data, df_synthetic_data, 1961, 2024, False, '11427700')
-    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427500'], df_extended_data, df_synthetic_data, 1966, 2007,True, '11427500')
-    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427760'], df_extended_data, df_synthetic_data, 1966, 2007, False, '11427760')
-    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428000'], df_extended_data, df_synthetic_data, 1957, 1986, False, '11428000')
-    extend_data(df_extended_data['11439501'], df_unimpaired_data['11428400'], df_extended_data, df_synthetic_data, 1991, 2015, False, '11428400')
-    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428800'], df_extended_data, df_synthetic_data, 1966, 2007, True, '11428800')
-    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11429500'], df_extended_data, df_synthetic_data, 1963, 2024, False, '11429500')
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11439501'], df_extended_data, df_synthetic_data, 1923, i_final_year, False, '11439501', i_final_year)
+    extend_data(df_extended_data['11439501'], df_full_data['11427700'], df_extended_data, df_synthetic_data, 1961, i_final_year, False, '11427700', i_final_year)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427500'], df_extended_data, df_synthetic_data, 1966, 2007,True, '11427500', i_final_year)
+    extend_data(df_full_data['11439501_ALTERED'], df_pos_unimpaired_data['11427500'], df_extended_data, df_synthetic_data, 1966, 2007,True, '11427500_ALTERED', 2021)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427760'], df_extended_data, df_synthetic_data, 1966, 2007, False, '11427760', i_final_year)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428000'], df_extended_data, df_synthetic_data, 1957, 1986, False, '11428000', i_final_year)
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11428400'], df_extended_data, df_synthetic_data, 1991, 2015, False, '11428400', i_final_year)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428800'], df_extended_data, df_synthetic_data, 1966, 2007, True, '11428800', i_final_year)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11429500'], df_extended_data, df_synthetic_data, 1963, i_final_year, False, '11429500', i_final_year)
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11430000'], df_extended_data, df_synthetic_data, 1963, 2021, False, '11430000', i_final_year)
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11433040'], df_extended_data, df_synthetic_data, 1962, 2017, True, '11433040', i_final_year)
+    extend_data(df_full_data['11439501_ALTERED'], df_unimpaired_data['11433040'], df_extended_data, df_synthetic_data, 1962, 2017, True, '11433040_ALTERED', 2021)
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11433100'], df_extended_data, df_synthetic_data, 1967, 1992, False, '11433100', i_final_year)
+    extend_data(df_full_data['AMF'], df_unimpaired_data['11433100'], df_extended_data, df_synthetic_data, 1967, 1992, False, '11433100_AMF', i_final_year)
+    extend_data(df_extended_data['11439501'], df_full_data['11433260'], df_extended_data, df_synthetic_data, 1966, 1985, False, '11433260', i_final_year)
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11433300'], df_extended_data, df_synthetic_data, 1959, i_final_year, False, '11433300', i_final_year)
+    df_extended_data['11433500'] = flow_from_two_unimp(df_unimpaired_data['11433500'], df_unimpaired_data['11433300'], 1.06)
+    extend_data(df_full_data['AMF'], df_unimpaired_data['11435100'].loc[datetime(2011, 9, 30):], df_extended_data, df_synthetic_data, 2012, 2021, False, '11435100_A', i_final_year)
+    extend_data(df_extended_data['11439501'], df_unimpaired_data['11435100'].loc[datetime(2011, 9, 30):], df_extended_data, df_synthetic_data, 2012, 2021, False, '11435100_B', i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -107,6 +132,19 @@ if __name__ == "__main__":
     I_LRB004(df_extended_data, df_rim_inflows)
     I_HHOLE(df_extended_data, df_rim_inflows)
     I_LOONL(df_extended_data, df_rim_inflows)
-
+    I_SFR006(df_extended_data, df_rim_inflows)
+    I_GERLE(df_extended_data, df_rim_inflows)
+    I_STMPY(df_extended_data, df_rim_inflows)
+    I_PLC007(df_extended_data, df_rim_inflows)
+    I_NLC003(df_extended_data, df_full_data, df_rim_inflows)
+    I_SLC003(df_extended_data, df_full_data, df_rim_inflows)
+    I_LNG012(df_extended_data, df_rim_inflows)
+    I_RUB002(df_extended_data, df_rim_inflows)
+    I_NMA003(df_extended_data, df_rim_inflows)
+    I_MFA025(df_extended_data, df_rim_inflows)
+    I_MFA023(df_extended_data, df_rim_inflows)
+    I_MFA001(df_extended_data, df_rim_inflows)
+    I_ALOHA(df_extended_data, df_rim_inflows)
+    I_PYR001(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
