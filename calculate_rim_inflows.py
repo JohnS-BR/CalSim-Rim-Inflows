@@ -159,5 +159,6 @@ if __name__ == "__main__":
     I_SILVR(df_extended_data, df_rim_inflows)
     I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows)
     I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows)
+    I_NFA013(df_unimpaired_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
