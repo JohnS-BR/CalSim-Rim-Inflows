@@ -776,3 +776,70 @@ def I_PYR001(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(2012, 2022)), 'I_PYR001')
+
+
+def I_CAPLS(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CAPLS
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11437000_B']
+
+    # first year gets the data from the A extension
+    df_location.iloc[:12] = df_extended_data['11437000_A'].iloc[:12]
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_CAPLS'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1993)) + list(range(1998, 2025)), 'I_CAPLS')
+
+
+def I_SILVR(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SILVR
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11436000']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SILVR'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SILVR')

@@ -200,6 +200,7 @@ def calc_evap_11436950(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11436950_evap'] = calculate_evap_data(df_storage_data['11436950'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+    df_storage_data['11436950_CAPLS_evap'] = calculate_evap_data(df_storage_data['11436950_CAPLS'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
 
 
 def calc_evap_11435900(s_dss_file, df_storage_data):
@@ -246,6 +247,7 @@ def calc_evap_11435900(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11435900_evap'] = calculate_evap_data(df_storage_data['11435900'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+    df_storage_data['11435900_ALT_evap'] = calculate_evap_data(df_storage_data['11435900_ALT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
 
 
 def calc_evap_11434900(s_dss_file, df_storage_data):
@@ -299,6 +301,8 @@ def calc_evap_11434900(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11434900_evap'] = calculate_evap_data(df_storage_data['11434900'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
+    # calculate the alternative evaporation that uses different Aloha data
+    df_storage_data['11434900_ALT_evap'] = calculate_evap_data(df_storage_data['11434900_ALT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
 
 
 def calc_evap_11428700(s_dss_file, df_storage_data):

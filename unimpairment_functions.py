@@ -1,5 +1,9 @@
+import pandas as pd
+from pandas import interval_range
+
 from extension_functions import unimpaired_flows, get_diversions
 import numpy as np
+from datetime import datetime
 
 def unimpaired_11439501(df_gauge_data):
     """
@@ -405,6 +409,87 @@ def unimpaired_11435100(df_gauge_data):
     df_unimpaired = unimpaired_flows(df_gauge_data['11435100'],
                                      fl_storages=[df_gauge_data['11434900']],
                                      fl_additions=[df_gauge_data['11434900_evap'].fillna(0)]
+                                     )
+
+    # calculate the alternative unimpairment that uses different Aloha data
+    df_unimpaired_ALT = unimpaired_flows(df_gauge_data['11435100'],
+                                     fl_storages=[df_gauge_data['11434900_ALT']],
+                                     fl_additions=[df_gauge_data['11434900_ALT_evap'].fillna(0)]
+                                     )
+
+    return pd.concat([df_unimpaired, df_unimpaired_ALT], axis=1)
+
+
+def unimpaired_11437000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11437000 CAPLES LK OUTLET NR KIRKWOOD CA. Follows the logic from CS3_I_CAPLS_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11437000: Caples Lake outlet (what we are unimpairing)
+    # 11436999: Caples release
+    # 11437500: Caples Spill
+    # 11436950: Caples Lake
+
+    # first fill what is missing with release + spill
+    df_gauge_data['11437000_EXT'] = df_gauge_data['11437000'].fillna(df_gauge_data['11436999'] + df_gauge_data['11437500'])
+
+    # replicate the calculations done in the CAPLS sheet
+    df_storage_temp = df_gauge_data['11436950_CAPLS']
+    df_storage_temp.loc[datetime(1922, 9, 30)] = 1.2
+    df_storage_temp.loc[datetime(1924, 2, 29)] = df_storage_temp.loc[datetime(1924, 3, 31)]
+    df_storage_temp.interpolate('linear', inplace=True)
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11437000_EXT'],
+                                     fl_storages=[df_storage_temp],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0)]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11436000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11436000 SILVER LK OUTLET NR KIRKWOOD CA. Follows the logic from CS3_I_SILVR_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11436000: Silver Lake outlet (what we are unimpairing)
+    # 11435900: Silver Lake
+
+    # calcualte seepage for different storages
+    df_seepage = pd.DataFrame(np.arange(0, 10.1, 0.1), columns=['Storage'])
+    df_seepage['Seepage'] = 0.02733 * (df_seepage['Storage'] ** 2) - 0.13408 * df_seepage['Storage'] + 0.01
+    df_seepage.loc[df_seepage['Storage'] < 5, 'Seepage'] = 0
+    df_seepage['Storage'] = df_seepage['Storage'].round(1)
+
+    # match based on the storage
+    # this will get the largest value below or equal to the storage value
+    df_gauge_data['11435900_seepage'] = (np.floor(df_gauge_data[['11435900']] * 10) / 10).merge(df_seepage, how='left', left_on='11435900', right_on='Storage')['Seepage'].values
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11436000'],
+                                     fl_storages=[df_gauge_data['11435900'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11435900_seepage']]
                                      )
 
     return df_unimpaired

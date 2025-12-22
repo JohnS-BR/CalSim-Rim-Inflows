@@ -1,4 +1,3 @@
-import datetime
 import os
 
 from extension_functions import *
@@ -18,7 +17,7 @@ if __name__ == "__main__":
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
-                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100']
+                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000']
     sl_cdec_stations = ['AMF', 'EDN']
 
     # time range to pull USGS data for
@@ -80,7 +79,9 @@ if __name__ == "__main__":
     df_unimpaired_data['11433100'] = unimpaired_11433100(df_full_data)
     df_unimpaired_data['11433300'] = unimpaired_11433300(df_full_data)
     df_unimpaired_data['11433500'] = unimpaired_11433500(df_full_data)
-    df_unimpaired_data['11435100'] = unimpaired_11435100(df_full_data)
+    df_unimpaired_data[['11435100', '11435100_ALT']] = unimpaired_11435100(df_full_data)
+    df_unimpaired_data['11437000'] = unimpaired_11437000(df_full_data)
+    df_unimpaired_data['11436000'] = unimpaired_11436000(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -115,8 +116,11 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11439501'], df_full_data['11433260'], df_extended_data, df_synthetic_data, 1966, 1985, False, '11433260', i_final_year)
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11433300'], df_extended_data, df_synthetic_data, 1959, i_final_year, False, '11433300', i_final_year)
     df_extended_data['11433500'] = flow_from_two_unimp(df_unimpaired_data['11433500'], df_unimpaired_data['11433300'], 1.06)
-    extend_data(df_full_data['AMF'], df_unimpaired_data['11435100'].loc[datetime(2011, 9, 30):], df_extended_data, df_synthetic_data, 2012, 2021, False, '11435100_A', i_final_year)
+    extend_data(df_full_data['AMF'], df_unimpaired_data['11435100_ALT'][~df_unimpaired_data.index.isin(pd.date_range(datetime(2002, 10, 31), datetime(2012, 9, 30)))], df_extended_data, df_synthetic_data, 1971, 2002, True, '11435100_A', i_final_year)
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11435100'].loc[datetime(2011, 9, 30):], df_extended_data, df_synthetic_data, 2012, 2021, False, '11435100_B', i_final_year)
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, True, '11437000_A', i_final_year)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, False, '11437000_B', i_final_year)
+    extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11436000'], df_extended_data, df_synthetic_data, 1923, i_final_year, False, '11436000', i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -146,5 +150,7 @@ if __name__ == "__main__":
     I_MFA001(df_extended_data, df_rim_inflows)
     I_ALOHA(df_extended_data, df_rim_inflows)
     I_PYR001(df_extended_data, df_rim_inflows)
+    I_CAPLS(df_extended_data, df_rim_inflows)
+    I_SILVR(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
