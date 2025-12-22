@@ -883,3 +883,42 @@ def I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_LKVLY')
+
+
+def I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NNA013
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    df_nf_american = df_unimpaired_data['11427000'] * 0.01637702750
+
+    df_nf_american.fillna(df_unimpaired_data['11426500'] * 0.01637702750 * 1.070, inplace=True)
+
+    df_lake_valley_canal = df_unimpaired_data['11426190'] * 0.01637702750 / (0.01594576705 + 0.01637702750)
+
+    df_location = pd.Series(np.where(df_full_data['11426170'].iloc[1:] < 7.99, df_lake_valley_canal, pd.concat([df_lake_valley_canal, df_nf_american], axis=1).max(axis=1)), index=df_nf_american.index)
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NNA013'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NNA013')
