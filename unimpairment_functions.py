@@ -493,3 +493,84 @@ def unimpaired_11436000(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_11426190(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11426190 LAKE VALLEY CN NR EMIGRANT GAP  CA. Follows the logic from CS3_I_LKVLY_Rev2022F
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11426190: Lake Valley canal (what we are unimpairing)
+    # 11426170: Lake Valley
+    # YB236: Fish release from lake valley canal
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11426190'],
+                                     fl_storages=[df_gauge_data['11426170']],
+                                     fl_additions=[df_gauge_data['11426170_evap'], df_gauge_data['YB236']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11427000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11427000 NF AMERICAN R A NORTH FORK DAM  CA. Follows the logic from CS3_I_LKVLY_Rev2022F
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11427000: North Fork american river at north fork dam (what we are unimpairing)
+    # 11426170: Lake Valley
+    # 11426190: Lake valley canal
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11427000'],
+                                     fl_storages=[df_gauge_data['11426170']],
+                                     fl_additions=[df_gauge_data['11426170_evap'], df_gauge_data['11426190']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11426500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11426500 NF AMERICAN R NR COLFAX  CA. Follows the logic from CS3_I_LKVLY_Rev2022F
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11426500: North Fork American river near Colfax (what we are unimpairing)
+    # 11426170: Lake Valley
+    # 11426190: Lake valley canal
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11426500'],
+                                     fl_storages=[df_gauge_data['11426170']],
+                                     fl_additions=[df_gauge_data['11426170_evap'], df_gauge_data['11426190']]
+                                     )
+
+    return df_unimpaired

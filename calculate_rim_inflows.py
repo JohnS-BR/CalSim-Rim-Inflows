@@ -6,7 +6,7 @@ from rim_inflow_functions import *
 from evaporation_functions import *
 
 if __name__ == "__main__":
-    i_final_year = 2021
+    i_final_year = 2024
 
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
@@ -17,8 +17,9 @@ if __name__ == "__main__":
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
-                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000']
+                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500']
     sl_cdec_stations = ['AMF', 'EDN']
+    sl_other_stations = ['YB236']
 
     # time range to pull USGS data for
     s_start_date = '2021-10-01'
@@ -60,6 +61,7 @@ if __name__ == "__main__":
     calc_evap_11429600(s_evap_dss_path, df_full_data)
     calc_evap_EDN(s_evap_dss_path, df_full_data)
     calc_evap_11429350_MFA001(s_evap_dss_path, df_full_data)
+    calc_evap_11426170(s_evap_dss_path, df_full_data)
 
 
     df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
@@ -82,6 +84,9 @@ if __name__ == "__main__":
     df_unimpaired_data[['11435100', '11435100_ALT']] = unimpaired_11435100(df_full_data)
     df_unimpaired_data['11437000'] = unimpaired_11437000(df_full_data)
     df_unimpaired_data['11436000'] = unimpaired_11436000(df_full_data)
+    df_unimpaired_data['11426190'] = unimpaired_11426190(df_full_data)
+    df_unimpaired_data['11427000'] = unimpaired_11427000(df_full_data)
+    df_unimpaired_data['11426500'] = unimpaired_11426500(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -152,5 +157,6 @@ if __name__ == "__main__":
     I_PYR001(df_extended_data, df_rim_inflows)
     I_CAPLS(df_extended_data, df_rim_inflows)
     I_SILVR(df_extended_data, df_rim_inflows)
+    I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
