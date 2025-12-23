@@ -761,7 +761,7 @@ def I_PYR001(df_extended_data, df_rim_inflows):
     df_location = df_extended_data['11435100_B']
 
     # first year gets the data from the A extension
-    df_location.iloc[:12] = df_extended_data['11435100_A'].iloc[:12]
+    df_location.iloc[:12] = df_extended_data['11435100_C'].iloc[:12]
 
     # cale by watershed
     df_location = df_location * 0.616
