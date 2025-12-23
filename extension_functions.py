@@ -862,3 +862,18 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     # put the data into the two final dataframes
     df_extended_data[s_name] = monthly_to_timeseries(df_curr_final_data)
     df_synthetic_data[s_name] = monthly_to_timeseries(df_curr_synthetic_data)
+
+
+def calculate_watershed_factors(s_path):
+
+    # read in the watershed factors csv
+    df_watershed_factors = pd.read_csv(s_path)
+
+    df_watershed_factors.columns = ['Location', 'Area', 'Precipitation']
+
+    # calculate the area and precip proportions
+    df_watershed_factors['Area Proportion'] = df_watershed_factors['Area'] / df_watershed_factors['Area'].sum()
+    df_watershed_factors['Precip Proportion'] = df_watershed_factors['Precipitation'] / df_watershed_factors['Precipitation'].sum()
+    df_watershed_factors['Factor'] = df_watershed_factors['Area Proportion'] * df_watershed_factors['Precip Proportion'] / (df_watershed_factors['Area Proportion'] * df_watershed_factors['Precip Proportion']).sum()
+
+    return df_watershed_factors

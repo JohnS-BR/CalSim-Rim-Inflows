@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from extension_functions import *
 from unimpairment_functions import *
 from rim_inflow_functions import *
@@ -131,6 +133,8 @@ if __name__ == "__main__":
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
     df_synthetic_data.to_csv('./Intermediate/synthetic_data.csv')
 
+    df_lake_valley_watershed = calculate_watershed_factors("./Inputs/lake_valley_watershed.csv")
+
     # final rim inflows
     df_rim_inflows = pd.DataFrame()
 
@@ -157,10 +161,10 @@ if __name__ == "__main__":
     I_PYR001(df_extended_data, df_rim_inflows)
     I_CAPLS(df_extended_data, df_rim_inflows)
     I_SILVR(df_extended_data, df_rim_inflows)
-    I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows)
-    I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows)
-    I_NFA054(df_unimpaired_data, df_rim_inflows)
-    I_CYN009(df_unimpaired_data, df_rim_inflows)
+    I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows, df_lake_valley_watershed)
+    I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows, df_lake_valley_watershed)
+    I_NFA054(df_unimpaired_data, df_rim_inflows, df_lake_valley_watershed)
+    I_CYN009(df_unimpaired_data, df_rim_inflows, df_lake_valley_watershed)
     I_NFA022(df_unimpaired_data, df_rim_inflows)
     I_NFA016(df_rim_inflows)
 

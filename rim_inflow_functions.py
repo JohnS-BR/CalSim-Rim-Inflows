@@ -846,7 +846,7 @@ def I_SILVR(df_extended_data, df_rim_inflows):
     create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SILVR')
 
 
-def I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows):
+def I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows, df_factors):
     """
     Calculate the final rim inflow for CalSim. Location: I_LKVLY
 
@@ -858,17 +858,20 @@ def I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows):
         Dataframe of the gauge data to pull from
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
 
     Returns
     -------
     None
     """
 
-    df_nf_american = df_unimpaired_data['11427000'] * 0.01594576705
+    df_nf_american = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0]
 
-    df_nf_american.fillna(df_unimpaired_data['11426500'] * 0.01594576705 * 1.070, inplace=True)
+    df_nf_american.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] * 1.070, inplace=True)
 
-    df_lake_valley_canal = df_unimpaired_data['11426190'] * 0.01594576705 / (0.01594576705 + 0.01637702750)
+    df_lake_valley_canal = df_unimpaired_data['11426190'] * df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] / (df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] +
+                                                                                                                                 df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0])
 
     df_location = pd.Series(np.where(df_full_data['11426170'].iloc[1:] < 7.99, df_lake_valley_canal, pd.concat([df_lake_valley_canal, df_nf_american], axis=1).max(axis=1)), index=df_nf_american.index)
 
@@ -885,7 +888,7 @@ def I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows):
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_LKVLY')
 
 
-def I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows):
+def I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows, df_factors):
     """
     Calculate the final rim inflow for CalSim. Location: I_NNA013
 
@@ -897,17 +900,20 @@ def I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows):
         Dataframe of the gauge data to pull from
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
 
     Returns
     -------
     None
     """
 
-    df_nf_american = df_unimpaired_data['11427000'] * 0.01637702750
+    df_nf_american = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0]
 
-    df_nf_american.fillna(df_unimpaired_data['11426500'] * 0.01637702750 * 1.070, inplace=True)
+    df_nf_american.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0] * 1.070, inplace=True)
 
-    df_lake_valley_canal = df_unimpaired_data['11426190'] * 0.01637702750 / (0.01594576705 + 0.01637702750)
+    df_lake_valley_canal = df_unimpaired_data['11426190'] * df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0] / (df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] +
+                                                                                                                                  df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0])
 
     df_location = pd.Series(np.where(df_full_data['11426170'].iloc[1:] < 7.99, df_lake_valley_canal, pd.concat([df_lake_valley_canal, df_nf_american], axis=1).max(axis=1)), index=df_nf_american.index)
 
@@ -924,7 +930,7 @@ def I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows):
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NNA013')
 
 
-def I_NFA054(df_unimpaired_data, df_rim_inflows):
+def I_NFA054(df_unimpaired_data, df_rim_inflows, df_factors):
     """
     Calculate the final rim inflow for CalSim. Location: I_NFA054
 
@@ -934,15 +940,17 @@ def I_NFA054(df_unimpaired_data, df_rim_inflows):
         Dataframe of unimpaired data to pull from
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
 
     Returns
     -------
     None
     """
 
-    df_location = df_unimpaired_data['11427000'] * 0.6029881535
+    df_location = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_NFA054']['Factor'].iloc[0]
 
-    df_location.fillna(df_unimpaired_data['11426500'] * 0.6029881535 * 1.070, inplace=True)
+    df_location.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_NFA054']['Factor'].iloc[0] * 1.070, inplace=True)
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
@@ -957,7 +965,7 @@ def I_NFA054(df_unimpaired_data, df_rim_inflows):
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA054')
 
 
-def I_CYN009(df_unimpaired_data, df_rim_inflows):
+def I_CYN009(df_unimpaired_data, df_rim_inflows, df_factors):
     """
     Calculate the final rim inflow for CalSim. Location: I_CYN009
 
@@ -967,15 +975,17 @@ def I_CYN009(df_unimpaired_data, df_rim_inflows):
         Dataframe of unimpaired data to pull from
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
 
     Returns
     -------
     None
     """
 
-    df_location = df_unimpaired_data['11427000'] * 0.0041019578
+    df_location = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_CYN009']['Factor'].iloc[0]
 
-    df_location.fillna(df_unimpaired_data['11426500'] * 0.0041019578 * 1.070, inplace=True)
+    df_location.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_CYN009']['Factor'].iloc[0] * 1.070, inplace=True)
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
