@@ -1093,3 +1093,34 @@ def I_SFA076(df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SFA076')
+
+
+def I_SLF009(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLF009
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+        """
+
+    df_location = df_rim_inflows['I_SFA066'] * 0.297 / 0.443
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SLF009'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SLF009')
