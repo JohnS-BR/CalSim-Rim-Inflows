@@ -162,5 +162,6 @@ if __name__ == "__main__":
     I_NFA054(df_unimpaired_data, df_rim_inflows)
     I_CYN009(df_unimpaired_data, df_rim_inflows)
     I_NFA022(df_unimpaired_data, df_rim_inflows)
+    I_NFA016(df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

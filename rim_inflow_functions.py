@@ -1007,7 +1007,7 @@ def I_NFA022(df_unimpaired_data, df_rim_inflows):
 
     df_location = df_unimpaired_data['11427000']
 
-    df_location.fillna(df_unimpaired_data['11426500']* 1.070, inplace=True)
+    df_location.fillna(df_unimpaired_data['11426500'] * 1.070, inplace=True)
 
     df_location = df_location - df_rim_inflows['I_NFA054'] - df_rim_inflows['I_NNA013'] - df_rim_inflows['I_LKVLY'] - df_rim_inflows['I_CYN009']
 
@@ -1023,3 +1023,32 @@ def I_NFA022(df_unimpaired_data, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA022')
 
+def I_NFA016(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NFA016
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+        """
+
+    df_location = df_rim_inflows['I_NFA022'] * 0.070803
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFA016'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA016')
