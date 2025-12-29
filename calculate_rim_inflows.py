@@ -19,7 +19,8 @@ if __name__ == "__main__":
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
-                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500']
+                        '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500',
+                        '11440000']
     sl_cdec_stations = ['AMF', 'EDN']
     sl_other_stations = ['YB236']
 
@@ -129,6 +130,8 @@ if __name__ == "__main__":
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, True, '11437000_A', i_final_year)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, False, '11437000_B', i_final_year)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11436000'], df_extended_data, df_synthetic_data, 1923, i_final_year, False, '11436000', i_final_year)
+    extend_data(df_full_data['AMF'], df_full_data['11440000'], df_extended_data, df_synthetic_data, 1923, 1981, False, '11440000_A', i_final_year)
+    extend_data(df_extended_data['11439501'], df_full_data['11440000'], df_extended_data, df_synthetic_data, 1923, 1981, False, '11440000_B', i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -171,5 +174,6 @@ if __name__ == "__main__":
     I_SFA066(df_extended_data, df_rim_inflows)
     I_SFA076(df_rim_inflows)
     I_SLF009(df_rim_inflows)
+    I_ALD004(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
