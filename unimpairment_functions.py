@@ -574,3 +574,42 @@ def unimpaired_11426500(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_11441000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11441000 SILVER C A UNION VALLEY CA. Follows the logic from CS3_I_UNVLY_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11441000: North Fork American river near Colfax (what we are unimpairing)
+    # 11441002:Union Valley powerhouse
+    # 11441001: Union Valley Reservoir
+    # 11440900: Jones Fork power plant
+    # 11429300: Robbs Peak powerhouse
+
+    # 11441001_spill: Union Valley Spill
+    df_gauge_data['11441001_spill'] = pd.Series(np.where((df_gauge_data['11441001'] < 225) | (df_gauge_data['11441001'].isna()), 0, np.nan), index=df_gauge_data.index)
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11441002'],
+                                     fl_storages=[df_gauge_data['11441001'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11441001_spill'], df_gauge_data['11441001_evap'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11440900'].fillna(0), df_gauge_data['11429300'].fillna(0)],
+                                     )
+
+    # this location is the default
+    df_final = df_gauge_data['11441000']
+
+    # where it is missing, filled with the calculate unimpaired flows
+    df_final.fillna(df_unimpaired, inplace=True)
+
+    return df_final
