@@ -175,5 +175,6 @@ if __name__ == "__main__":
     I_SFA076(df_rim_inflows)
     I_SLF009(df_rim_inflows)
     I_ALD004(df_extended_data, df_rim_inflows)
+    I_ALD002(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
