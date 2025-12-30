@@ -194,5 +194,6 @@ if __name__ == "__main__":
     I_UNVLY(df_extended_data, df_rim_inflows)
     I_ICEHS(df_extended_data, df_rim_inflows)
     I_SLV006(df_extended_data, df_rim_inflows)
+    I_SLV015(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
