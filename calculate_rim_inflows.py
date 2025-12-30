@@ -145,6 +145,7 @@ if __name__ == "__main__":
     extend_data(df_full_data['11442000'], df_pos_unimpaired_data['11441500'], df_extended_data, df_synthetic_data, 1925, i_final_year, True, '11441500', 1961)
     # wy 1962 and on are blank, fill with the original values
     df_extended_data.fillna({'11441500': df_pos_unimpaired_data['11441500']}, inplace=True)
+    extend_data(df_extended_data['11439501'], df_full_data['11442000_SLV006'], df_extended_data, df_synthetic_data, 1923, 1961, False, '11442000', i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -192,5 +193,6 @@ if __name__ == "__main__":
     I_PLM001(df_extended_data, df_rim_inflows)
     I_UNVLY(df_extended_data, df_rim_inflows)
     I_ICEHS(df_extended_data, df_rim_inflows)
+    I_SLV006(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

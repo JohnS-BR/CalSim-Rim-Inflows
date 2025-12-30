@@ -462,6 +462,9 @@ def remove_negatives_timeseries(df_timeseries):
     df_total = df_timeseries_positive.groupby(['Water Year'])[ls_cols].sum().replace(0, np.nan)
     df_pos_totals = df_timeseries_positive[df_timeseries_positive >0].groupby(['Water Year'])[ls_cols].sum().replace(0, np.nan)
 
+    # set negatives to zero
+    df_timeseries_positive[df_timeseries_positive < 0] = 0
+
     # add the totals back into the frame based on the water year
     df_timeseries_positive = df_timeseries_positive.merge(df_pos_totals, how='left', left_on='Water Year', right_index=True, suffixes=['', '_pos_tot'])
     df_timeseries_positive = df_timeseries_positive.merge(df_total, how='left', left_on='Water Year', right_index=True, suffixes=['', '_tot'])
@@ -472,9 +475,6 @@ def remove_negatives_timeseries(df_timeseries):
 
     # remove all the extra columns we have created
     df_timeseries_positive = df_timeseries_positive[ls_cols]
-
-    # set negatives to zero
-    df_timeseries_positive[df_timeseries_positive < 0] = 0
 
     # return the positive frame
     return df_timeseries_positive
