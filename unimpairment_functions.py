@@ -591,8 +591,8 @@ def unimpaired_11441000(df_gauge_data):
         Unpaired flow for current station
     """
 
-    # 11441000: North Fork American river near Colfax (what we are unimpairing)
-    # 11441002:Union Valley powerhouse
+    # 11441000: Silver Creek at Union Valley (what we are unimpairing)
+    # 11441002: Union Valley powerhouse
     # 11441001: Union Valley Reservoir
     # 11440900: Jones Fork power plant
     # 11429300: Robbs Peak powerhouse
@@ -613,3 +613,30 @@ def unimpaired_11441000(df_gauge_data):
     df_final.fillna(df_unimpaired, inplace=True)
 
     return df_final
+
+
+def unimpaired_11441500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11441500 SF SILVER C NR ICE HOUSE CA. Follows the logic from CS3_I_ICEHS_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11441500: North Fork American river near Colfax (what we are unimpairing)
+    # 11441100: Ice House Reservoir
+    # 11440900: Jones Fork power plant, uses different data than other locations
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11441500'],
+                                     fl_storages=[df_gauge_data['11441100'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11440900_ICEHS'].fillna(0), df_gauge_data['11441100_evap'].fillna(0)],
+                                     )
+
+    return df_unimpaired

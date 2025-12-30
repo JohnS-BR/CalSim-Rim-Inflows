@@ -20,7 +20,7 @@ if __name__ == "__main__":
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
                         '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500',
-                        '11440000', '11440500', '11441000', '11441002', '11441001', '11440900', '11429300']
+                        '11440000', '11440500', '11441000', '11441002', '11441001', '11440900', '11429300', '11441500', '11441100', '11442000']
     sl_cdec_stations = ['AMF', 'EDN']
     sl_other_stations = ['YB236']
 
@@ -66,6 +66,7 @@ if __name__ == "__main__":
     calc_evap_11429350_MFA001(s_evap_dss_path, df_full_data)
     calc_evap_11426170(s_evap_dss_path, df_full_data)
     calc_evap_11441000(s_evap_dss_path, df_full_data)
+    calc_evap_11441100(s_evap_dss_path, df_full_data)
 
 
     df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
@@ -92,6 +93,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11427000'] = unimpaired_11427000(df_full_data)
     df_unimpaired_data['11426500'] = unimpaired_11426500(df_full_data)
     df_unimpaired_data['11441000'] = unimpaired_11441000(df_full_data)
+    df_unimpaired_data['11441500'] = unimpaired_11441500(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -136,9 +138,13 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11439501'], df_full_data['11440000'], df_extended_data, df_synthetic_data, 1923, 1981, False, '11440000_B', i_final_year)
     extend_data(df_full_data['AMF'], df_full_data['11440500'], df_extended_data, df_synthetic_data, 1923, 1939, False, '11440500_A', i_final_year)
     extend_data(df_extended_data['11439501'], df_full_data['11440500'], df_extended_data, df_synthetic_data, 1923, 1939, False, '11440500_B', i_final_year)
-    extend_data(df_extended_data['11439501'], monthly_to_timeseries(timeseries_to_monthly(df_full_data['11441000']).dropna(how='any', axis=0).drop(1962, axis=0))['TAF'], df_extended_data, df_synthetic_data, 1925, 1960, True, '11441000', i_final_year)
+    extend_data(df_extended_data['11439501'], monthly_to_timeseries(timeseries_to_monthly(df_unimpaired_data['11441000']).dropna(how='any', axis=0).drop(1962, axis=0))['TAF'], df_extended_data, df_synthetic_data, 1925, 1960, True, '11441000', i_final_year)
+    # wy 1981 and 1994 use the synthetic values
     df_extended_data.loc[pd.date_range(datetime(1980, 10, 31), datetime(1981, 9, 30), freq='ME'), '11441000'] = df_synthetic_data.loc[pd.date_range(datetime(1980, 10, 31), datetime(1981, 9, 30), freq='ME'), '11441000'].values
     df_extended_data.loc[pd.date_range(datetime(1993, 10, 31), datetime(1994, 9, 30), freq='ME'), '11441000'] = df_synthetic_data.loc[pd.date_range(datetime(1993, 10, 31), datetime(1994, 9, 30), freq='ME'), '11441000'].values
+    extend_data(df_full_data['11442000'], df_pos_unimpaired_data['11441500'], df_extended_data, df_synthetic_data, 1925, i_final_year, True, '11441500', 1961)
+    # wy 1962 and on are blank, fill with the original values
+    df_extended_data.fillna({'11441500': df_pos_unimpaired_data['11441500']}, inplace=True)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -185,5 +191,6 @@ if __name__ == "__main__":
     I_ALD002(df_extended_data, df_rim_inflows)
     I_PLM001(df_extended_data, df_rim_inflows)
     I_UNVLY(df_extended_data, df_rim_inflows)
+    I_ICEHS(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
