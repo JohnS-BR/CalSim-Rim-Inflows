@@ -1485,4 +1485,4 @@ def I_RCK001(df_extended_data, df_rim_inflows):
     df_rim_inflows['I_RCK001'] = df_location
 
     # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1987, 2009)), 'I_RCK001')
+    create_final_flow_plots(df_location, list(range(1987, 2009) + [2010, 2012, 2013, 2017]), 'I_RCK001')
