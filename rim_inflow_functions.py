@@ -1454,3 +1454,35 @@ def I_SFA040(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1923, 1968)) + list(range(1974, 2025)), 'I_SFA040')
+
+
+def I_RCK001(df_extended_data, df_rim_inflows):
+    """
+        Calculate the final rim inflow for CalSim. Location: I_RCK001
+
+        Parameters
+        ----------
+        df_extended_data: dataframe
+            Dataframe of extended (and unimpaired where relevant) data to pull from
+        df_rim_inflows: dataframe
+            Dataframe of rim inflows that have been calculated already
+
+        Returns
+        -------
+        None
+        """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11444201']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_RCK001'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1987, 2009)), 'I_RCK001')

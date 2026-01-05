@@ -18,7 +18,7 @@ if __name__ == "__main__":
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
                         '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500',
                         '11440000', '11440500', '11441000', '11441002', '11441001', '11440900', '11429300', '11441500', '11441100', '11442000', '11443500', '11443460', '11443450', '11444500',
-                        '11443501']
+                        '11443501', '11444201', '11444280']
     sl_cdec_stations = ['AMF', 'EDN']
     sl_other_stations = ['YB236', 'El Dorado']
 
@@ -94,6 +94,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11441500'] = unimpaired_11441500(df_full_data)
     df_unimpaired_data['11443500'] = unimpaired_11443500(df_full_data)
     df_unimpaired_data['11444500'] = unimpaired_11444500(df_full_data)
+    df_unimpaired_data['11444201'] = unimpaired_11444201(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -149,6 +150,9 @@ if __name__ == "__main__":
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11443500'], df_extended_data, df_synthetic_data, 1974, 2021, True, '11443500_A', i_final_year=i_final_year)
     extend_data(df_pos_unimpaired_data['11444500'], df_pos_unimpaired_data['11443500'], df_extended_data, df_synthetic_data, 1974, 2021, True, '11443500_D', i_x_start_year=1965, i_final_year=i_final_year)
     df_extended_data.fillna({'11443500_D': df_pos_unimpaired_data['11443500']}, inplace=True)
+    extend_data(df_full_data['AMF'], df_unimpaired_data['11444201'], df_extended_data, df_synthetic_data, 1987, 2008, True, '11444201', i_final_year=i_final_year)
+    # replace the end of wy 2017
+    df_extended_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201'] = df_unimpaired_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201']
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -200,5 +204,6 @@ if __name__ == "__main__":
     I_SLV015(df_extended_data, df_rim_inflows)
     I_BSH003(df_extended_data, df_rim_inflows)
     I_SFA040(df_extended_data, df_rim_inflows)
+    I_RCK001(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

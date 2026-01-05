@@ -722,3 +722,28 @@ def unimpaired_11444500(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_11444201(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11444201 ROCK C NR PLACERVILLE CA. Follows the logic from CS3_I_RCK001_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11444201: Rock Creek near placerville (what we are unimpairing)
+    # 11444280: Rock Creek
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11444201'],
+                                     fl_additions=[df_gauge_data['11444280']]
+                                     )
+
+    return df_unimpaired
