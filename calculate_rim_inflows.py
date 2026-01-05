@@ -93,7 +93,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11441000'] = unimpaired_11441000(df_full_data)
     df_unimpaired_data['11441500'] = unimpaired_11441500(df_full_data)
     df_unimpaired_data['11443500'] = unimpaired_11443500(df_full_data)
-    df_unimpaired_data['11444500'] = unimpaired_11444500(df_full_data)
+    df_unimpaired_data[['11444500', '11444500_SFA030']] = unimpaired_11444500(df_full_data)
     df_unimpaired_data['11444201'] = unimpaired_11444201(df_full_data)
 
     # drop the first row which is only for calculating storage differences
@@ -153,6 +153,7 @@ if __name__ == "__main__":
     extend_data(df_full_data['AMF'], df_unimpaired_data['11444201'], df_extended_data, df_synthetic_data, 1987, 2008, True, '11444201', i_final_year=i_final_year)
     # replace the end of wy 2017
     df_extended_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201'] = df_unimpaired_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201']
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11444500_SFA030'], df_extended_data, df_synthetic_data, 1965, i_final_year, False, '11444500', i_final_year=i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -205,5 +206,6 @@ if __name__ == "__main__":
     I_BSH003(df_extended_data, df_rim_inflows)
     I_SFA040(df_extended_data, df_rim_inflows)
     I_RCK001(df_extended_data, df_rim_inflows)
+    I_SFA030(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

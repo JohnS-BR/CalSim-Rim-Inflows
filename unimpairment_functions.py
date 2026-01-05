@@ -721,7 +721,16 @@ def unimpaired_11444500(df_gauge_data):
                                      fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
                                      )
 
-    return df_unimpaired
+    # alternate version of this data that just uses different versions of some data sources
+    df_unimpaired_SFA030 = unimpaired_flows(df_gauge_data['11444500'],
+                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450_SFA030'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                            )
+
+    return pd.concat([df_unimpaired, df_unimpaired_SFA030], axis=1)
 
 
 def unimpaired_11444201(df_gauge_data):
