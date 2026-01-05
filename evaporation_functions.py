@@ -647,3 +647,4 @@ def calc_evap_11441100(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11441100_evap'] = calculate_evap_data(df_storage_data['11441100'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+    df_storage_data['11441100_SFA040_evap'] = calculate_evap_data(df_storage_data['11441100_SFA040'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)

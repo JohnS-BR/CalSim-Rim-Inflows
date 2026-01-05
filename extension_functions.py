@@ -817,7 +817,7 @@ def read_previous_data(s_path, df_new_data):
 
 
 def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthetic_data,
-                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_final_year):
+                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922, i_final_year=2021):
 
     """
     Extends data using the s-curve disaggregation. Also creates the plots and saves the data into dataframes.
@@ -851,7 +851,7 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     # do the s-curve disaggregation
     df_curr_final_data, df_curr_synthetic_data = s_curve_disaggregation(df_reference_data,
                                                                         df_current_data,
-                                                                        1922, i_final_year,
+                                                                        i_x_start_year, i_final_year,
                                                                         i_y_start_year, i_y_end_year,
                                                                         b_use_all_y_data)
     # generate the comparison plots
