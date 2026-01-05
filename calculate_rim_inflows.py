@@ -18,7 +18,7 @@ if __name__ == "__main__":
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
                         '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500',
                         '11440000', '11440500', '11441000', '11441002', '11441001', '11440900', '11429300', '11441500', '11441100', '11442000', '11443500', '11443460', '11443450', '11444500',
-                        '11443501', '11444201', '11444280']
+                        '11443501', '11444201', '11444280', '11446000']
     sl_cdec_stations = ['AMF', 'EDN']
     sl_other_stations = ['YB236', 'El Dorado']
 
@@ -154,6 +154,7 @@ if __name__ == "__main__":
     # replace the end of wy 2017
     df_extended_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201'] = df_unimpaired_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201']
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11444500_SFA030'], df_extended_data, df_synthetic_data, 1965, i_final_year, False, '11444500', i_final_year=i_final_year)
+    extend_data(df_full_data['AMF'], df_full_data['11446000'], df_extended_data, df_synthetic_data, 1944, 1959, False, '11446000', i_final_year=i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/extended_data.csv')
@@ -207,5 +208,6 @@ if __name__ == "__main__":
     I_SFA040(df_extended_data, df_rim_inflows)
     I_RCK001(df_extended_data, df_rim_inflows)
     I_SFA030(df_extended_data, df_rim_inflows)
+    I_WBR001(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
