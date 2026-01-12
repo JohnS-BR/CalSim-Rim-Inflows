@@ -204,8 +204,8 @@ def unimpaired_11429500(df_gauge_data):
     # Adds in Loon Lake storage differences and Loon Lake evaporation and subtracts Buck Look Tunnel
 
     # 11429500: Gerle Creek below Loon Lake (what we are unimpairing)
-    # 11429340: Look Lake PH
-    # 11429350: Look Lake
+    # 11429340: Loon Lake PH
+    # 11429350: Loon Lake
     # 11428300: Buck Look Tunnel
 
     # this will be when there is data for 11429340
@@ -756,3 +756,69 @@ def unimpaired_11444201(df_gauge_data):
                                      )
 
     return df_unimpaired
+
+
+def unimpaired_calsim3(df_gauge_data):
+    """
+    Calculate the unimpaired flow for CALCULATED UNIMPAIRED FLOW AT FAIR OAKS. Follows the logic from CS3_I_FOLSM_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11446500: Fair Oaks
+    # YB90: South Canal below Wise powerhouse
+    # YB91: Lower Greeley Canal
+    # 11425416: Newcastle
+    # 11434500: Echo Lake Conduit
+    # PCWA Pump Station
+    # El Dorado: el dorado export
+    # 11432000: GD Ditch
+    # 11426190: Lake Valley Canal
+    # EID Diversions
+    # Folsom Diversions
+    # Folsom South Canal
+    # 11426170: Lake Valley
+    # 11436950: Caples Lake
+    # 11435900: Silver Lake
+    # 11434900: Lake Aloha
+    # 11441001: Union Valley Reservoir
+    # 11441100: Ice House Reservoir
+    # 11443450: Slab Creek Reservoir
+    # EDN: Stumpy Meadows
+    # 11429350: Loon Lake
+    # 11427400: French Meadows Reservoir
+    # 11428700: Hell Hole Reservoir
+    # Folsom: Folsom storage
+    # NAT: Natoma storage
+
+    # there is a timeseries that is max(11425416, YB90-YB91) for Dec 2017 and before and 11425416+11433930 Jan 2018 and on
+    df_temporary = df_gauge_data['YB90'] - df_gauge_data['YB91']
+    df_temporary = pd.concat([df_temporary, df_gauge_data['11425416']], axis=1).max(axis=1)
+    df_temporary.loc[datetime(2018,1,31):] = df_gauge_data['11425416'].loc[datetime(2018,1,31):] + df_gauge_data['11433930'].loc[datetime(2018,1,31):]
+
+    # this timeseries is just scaled
+    df_gd_ditch_returns = df_gauge_data['11432000'] * 0.8 * 0.25
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11446500'],
+                                     fl_storages=[df_gauge_data['11426170'].fillna(0), df_gauge_data['11436950_CAPLS'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900_ALT'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450_FOLSM'].fillna(0), df_gauge_data['EDN'].fillna(0),
+                                                  df_gauge_data['11429350_FOLSM'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['11428700_FOLSM'].fillna(0), df_gauge_data['Folsom'].fillna(0),
+                                                  df_gauge_data['NAT'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11426170_evap'].fillna(0), df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11434900_ALT_evap'].fillna(0), df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0),
+                                                   df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
+                                                   df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['Folsom_evap'].fillna(0), df_gauge_data['NAT_evap'].fillna(0),
+                                                   df_gauge_data['PCWA Pump Station'], df_gauge_data['El Dorado'], df_gauge_data['11432000'], df_gauge_data['11426190'],
+                                                   df_gauge_data['EID Diversions'], df_gauge_data['Folsom Diversions'], df_gauge_data['Folsom South Canal']],
+                                     fl_subtractions=[df_temporary, df_gauge_data['11434500_SFA040'], df_gd_ditch_returns])
+
+    return df_unimpaired
+

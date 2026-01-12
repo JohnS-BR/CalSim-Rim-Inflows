@@ -18,9 +18,9 @@ if __name__ == "__main__":
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
                         '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500',
                         '11440000', '11440500', '11441000', '11441002', '11441001', '11440900', '11429300', '11441500', '11441100', '11442000', '11443500', '11443460', '11443450', '11444500',
-                        '11443501', '11444201', '11444280', '11446000']
-    sl_cdec_stations = ['AMF', 'EDN']
-    sl_other_stations = ['YB236', 'El Dorado']
+                        '11443501', '11444201', '11444280', '11446000', '11446500', '11425416', '11433930']
+    sl_cdec_stations = ['AMF', 'EDN', 'NAT']
+    sl_other_stations = ['YB236', 'El Dorado', 'PCWA Pump Station', 'EID Diversions', 'Folsom Diversions', 'Folsom South Canal', 'Folsom', 'YB90', 'YB91', 'Folsom Fair Oaks']
 
     # time range to pull USGS data for
     s_start_date = '2021-10-01'
@@ -65,6 +65,8 @@ if __name__ == "__main__":
     calc_evap_11426170(s_evap_dss_path, df_full_data)
     calc_evap_11441000(s_evap_dss_path, df_full_data)
     calc_evap_11441100(s_evap_dss_path, df_full_data)
+    # calc_evap_folsom(s_evap_dss_path, df_full_data)
+    # calc_evap_NAT(s_evap_dss_path, df_full_data)
 
 
     df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
@@ -95,6 +97,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11443500'] = unimpaired_11443500(df_full_data)
     df_unimpaired_data[['11444500', '11444500_SFA030']] = unimpaired_11444500(df_full_data)
     df_unimpaired_data['11444201'] = unimpaired_11444201(df_full_data)
+    df_unimpaired_data['CalSim3'] = unimpaired_calsim3(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -209,5 +212,6 @@ if __name__ == "__main__":
     I_RCK001(df_extended_data, df_rim_inflows)
     I_SFA030(df_extended_data, df_rim_inflows)
     I_WBR001(df_extended_data, df_rim_inflows)
+    I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

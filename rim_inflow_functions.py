@@ -1559,3 +1559,42 @@ def I_WBR001(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1944, 1960)), 'I_WBR001')
+
+
+def I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_FOLSM
+
+    Parameters
+    ----------
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired flows
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_unimpaired_data['CalSim3'] - df_rim_inflows[['I_NNA013', 'I_NFA054','I_LKVLY', 'I_NFA022',  'I_CYN009', 'I_FRMDW_F','I_RUB002', 'I_STMPY', 'I_PLC007', 'I_SLC003', 'I_LNG012',
+                                                            'I_NLC003',  'I_SFR006', 'I_GERLE','I_LOONL', 'I_LRB004', 'I_HHOLE', 'I_RUB047','I_NMA003', 'I_MFA036', 'I_DCC010', 'I_MFA025', 'I_MFA023',
+                                                            'I_PLM001',  'I_ALD004', 'I_ALD002', 'I_UNVLY', 'I_ICEHS','I_SFA066','I_SLF009', 'I_SFA076', 'I_CAPLS', 'I_SILVR', 'I_SFA040', 'I_SFA030',
+                                                            'I_MFA001', 'I_SLV015', 'I_SLV006', 'I_ALOHA', 'I_BSH003', 'I_PYR001', 'I_RCK001', 'I_WBR001', 'I_NFA016']].sum(axis=1)
+
+    # subtract out this flow
+    df_location = df_location - df_full_data['Folsom Fair Oaks']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_FOLSM'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, [], 'I_FOLSM')

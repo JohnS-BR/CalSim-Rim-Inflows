@@ -648,3 +648,68 @@ def calc_evap_11441100(s_dss_file, df_storage_data):
     # calculate and set the evaporation
     df_storage_data['11441100_evap'] = calculate_evap_data(df_storage_data['11441100'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
     df_storage_data['11441100_SFA040_evap'] = calculate_evap_data(df_storage_data['11441100_SFA040'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+
+
+def calc_evap_folsom(s_dss_file, df_storage_data):
+    """
+    Calculate the evaporation amount for Folsom Reservoir. Follows the logic in CS3_I_FOLSM_Rev2022G.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+
+    Returns
+    -------
+    None
+    """
+
+    # get the evap rates from the dss file
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_FOLSM')
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/folsom_AC.csv")
+
+    # no calculations, just rename columns
+    df_area_capacity.rename(columns={'Capacity (TAF)': 'Capacity', 'Area (acres)': 'Area'}, inplace=True)
+
+    # calculate and set the evaporation
+    df_storage_data['Folsom_evap'] = calculate_evap_data(df_storage_data['Folsom'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+
+def calc_evap_NAT(s_dss_file, df_storage_data):
+    """
+    Calculate the evaporation amount for Lake Natoma. Follows the logic in CS3_I_FOLSM_Rev2022G.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+
+    Returns
+    -------
+    None
+    """
+
+    # get the evap rates from the dss file
+    # df_evap_rates = read_evap_data(s_dss_file, 'ER_NTOMA')
+
+    # read alternate rates from sheet
+    df_evap_rates = pd.read_csv(r"./Inputs/modified_evap_rates.csv", index_col=0, parse_dates=True)[['NTOMA']]
+    df_evap_rates.columns = ['IN']
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/NAT_AC.csv")
+
+    # Rename column
+    df_area_capacity.rename(columns={'Area (acres)': 'Area'}, inplace=True)
+
+    # get capacity in TAF
+    df_area_capacity['Capacity'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # calculate and set the evaporation
+    df_storage_data['NAT_evap'] = calculate_evap_data(df_storage_data['NAT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+

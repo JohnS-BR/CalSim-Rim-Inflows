@@ -687,10 +687,10 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
             # for AF, we want the last day of the month data divided by 1000
             df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join(df_current.resample('ME').last().to_frame(station) / 1000, how='outer')
 
-        elif '00060' in df_current.columns[1]:
+        elif '00060_Mean' in df_current.columns:
 
             # only save the column with the data
-            df_current = df_current.iloc[:, 1]
+            df_current = df_current.loc[:, '00060_Mean']
 
             # for CFS, we want the monthly average then converted to TAF
             # monthly average
@@ -743,7 +743,7 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
                 continue
 
         # we if have something too short to be real, try again with a different url
-        if len(o_outflow_file.text) < 100:
+        if o_outflow_file == '' or len(o_outflow_file.text) < 100:
 
             # construct the url to get the CDEC data
             s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=15&dur_code=M&Start={s_start_date}&End={s_end_date}"
