@@ -213,5 +213,6 @@ if __name__ == "__main__":
     I_SFA030(df_extended_data, df_rim_inflows)
     I_WBR001(df_extended_data, df_rim_inflows)
     I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows)
+    I_ECHOL(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')

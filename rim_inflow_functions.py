@@ -1598,3 +1598,35 @@ def I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, [], 'I_FOLSM')
+
+
+def I_ECHOL(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CAPLS
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out Caples
+    df_location = df_rim_inflows['I_CAPLS'] * 0.385 + 0.311
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_ECHOL'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, [], 'I_ECHOL')
