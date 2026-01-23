@@ -682,10 +682,22 @@ def unimpaired_11443500(df_gauge_data):
                                      fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
                                      )
 
+    df_unimpaired_alt = unimpaired_flows(df_location,
+                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900_ALT'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0),
+                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                     )
+
     df_unimpaired.loc[datetime(1921, 10, 31): datetime(1922, 9, 30)] = np.nan
     df_unimpaired.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = np.nan
+    df_unimpaired_alt.loc[datetime(1921, 10, 31): datetime(1922, 9, 30)] = np.nan
+    df_unimpaired_alt.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = np.nan
 
-    return df_unimpaired
+    return pd.concat([df_unimpaired, df_unimpaired_alt], axis=1)
+
 
 def unimpaired_11444500(df_gauge_data):
     """
