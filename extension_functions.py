@@ -5,9 +5,10 @@ from datetime import timedelta, datetime
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-import dataretrieval.nwis as nwis
 from dataretrieval import waterdata
+import urllib3
 
+urllib3.disable_warnings()
 
 def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year, i_y_end_year, b_use_all_y=False):
     """
@@ -664,7 +665,8 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
     # make the call to get the data
     df_usgs_data, metadata = waterdata.get_daily(
         monitoring_location_id=sl_usgs_stations,
-        time=s_start_date + '/' + s_end_date
+        time=s_start_date + '/' + s_end_date,
+        skip_geometry=True
     )
 
     # filter for the acre-feet data which will have param code 00054
