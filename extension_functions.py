@@ -5,8 +5,10 @@ from datetime import timedelta, datetime
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-import dataretrieval.nwis as nwis
+from dataretrieval import waterdata
+import urllib3
 
+urllib3.disable_warnings()
 
 def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year, i_y_end_year, b_use_all_y=False):
     """
@@ -462,6 +464,9 @@ def remove_negatives_timeseries(df_timeseries):
     df_total = df_timeseries_positive.groupby(['Water Year'])[ls_cols].sum().replace(0, np.nan)
     df_pos_totals = df_timeseries_positive[df_timeseries_positive >0].groupby(['Water Year'])[ls_cols].sum().replace(0, np.nan)
 
+    # set negatives to zero
+    df_timeseries_positive[df_timeseries_positive < 0] = 0
+
     # add the totals back into the frame based on the water year
     df_timeseries_positive = df_timeseries_positive.merge(df_pos_totals, how='left', left_on='Water Year', right_index=True, suffixes=['', '_pos_tot'])
     df_timeseries_positive = df_timeseries_positive.merge(df_total, how='left', left_on='Water Year', right_index=True, suffixes=['', '_tot'])
@@ -472,9 +477,6 @@ def remove_negatives_timeseries(df_timeseries):
 
     # remove all the extra columns we have created
     df_timeseries_positive = df_timeseries_positive[ls_cols]
-
-    # set negatives to zero
-    df_timeseries_positive[df_timeseries_positive < 0] = 0
 
     # return the positive frame
     return df_timeseries_positive
@@ -533,10 +535,10 @@ def create_final_flow_plots(df_final_flow, il_oberved_years, s_current_location)
     """
 
     if isinstance(df_final_flow, pd.Series):
-        df_final_flow_plotting = df_final_flow.to_frame('TAF')
+        df_final_flow_plotting = df_final_flow.to_frame('TAF').dropna()
     else:
         # copy the data frame so we don't edit it
-        df_final_flow_plotting = df_final_flow.copy()
+        df_final_flow_plotting = df_final_flow.dropna().copy()
 
     # add in month and water year
     df_final_flow_plotting['Month'] = df_final_flow_plotting.index.month
@@ -657,58 +659,64 @@ def pull_usgs_data(sl_stations, s_start_date, s_end_date):
         Dataframe containing data from USGS data converted to monthly TAF values
     """
 
-    # data frame to hold data straight from USGS
-    df_gauge_data_original = pd.DataFrame()
+    # append in USGS- to all  the stations
+    sl_usgs_stations = ['USGS-' + station for station in sl_stations]
 
-    # data frame to hold the monthly data in TAF
-    df_gauge_data_monthly_taf = pd.DataFrame()
+    # make the call to get the data
+    df_usgs_data, metadata = waterdata.get_daily(
+        monitoring_location_id=sl_usgs_stations,
+        time=s_start_date + '/' + s_end_date,
+        skip_geometry=True
+    )
 
-    # loop through the stations
-    for station in sl_stations:
-        # pull the data
-        df_current = nwis.get_record(sites=station, service='dv', start=s_start_date, end=s_end_date)
+    # filter for the acre-feet data which will have param code 00054
+    df_af_data = df_usgs_data[df_usgs_data['parameter_code'] == '00054']
 
-        if df_current.empty:
-            print(f"No data found for USGS station {station}")
-            continue
+    # format the data to have a colum for each location
+    df_af_data = df_af_data.pivot(index='time', columns='monitoring_location_id', values='value')
 
-        print(f"Pulled USGS data for: {station}")
+    # format the index
+    df_af_data.index = pd.to_datetime(df_af_data.index).tz_localize(None)
+    df_af_data.sort_index(inplace=True)
 
-        # add the unaltered data to the dataframe with the original data
-        df_gauge_data_original = df_gauge_data_original.join(df_current.iloc[:,1].to_frame(station), how='outer')
+    # filter for the cfs data which will have param code 00060
+    df_cfs_data = df_usgs_data[df_usgs_data['parameter_code'] == '00060']
 
-        # depending on the units, we convert differently
-        # 00054 is storage in AF and 00060 is discharge in CFS, both need to be in TAF
-        if '00054' in df_current.columns[1]:
+    # format the data to have a colum for each location
+    df_cfs_data = df_cfs_data.pivot(index='time', columns='monitoring_location_id', values='value')
 
-            # only save the column with the data
-            df_current = df_current.iloc[:, 1]
+    # format the index
+    df_cfs_data.index = pd.to_datetime(df_cfs_data.index).tz_localize(None)
+    df_cfs_data.sort_index(inplace=True)
 
-            # for AF, we want the last day of the month data divided by 1000
-            df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join(df_current.resample('ME').last().to_frame(station) / 1000, how='outer')
+    # concat the original data
+    df_gauge_data_original = pd.concat([df_af_data, df_cfs_data], axis=1)
 
-        elif '00060' in df_current.columns[1]:
-
-            # only save the column with the data
-            df_current = df_current.iloc[:, 1]
-
-            # for CFS, we want the monthly average then converted to TAF
-            # monthly average
-            df_current = df_current.groupby(pd.Grouper(freq='ME')).mean()
-
-            # CFS -> TAF
-            df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current * df_current.index.day *  24 * 60 * 60 / (220 * 22 * 9 * 1000)).to_frame(station), how='outer')
-
-        else:
-            raise Exception(f'Cannot convert to TAF. Columns: {df_current.columns}')
-
-
-    # remove the timezone from the index for both data frames
-    df_gauge_data_original.index = df_gauge_data_original.index.tz_localize(None)
-    df_gauge_data_monthly_taf.index = df_gauge_data_monthly_taf.index.tz_localize(None)
-
+    # remove name on index
     df_gauge_data_original.index.name = None
+
+    # remove USGS- from column names
+    df_gauge_data_original.columns = [station.split('-')[1] for station in df_gauge_data_original.columns]
+
+    # resample to monthly and convert acre-feet to TAF
+    df_af_data = df_af_data.resample('ME').last()
+    df_af_data = df_af_data / 1000
+
+    # resample to monthly and convert cfs to TAF
+    df_cfs_data = df_cfs_data.resample('ME').mean()
+    df_cfs_data = df_cfs_data.mul(df_cfs_data.index.day *  24 * 60 * 60 / (220 * 22 * 9 * 1000), axis=0)
+
+    # combine TAF monthly data
+    df_gauge_data_monthly_taf = pd.concat([df_af_data, df_cfs_data], axis=1)
+
+    # remove name on index
     df_gauge_data_monthly_taf.index.name = None
+
+    # remove USGS- from column names
+    df_gauge_data_monthly_taf.columns = [station.split('-')[1] for station in df_gauge_data_monthly_taf.columns]
+
+    print("Pulled data for USGS stations: ", list(df_gauge_data_monthly_taf.columns))
+    print("Did not pull data for USGS stations: ", list(set(sl_stations) - set(df_gauge_data_original.columns)))
 
     # return the two dataframes
     return df_gauge_data_original, df_gauge_data_monthly_taf
@@ -743,7 +751,7 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
                 continue
 
         # we if have something too short to be real, try again with a different url
-        if len(o_outflow_file.text) < 100:
+        if o_outflow_file == '' or len(o_outflow_file.text) < 100:
 
             # construct the url to get the CDEC data
             s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=15&dur_code=M&Start={s_start_date}&End={s_end_date}"
@@ -817,7 +825,7 @@ def read_previous_data(s_path, df_new_data):
 
 
 def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthetic_data,
-                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_final_year):
+                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922, i_final_year=2021):
 
     """
     Extends data using the s-curve disaggregation. Also creates the plots and saves the data into dataframes.
@@ -851,7 +859,7 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     # do the s-curve disaggregation
     df_curr_final_data, df_curr_synthetic_data = s_curve_disaggregation(df_reference_data,
                                                                         df_current_data,
-                                                                        1922, i_final_year,
+                                                                        i_x_start_year, i_final_year,
                                                                         i_y_start_year, i_y_end_year,
                                                                         b_use_all_y_data)
     # generate the comparison plots
@@ -862,3 +870,18 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     # put the data into the two final dataframes
     df_extended_data[s_name] = monthly_to_timeseries(df_curr_final_data)
     df_synthetic_data[s_name] = monthly_to_timeseries(df_curr_synthetic_data)
+
+
+def calculate_watershed_factors(s_path):
+
+    # read in the watershed factors csv
+    df_watershed_factors = pd.read_csv(s_path)
+
+    df_watershed_factors.columns = ['Location', 'Area', 'Precipitation']
+
+    # calculate the area and precip proportions
+    df_watershed_factors['Area Proportion'] = df_watershed_factors['Area'] / df_watershed_factors['Area'].sum()
+    df_watershed_factors['Precip Proportion'] = df_watershed_factors['Precipitation'] / df_watershed_factors['Precipitation'].sum()
+    df_watershed_factors['Factor'] = df_watershed_factors['Area Proportion'] * df_watershed_factors['Precip Proportion'] / (df_watershed_factors['Area Proportion'] * df_watershed_factors['Precip Proportion']).sum()
+
+    return df_watershed_factors

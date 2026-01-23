@@ -1,5 +1,10 @@
+import pandas as pd
+from pandas import interval_range
+from scipy.stats import alpha
+
 from extension_functions import unimpaired_flows, get_diversions
 import numpy as np
+from datetime import datetime
 
 def unimpaired_11439501(df_gauge_data):
     """
@@ -199,8 +204,8 @@ def unimpaired_11429500(df_gauge_data):
     # Adds in Loon Lake storage differences and Loon Lake evaporation and subtracts Buck Look Tunnel
 
     # 11429500: Gerle Creek below Loon Lake (what we are unimpairing)
-    # 11429340: Look Lake PH
-    # 11429350: Look Lake
+    # 11429340: Loon Lake PH
+    # 11429350: Loon Lake
     # 11428300: Buck Look Tunnel
 
     # this will be when there is data for 11429340
@@ -407,4 +412,425 @@ def unimpaired_11435100(df_gauge_data):
                                      fl_additions=[df_gauge_data['11434900_evap'].fillna(0)]
                                      )
 
+    # calculate the alternative unimpairment that uses different Aloha data
+    df_unimpaired_ALT = unimpaired_flows(df_gauge_data['11435100'],
+                                     fl_storages=[df_gauge_data['11434900_ALT']],
+                                     fl_additions=[df_gauge_data['11434900_ALT_evap'].fillna(0)]
+                                     )
+
+    return pd.concat([df_unimpaired, df_unimpaired_ALT], axis=1)
+
+
+def unimpaired_11437000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11437000 CAPLES LK OUTLET NR KIRKWOOD CA. Follows the logic from CS3_I_CAPLS_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11437000: Caples Lake outlet (what we are unimpairing)
+    # 11436999: Caples release
+    # 11437500: Caples Spill
+    # 11436950: Caples Lake
+
+    # first fill what is missing with release + spill
+    df_gauge_data['11437000_EXT'] = df_gauge_data['11437000'].fillna(df_gauge_data['11436999'] + df_gauge_data['11437500'])
+
+    # replicate the calculations done in the CAPLS sheet
+    df_storage_temp = df_gauge_data['11436950_CAPLS']
+    df_storage_temp.loc[datetime(1922, 9, 30)] = 1.2
+    df_storage_temp.loc[datetime(1924, 2, 29)] = df_storage_temp.loc[datetime(1924, 3, 31)]
+    df_storage_temp.interpolate('linear', inplace=True)
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11437000_EXT'],
+                                     fl_storages=[df_storage_temp],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0)]
+                                     )
+
     return df_unimpaired
+
+
+def unimpaired_11436000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11436000 SILVER LK OUTLET NR KIRKWOOD CA. Follows the logic from CS3_I_SILVR_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11436000: Silver Lake outlet (what we are unimpairing)
+    # 11435900: Silver Lake
+
+    # calcualte seepage for different storages
+    df_seepage = pd.DataFrame(np.arange(0, 10.1, 0.1), columns=['Storage'])
+    df_seepage['Seepage'] = 0.02733 * (df_seepage['Storage'] ** 2) - 0.13408 * df_seepage['Storage'] + 0.01
+    df_seepage.loc[df_seepage['Storage'] < 5, 'Seepage'] = 0
+    df_seepage['Storage'] = df_seepage['Storage'].round(1)
+
+    # match based on the storage
+    # this will get the largest value below or equal to the storage value
+    df_gauge_data['11435900_seepage'] = (np.floor(df_gauge_data[['11435900']] * 10) / 10).merge(df_seepage, how='left', left_on='11435900', right_on='Storage')['Seepage'].values
+
+    # if any are nans, fill with zeros so they can be skipped
+    df_unimpaired = unimpaired_flows(df_gauge_data['11436000'],
+                                     fl_storages=[df_gauge_data['11435900'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11435900_seepage']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11426190(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11426190 LAKE VALLEY CN NR EMIGRANT GAP  CA. Follows the logic from CS3_I_LKVLY_Rev2022F
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11426190: Lake Valley canal (what we are unimpairing)
+    # 11426170: Lake Valley
+    # YB236: Fish release from lake valley canal
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11426190'],
+                                     fl_storages=[df_gauge_data['11426170']],
+                                     fl_additions=[df_gauge_data['11426170_evap'], df_gauge_data['YB236']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11427000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11427000 NF AMERICAN R A NORTH FORK DAM  CA. Follows the logic from CS3_I_LKVLY_Rev2022F
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11427000: North Fork american river at north fork dam (what we are unimpairing)
+    # 11426170: Lake Valley
+    # 11426190: Lake valley canal
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11427000'],
+                                     fl_storages=[df_gauge_data['11426170']],
+                                     fl_additions=[df_gauge_data['11426170_evap'], df_gauge_data['11426190']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11426500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11426500 NF AMERICAN R NR COLFAX  CA. Follows the logic from CS3_I_LKVLY_Rev2022F
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11426500: North Fork American river near Colfax (what we are unimpairing)
+    # 11426170: Lake Valley
+    # 11426190: Lake valley canal
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11426500'],
+                                     fl_storages=[df_gauge_data['11426170']],
+                                     fl_additions=[df_gauge_data['11426170_evap'], df_gauge_data['11426190']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11441000(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11441000 SILVER C A UNION VALLEY CA. Follows the logic from CS3_I_UNVLY_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11441000: Silver Creek at Union Valley (what we are unimpairing)
+    # 11441002: Union Valley powerhouse
+    # 11441001: Union Valley Reservoir
+    # 11440900: Jones Fork power plant
+    # 11429300: Robbs Peak powerhouse
+
+    # 11441001_spill: Union Valley Spill
+    df_gauge_data['11441001_spill'] = pd.Series(np.where((df_gauge_data['11441001'] < 225) | (df_gauge_data['11441001'].isna()), 0, np.nan), index=df_gauge_data.index)
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11441002'],
+                                     fl_storages=[df_gauge_data['11441001'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11441001_spill'], df_gauge_data['11441001_evap'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11440900'].fillna(0), df_gauge_data['11429300'].fillna(0)],
+                                     )
+
+    # this location is the default
+    df_final = df_gauge_data['11441000']
+
+    # where it is missing, filled with the calculate unimpaired flows
+    df_final.fillna(df_unimpaired, inplace=True)
+
+    return df_final
+
+
+def unimpaired_11441500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11441500 SF SILVER C NR ICE HOUSE CA. Follows the logic from CS3_I_ICEHS_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11441500: North Fork American river near Colfax (what we are unimpairing)
+    # 11441100: Ice House Reservoir
+    # 11440900: Jones Fork power plant, uses different data than other locations
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11441500'],
+                                     fl_storages=[df_gauge_data['11441100'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11440900_ICEHS'].fillna(0), df_gauge_data['11441100_evap'].fillna(0)],
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_11443500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11443500 SF AMERICAN R NR CAMINO CA. Follows the logic from CS3_I_SFA040_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11443500: South fork of the american near camino (what we are unimpairing)
+    # 11443501: South fork of the american near camino + american river flume near camino
+    # 11443460: South fork of the american
+    # El Dorado: el dorado export
+    # 11429300: Robbs Peak powerhouse
+    # 11434500: Echo Lake Conduit
+    # 11436950: Caples Lake
+    # 11435900: Silver Lake
+    # 11434900: Lake Aloha
+    # 11441001: Union Valley Reservoir
+    # 11441100: Ice House Reservoir
+    # 11443450: Slab Creek Reservoir
+
+    df_location = df_gauge_data['11443500'] + df_gauge_data['11443460'].fillna(0)
+    df_location.loc[datetime(1922,10,31): datetime(1964, 11, 30)] = df_gauge_data.loc[datetime(1922,10,31): datetime(1964, 11, 30), '11443501']
+
+    df_unimpaired = unimpaired_flows(df_location,
+                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0), df_gauge_data['11441001'].fillna(0),
+                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                     )
+
+    df_unimpaired_alt = unimpaired_flows(df_location,
+                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900_ALT'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0),
+                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                     )
+
+    df_unimpaired.loc[datetime(1921, 10, 31): datetime(1922, 9, 30)] = np.nan
+    df_unimpaired.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = np.nan
+    df_unimpaired_alt.loc[datetime(1921, 10, 31): datetime(1922, 9, 30)] = np.nan
+    df_unimpaired_alt.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = np.nan
+
+    return pd.concat([df_unimpaired, df_unimpaired_alt], axis=1)
+
+
+def unimpaired_11444500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11444500 SF AMERICAN R NR PLACERVILLE CA. Follows the logic from CS3_I_SFA040_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11444500: South fork of the american (what we are unimpairing)
+    # El Dorado: el dorado export
+    # 11429300: Robbs Peak powerhouse
+    # 11434500: Echo Lake Conduit
+    # 11436950: Caples Lake
+    # 11435900: Silver Lake
+    # 11434900: Lake Aloha
+    # 11441001: Union Valley Reservoir
+    # 11441100: Ice House Reservoir
+    # 11443450: Slab Creek Reservoir
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11444500'],
+                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0), df_gauge_data['11441001'].fillna(0),
+                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                     )
+
+    # alternate version of this data that just uses different versions of some data sources
+    df_unimpaired_SFA030 = unimpaired_flows(df_gauge_data['11444500'],
+                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450_SFA030'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                            )
+
+    return pd.concat([df_unimpaired, df_unimpaired_SFA030], axis=1)
+
+
+def unimpaired_11444201(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS 11444201 ROCK C NR PLACERVILLE CA. Follows the logic from CS3_I_RCK001_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11444201: Rock Creek near placerville (what we are unimpairing)
+    # 11444280: Rock Creek
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11444201'],
+                                     fl_additions=[df_gauge_data['11444280']]
+                                     )
+
+    return df_unimpaired
+
+
+def unimpaired_calsim3(df_gauge_data):
+    """
+    Calculate the unimpaired flow for CALCULATED UNIMPAIRED FLOW AT FAIR OAKS. Follows the logic from CS3_I_FOLSM_Rev2022G
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11446500: Fair Oaks
+    # YB90: South Canal below Wise powerhouse
+    # YB91: Lower Greeley Canal
+    # 11425416: Newcastle
+    # 11434500: Echo Lake Conduit
+    # PCWA Pump Station
+    # El Dorado: el dorado export
+    # 11432000: GD Ditch
+    # 11426190: Lake Valley Canal
+    # EID Diversions
+    # Folsom Diversions
+    # Folsom South Canal
+    # 11426170: Lake Valley
+    # 11436950: Caples Lake
+    # 11435900: Silver Lake
+    # 11434900: Lake Aloha
+    # 11441001: Union Valley Reservoir
+    # 11441100: Ice House Reservoir
+    # 11443450: Slab Creek Reservoir
+    # EDN: Stumpy Meadows
+    # 11429350: Loon Lake
+    # 11427400: French Meadows Reservoir
+    # 11428700: Hell Hole Reservoir
+    # Folsom: Folsom storage
+    # NAT: Natoma storage
+
+    # there is a timeseries that is max(11425416, YB90-YB91) for Dec 2017 and before and 11425416+11433930 Jan 2018 and on
+    df_temporary = df_gauge_data['YB90'] - df_gauge_data['YB91']
+    df_temporary = pd.concat([df_temporary, df_gauge_data['11425416']], axis=1).max(axis=1)
+    df_temporary.loc[datetime(2018,1,31):] = df_gauge_data['11425416'].loc[datetime(2018,1,31):] + df_gauge_data['11433930'].loc[datetime(2018,1,31):]
+
+    # this timeseries is just scaled
+    df_gd_ditch_returns = df_gauge_data['11432000'] * 0.8 * 0.25
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11446500'],
+                                     fl_storages=[df_gauge_data['11426170'].fillna(0), df_gauge_data['11436950_CAPLS'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900_ALT'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450_FOLSM'].fillna(0), df_gauge_data['EDN'].fillna(0),
+                                                  df_gauge_data['11429350_FOLSM'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['11428700_FOLSM'].fillna(0), df_gauge_data['Folsom'].fillna(0),
+                                                  df_gauge_data['NAT'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11426170_evap'].fillna(0), df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0),
+                                                   df_gauge_data['11434900_ALT_evap'].fillna(0), df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0),
+                                                   df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
+                                                   df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['Folsom_evap'].fillna(0), df_gauge_data['NAT_evap'].fillna(0),
+                                                   df_gauge_data['PCWA Pump Station'], df_gauge_data['El Dorado'], df_gauge_data['11432000'], df_gauge_data['11426190'],
+                                                   df_gauge_data['EID Diversions'], df_gauge_data['Folsom Diversions'], df_gauge_data['Folsom South Canal']],
+                                     fl_subtractions=[df_temporary, df_gauge_data['11434500_SFA040'], df_gd_ditch_returns])
+
+    return df_unimpaired
+

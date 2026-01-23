@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 from extension_functions import create_final_flow_plots, area_scale, remove_negatives_timeseries
+from datetime import datetime
 
 def I_DCC010(df_extended_data, df_rim_inflows):
     """
@@ -760,7 +762,7 @@ def I_PYR001(df_extended_data, df_rim_inflows):
     df_location = df_extended_data['11435100_B']
 
     # first year gets the data from the A extension
-    df_location.iloc[:12] = df_extended_data['11435100_A'].iloc[:12]
+    df_location.iloc[:12] = df_extended_data['11435100_C'].iloc[:12]
 
     # cale by watershed
     df_location = df_location * 0.616
@@ -776,3 +778,888 @@ def I_PYR001(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(2012, 2022)), 'I_PYR001')
+
+
+def I_CAPLS(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CAPLS
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11437000_B']
+    df_location_ALT = df_extended_data['11437000_ALT_B']
+
+    # first year gets the data from the A extension
+    df_location.iloc[:12] = df_extended_data['11437000_A'].iloc[:12]
+    df_location_ALT.iloc[:12] = df_extended_data['11437000_A'].iloc[:12]
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+    df_location_ALT.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+    df_location_ALT = df_location_ALT.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_CAPLS'] = df_location
+    df_rim_inflows['I_CAPLS_ALT'] = df_location_ALT
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1993)) + list(range(1998, 2025)), 'I_CAPLS')
+
+
+def I_SILVR(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SILVR
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11436000']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SILVR'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SILVR')
+
+
+def I_LKVLY(df_unimpaired_data, df_full_data, df_rim_inflows, df_factors):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_LKVLY
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
+
+    Returns
+    -------
+    None
+    """
+
+    df_nf_american = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0]
+
+    df_nf_american.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] * 1.070, inplace=True)
+
+    df_lake_valley_canal = df_unimpaired_data['11426190'] * df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] / (df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] +
+                                                                                                                                 df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0])
+
+    df_location = pd.Series(np.where(df_full_data['11426170'].iloc[1:] < 7.99, df_lake_valley_canal, pd.concat([df_lake_valley_canal, df_nf_american], axis=1).max(axis=1)), index=df_nf_american.index)
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_LKVLY'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_LKVLY')
+
+
+def I_NNA013(df_unimpaired_data, df_full_data, df_rim_inflows, df_factors):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NNA013
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
+
+    Returns
+    -------
+    None
+    """
+
+    df_nf_american = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0]
+
+    df_nf_american.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0] * 1.070, inplace=True)
+
+    df_lake_valley_canal = df_unimpaired_data['11426190'] * df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0] / (df_factors[df_factors['Location'] == 'I_LKVLY']['Factor'].iloc[0] +
+                                                                                                                                  df_factors[df_factors['Location'] == 'I_NNA013']['Factor'].iloc[0])
+
+    df_location = pd.Series(np.where(df_full_data['11426170'].iloc[1:] < 7.99, df_lake_valley_canal, pd.concat([df_lake_valley_canal, df_nf_american], axis=1).max(axis=1)), index=df_nf_american.index)
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NNA013'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NNA013')
+
+
+def I_NFA054(df_unimpaired_data, df_rim_inflows, df_factors):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NFA054
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
+
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_NFA054']['Factor'].iloc[0]
+
+    df_location.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_NFA054']['Factor'].iloc[0] * 1.070, inplace=True)
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFA054'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA054')
+
+
+def I_CYN009(df_unimpaired_data, df_rim_inflows, df_factors):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CYN009
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+    df_factors: dataframe
+        Watershed factors
+
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_unimpaired_data['11427000'] * df_factors[df_factors['Location'] == 'I_CYN009']['Factor'].iloc[0]
+
+    df_location.fillna(df_unimpaired_data['11426500'] * df_factors[df_factors['Location'] == 'I_CYN009']['Factor'].iloc[0] * 1.070, inplace=True)
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_CYN009'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_CYN009')
+
+def I_NFA022(df_unimpaired_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NFA022
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_unimpaired_data['11427000']
+
+    df_location.fillna(df_unimpaired_data['11426500'] * 1.070, inplace=True)
+
+    df_location = df_location - df_rim_inflows['I_NFA054'] - df_rim_inflows['I_NNA013'] - df_rim_inflows['I_LKVLY'] - df_rim_inflows['I_CYN009']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFA022'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA022')
+
+def I_NFA016(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NFA016
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+        """
+
+    df_location = df_rim_inflows['I_NFA022'] * 0.070803
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFA016'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA016')
+
+
+def I_SFA076(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SFA076
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+        """
+
+    df_location = df_rim_inflows['I_SFA066'] * 0.260 / 0.443
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SFA076'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SFA076')
+
+
+def I_SLF009(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLF009
+
+    Parameters
+    ----------
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+        """
+
+    df_location = df_rim_inflows['I_SFA066'] * 0.297 / 0.443
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SLF009'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 2025)), 'I_SLF009')
+
+
+def I_ALD004(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_ALD004
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11440000_B']
+    df_location_ALT = df_extended_data['11440000_ALT_B']
+
+    # first year uses A data
+    df_location.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
+    df_location_ALT.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
+
+    # watershed factor
+    df_location = df_location * 0.848
+    df_location_ALT = df_location_ALT * 0.848
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+    df_location_ALT.loc[df_location_ALT < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+    df_location_ALT = df_location_ALT.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_ALD004'] = df_location
+    df_rim_inflows['I_ALD004_ALT'] = df_location_ALT
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1982)), 'I_ALD004')
+
+def I_ALD002(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_ALD002
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11440000_B']
+    df_location_ALT = df_extended_data['11440000_ALT_B']
+
+    # first year uses A data
+    df_location.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
+    df_location_ALT.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
+
+    # watershed factor
+    df_location = df_location * 0.152
+    df_location_ALT = df_location_ALT * 0.152
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+    df_location_ALT.loc[df_location_ALT < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+    df_location_ALT = df_location_ALT.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_ALD002'] = df_location
+    df_rim_inflows['I_ALD002_ALT'] = df_location_ALT
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1982)), 'I_ALD002')
+
+
+def I_PLM001(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_PLM001
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11440500_B']
+    df_location_ALT = df_extended_data['11440500_ALT_B']
+
+    # first year uses A data
+    df_location.iloc[:12] = df_extended_data['11440500_A'].iloc[:12]
+    df_location_ALT.iloc[:12] = df_extended_data['11440500_A'].iloc[:12]
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+    df_location_ALT.loc[df_location_ALT < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+    df_location_ALT = df_location_ALT.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_PLM001'] = df_location
+    df_rim_inflows['I_PLM001_ALT'] = df_location_ALT
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1940)), 'I_PLM001')
+
+
+def I_UNVLY(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_UNVLY
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11441000']
+    df_location_ALT = df_extended_data['11441000_ALT']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+    df_location_ALT.loc[df_location_ALT < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+    df_location_ALT = df_location_ALT.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_UNVLY'] = df_location
+    df_rim_inflows['I_UNVLY_ALT'] = df_location_ALT
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1925, 1961)) + [1966, 1976, 1977, 1987, 1988, 1991, 1992, 2001, 2014, 2015, 2021], 'I_UNVLY')
+
+
+def I_ICEHS(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_ICEHS
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11441500']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_ICEHS'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1925, 2025)), 'I_ICEHS')
+
+
+def I_SLV006(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLV006
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11442000']
+
+    # subtract upstream
+    df_location = df_location - df_rim_inflows['I_UNVLY'] - df_rim_inflows['I_ICEHS']
+
+    # redistribute negatives
+    df_location = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
+
+    # watershed factors
+    df_location = df_location * 0.485 * 0.76
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SLV006'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1962)), 'I_SLV006')
+
+
+def I_SLV015(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLV006
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # get the already calculated location
+    df_location = df_rim_inflows['I_SLV006']
+
+    # watershed factors
+    df_location = df_location * 0.584 / 0.416
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SLV015'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1962)), 'I_SLV015')
+
+
+def I_BSH003(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_BSH003
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # get the already calculated location
+    df_location = df_rim_inflows['I_SLV006']
+
+    # watershed factors
+    df_location = df_location * 0.24 / 0.76
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_BSH003'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1962)), 'I_BSH003')
+
+
+def I_SFA040(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SFA040
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11443500_D']
+
+    df_location.loc[:datetime(1922, 9, 30)] = df_extended_data['11443500_A'].loc[:datetime(1922, 9, 30)]
+
+    # subtract upstream
+    df_location = df_location - df_rim_inflows['I_PYR001'] - df_rim_inflows['I_ALOHA'] - df_rim_inflows['I_SFA076'] - df_rim_inflows['I_CAPLS'] - df_rim_inflows['I_SILVR'] - df_rim_inflows['I_SLF009'] - df_rim_inflows['I_SFA066'] - df_rim_inflows['I_ALD004'] - df_rim_inflows['I_ALD002'] - df_rim_inflows['I_PLM001'] - df_rim_inflows['I_UNVLY'] - df_rim_inflows['I_ICEHS'] - df_rim_inflows['I_SLV015'] - df_rim_inflows['I_SLV006'] - df_rim_inflows['I_BSH003']
+
+    # redistribute negatives
+    df_location_positive = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
+
+    # splits which years use the redistributed negatives
+    df_location.loc[:datetime(1922, 9, 30)] = df_location_positive.loc[:datetime(1922, 9, 30)]
+    df_location.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = df_location_positive.loc[datetime(1967,10, 31): datetime(1973, 9, 30)]
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SFA040'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1923, 1968)) + list(range(1974, 2025)), 'I_SFA040')
+
+
+def I_RCK001(df_extended_data, df_rim_inflows):
+    """
+        Calculate the final rim inflow for CalSim. Location: I_RCK001
+
+        Parameters
+        ----------
+        df_extended_data: dataframe
+            Dataframe of extended (and unimpaired where relevant) data to pull from
+        df_rim_inflows: dataframe
+            Dataframe of rim inflows that have been calculated already
+
+        Returns
+        -------
+        None
+        """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11444201']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_RCK001'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1987, 2009)) + [2010, 2012, 2013, 2017], 'I_RCK001')
+
+
+def I_SFA030(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SFA030
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = (df_extended_data['11444500'] - df_rim_inflows['I_PLM001'] - df_rim_inflows['I_ALD002'] - df_rim_inflows['I_UNVLY'] - df_rim_inflows['I_ICEHS'] - df_rim_inflows['I_SFA066']
+                   - df_rim_inflows['I_CAPLS'] - df_rim_inflows['I_SILVR'] - df_rim_inflows['I_SLV015'] - df_rim_inflows['I_SLV006'] - df_rim_inflows['I_ALOHA'] - df_rim_inflows['I_PYR001']
+                   - df_rim_inflows['I_BSH003'] - df_rim_inflows['I_SFA040'] - df_rim_inflows['I_RCK001'] - df_rim_inflows['I_SFA076'] - df_rim_inflows['I_SLF009'] - df_rim_inflows['I_ALD004']
+                   )
+
+    # redistribute negatives
+    df_location_positive = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
+
+    # the synthetic years used the redistributed negatives
+    df_location.loc[:datetime(1964, 9, 30)] = df_location_positive.loc[:datetime(1964, 9, 30)]
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SFA030'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1965, 2025)), 'I_SFA030')
+
+
+def I_WBR001(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_WBR001
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_extended_data['11446000']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_WBR001'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1944, 1960)), 'I_WBR001')
+
+
+def I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_FOLSM
+
+    Parameters
+    ----------
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_unimpaired_data: dataframe
+        Dataframe of unimpaired flows
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # Folsom uses random old versions of the data that we will just read in
+    df_FOLSM_data = pd.read_csv('./Inputs/FOLSM_data.csv', parse_dates=True, index_col=0)
+
+    # replace these timeseries
+    df_rim_inflows_copy = df_rim_inflows.copy()
+    df_rim_inflows_copy[df_FOLSM_data.columns] = df_FOLSM_data
+
+    df_location = df_unimpaired_data['CalSim3'] - df_rim_inflows_copy[['I_NNA013', 'I_NFA054','I_LKVLY', 'I_NFA022',  'I_CYN009', 'I_FRMDW_F','I_RUB002', 'I_STMPY', 'I_PLC007', 'I_SLC003', 'I_LNG012',
+                                                            'I_NLC003',  'I_SFR006', 'I_GERLE','I_LOONL', 'I_LRB004', 'I_HHOLE', 'I_RUB047','I_NMA003', 'I_MFA036', 'I_DCC010', 'I_MFA025', 'I_MFA023',
+                                                            'I_PLM001_ALT',  'I_ALD004_ALT', 'I_ALD002_ALT', 'I_UNVLY_ALT', 'I_ICEHS','I_SFA066','I_SLF009', 'I_SFA076', 'I_CAPLS_ALT', 'I_SILVR', 'I_SFA040', 'I_SFA030',
+                                                            'I_MFA001', 'I_SLV015', 'I_SLV006', 'I_ALOHA', 'I_BSH003', 'I_PYR001', 'I_RCK001', 'I_WBR001', 'I_NFA016']].sum(axis=1)
+
+    # subtract out this flow
+    df_location = df_location - df_full_data['Folsom Fair Oaks']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_FOLSM'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_FOLSM')
+
+
+def I_ECHOL(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_ECHOL
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of extended (and unimpaired where relevant) data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out Caples
+    df_location = df_rim_inflows['I_CAPLS_ALT'] * 0.385 + 0.311
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_ECHOL'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, [], 'I_ECHOL')
