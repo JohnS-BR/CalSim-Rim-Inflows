@@ -2,6 +2,10 @@ from pydsstools.heclib.dss import HecDss
 import pandas as pd
 from datetime import timedelta
 import numpy as np
+from pydsstools.heclib.utils import dss_logging
+
+# turn off all the dss output
+dss_logging.config(level='None')
 
 
 def read_evap_data(s_path, s_b_part):
