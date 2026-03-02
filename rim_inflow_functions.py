@@ -61,25 +61,10 @@ def I_FRMDW(df_extended_data, df_rim_inflows):
     df_location = df_location.round(2)
 
     # add into the rim inflow dataframe
-    df_rim_inflows['I_FRMDW_G'] = df_location
+    df_rim_inflows['I_FRMDW'] = df_location
 
     # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1966, 2008)) + list(range(2009, 2024)), 'I_FRMDW_G')
-
-    # pull out the relevant station
-    df_location = df_extended_data['11427500_ALTERED']
-
-    # set anything negative to zero
-    df_location.loc[df_location < 0] = 0
-
-    # round to two decimal places
-    df_location = df_location.round(2)
-
-    # add into the rim inflow dataframe
-    df_rim_inflows['I_FRMDW_F'] = df_location
-
-    # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1966, 2008)) + list(range(2009, 2024)), 'I_FRMDW_F')
+    create_final_flow_plots(df_location, list(range(1966, 2008)) + list(range(2009, 2024)), 'I_FRMDW')
 
 
 def I_MFA036(df_extended_data, df_rim_inflows):
@@ -102,7 +87,7 @@ def I_MFA036(df_extended_data, df_rim_inflows):
     df_location = df_extended_data['11427760']
 
     # subtract upstream
-    df_location = df_location - df_rim_inflows['I_FRMDW_G'] - df_rim_inflows['I_DCC010']
+    df_location = df_location - df_rim_inflows['I_FRMDW'] - df_rim_inflows['I_DCC010']
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
@@ -244,6 +229,7 @@ def I_LOONL(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1963, 2025)), 'I_LOONL')
+
 
 def I_SFA066(df_extended_data, df_rim_inflows):
     """
@@ -405,7 +391,7 @@ def I_PLC007(df_extended_data, df_rim_inflows):
         """
 
     # pull out the relevant station
-    df_location = df_extended_data['11433040_ALTERED']
+    df_location = df_extended_data['11433040']
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
@@ -502,6 +488,7 @@ def I_SLC003(df_extended_data, df_gauge_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1967, 1993)), 'I_SLC003')
+
 
 def I_LNG012(df_extended_data, df_rim_inflows):
     """
@@ -608,7 +595,7 @@ def I_MFA025(df_extended_data, df_rim_inflows):
     df_location = df_extended_data['11433300']
 
     # subtract upstream
-    df_location = (df_location - df_rim_inflows['I_FRMDW_F'] - df_rim_inflows['I_RUB002'] - df_rim_inflows['I_PLC007'] - df_rim_inflows['I_STMPY'] - df_rim_inflows['I_LNG012'] -
+    df_location = (df_location - df_rim_inflows['I_FRMDW'] - df_rim_inflows['I_RUB002'] - df_rim_inflows['I_PLC007'] - df_rim_inflows['I_STMPY'] - df_rim_inflows['I_LNG012'] -
                    df_rim_inflows['I_SLC003'] - df_rim_inflows['I_NLC003'] - df_rim_inflows['I_SFR006'] - df_rim_inflows['I_LOONL'] - df_rim_inflows['I_LRB004'] - df_rim_inflows['I_RUB047']
                    - df_rim_inflows['I_HHOLE'] - df_rim_inflows['I_NMA003'] - df_rim_inflows['I_MFA036'] - df_rim_inflows['I_DCC010'] - df_rim_inflows['I_GERLE'])
 
@@ -686,7 +673,7 @@ def I_MFA001(df_extended_data, df_rim_inflows):
     df_location = df_extended_data['11433500']
 
     # subtract upstream
-    df_location = (df_location - df_rim_inflows['I_FRMDW_F'] - df_rim_inflows['I_RUB002'] - df_rim_inflows['I_PLC007'] - df_rim_inflows['I_STMPY'] - df_rim_inflows['I_LNG012'] -
+    df_location = (df_location - df_rim_inflows['I_FRMDW'] - df_rim_inflows['I_RUB002'] - df_rim_inflows['I_PLC007'] - df_rim_inflows['I_STMPY'] - df_rim_inflows['I_LNG012'] -
                    df_rim_inflows['I_SLC003'] - df_rim_inflows['I_NLC003'] - df_rim_inflows['I_SFR006'] - df_rim_inflows['I_LOONL'] - df_rim_inflows['I_LRB004'] - df_rim_inflows['I_RUB047']
                    - df_rim_inflows['I_HHOLE'] - df_rim_inflows['I_NMA003'] - df_rim_inflows['I_MFA036'] - df_rim_inflows['I_DCC010'] - df_rim_inflows['I_GERLE'] - df_rim_inflows['I_MFA023']
                    - df_rim_inflows['I_MFA025'])
@@ -798,23 +785,18 @@ def I_CAPLS(df_extended_data, df_rim_inflows):
 
     # pull out the relevant station
     df_location = df_extended_data['11437000_B']
-    df_location_ALT = df_extended_data['11437000_ALT_B']
 
     # first year gets the data from the A extension
     df_location.iloc[:12] = df_extended_data['11437000_A'].iloc[:12]
-    df_location_ALT.iloc[:12] = df_extended_data['11437000_A'].iloc[:12]
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
-    df_location_ALT.loc[df_location < 0] = 0
 
     # round to two decimal places
     df_location = df_location.round(2)
-    df_location_ALT = df_location_ALT.round(2)
 
     # add into the rim inflow dataframe
     df_rim_inflows['I_CAPLS'] = df_location
-    df_rim_inflows['I_CAPLS_ALT'] = df_location_ALT
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1923, 1993)) + list(range(1998, 2025)), 'I_CAPLS')
@@ -1039,6 +1021,7 @@ def I_NFA022(df_unimpaired_data, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFA022')
 
+
 def I_NFA016(df_rim_inflows):
     """
     Calculate the final rim inflow for CalSim. Location: I_NFA016
@@ -1150,27 +1133,21 @@ def I_ALD004(df_extended_data, df_rim_inflows):
 
     # pull out the relevant station
     df_location = df_extended_data['11440000_B']
-    df_location_ALT = df_extended_data['11440000_ALT_B']
 
     # first year uses A data
     df_location.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
-    df_location_ALT.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
 
     # watershed factor
     df_location = df_location * 0.848
-    df_location_ALT = df_location_ALT * 0.848
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
-    df_location_ALT.loc[df_location_ALT < 0] = 0
 
     # round to two decimal places
     df_location = df_location.round(2)
-    df_location_ALT = df_location_ALT.round(2)
 
     # add into the rim inflow dataframe
     df_rim_inflows['I_ALD004'] = df_location
-    df_rim_inflows['I_ALD004_ALT'] = df_location_ALT
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1923, 1982)), 'I_ALD004')
@@ -1193,27 +1170,21 @@ def I_ALD002(df_extended_data, df_rim_inflows):
 
     # pull out the relevant station
     df_location = df_extended_data['11440000_B']
-    df_location_ALT = df_extended_data['11440000_ALT_B']
 
     # first year uses A data
     df_location.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
-    df_location_ALT.iloc[:12] = df_extended_data['11440000_A'].iloc[:12]
 
     # watershed factor
     df_location = df_location * 0.152
-    df_location_ALT = df_location_ALT * 0.152
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
-    df_location_ALT.loc[df_location_ALT < 0] = 0
 
     # round to two decimal places
     df_location = df_location.round(2)
-    df_location_ALT = df_location_ALT.round(2)
 
     # add into the rim inflow dataframe
     df_rim_inflows['I_ALD002'] = df_location
-    df_rim_inflows['I_ALD002_ALT'] = df_location_ALT
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1923, 1982)), 'I_ALD002')
@@ -1237,23 +1208,18 @@ def I_PLM001(df_extended_data, df_rim_inflows):
 
     # pull out the relevant station
     df_location = df_extended_data['11440500_B']
-    df_location_ALT = df_extended_data['11440500_ALT_B']
 
     # first year uses A data
     df_location.iloc[:12] = df_extended_data['11440500_A'].iloc[:12]
-    df_location_ALT.iloc[:12] = df_extended_data['11440500_A'].iloc[:12]
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
-    df_location_ALT.loc[df_location_ALT < 0] = 0
 
     # round to two decimal places
     df_location = df_location.round(2)
-    df_location_ALT = df_location_ALT.round(2)
 
     # add into the rim inflow dataframe
     df_rim_inflows['I_PLM001'] = df_location
-    df_rim_inflows['I_PLM001_ALT'] = df_location_ALT
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1923, 1940)), 'I_PLM001')
@@ -1277,19 +1243,15 @@ def I_UNVLY(df_extended_data, df_rim_inflows):
 
     # pull out the relevant station
     df_location = df_extended_data['11441000']
-    df_location_ALT = df_extended_data['11441000_ALT']
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
-    df_location_ALT.loc[df_location_ALT < 0] = 0
 
     # round to two decimal places
     df_location = df_location.round(2)
-    df_location_ALT = df_location_ALT.round(2)
 
     # add into the rim inflow dataframe
     df_rim_inflows['I_UNVLY'] = df_location
-    df_rim_inflows['I_UNVLY_ALT'] = df_location_ALT
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1925, 1961)) + [1966, 1976, 1977, 1987, 1988, 1991, 1992, 2001, 2014, 2015, 2021], 'I_UNVLY')
@@ -1460,7 +1422,9 @@ def I_SFA040(df_extended_data, df_rim_inflows):
     df_location.loc[:datetime(1922, 9, 30)] = df_extended_data['11443500_A'].loc[:datetime(1922, 9, 30)]
 
     # subtract upstream
-    df_location = df_location - df_rim_inflows['I_PYR001'] - df_rim_inflows['I_ALOHA'] - df_rim_inflows['I_SFA076'] - df_rim_inflows['I_CAPLS'] - df_rim_inflows['I_SILVR'] - df_rim_inflows['I_SLF009'] - df_rim_inflows['I_SFA066'] - df_rim_inflows['I_ALD004'] - df_rim_inflows['I_ALD002'] - df_rim_inflows['I_PLM001'] - df_rim_inflows['I_UNVLY'] - df_rim_inflows['I_ICEHS'] - df_rim_inflows['I_SLV015'] - df_rim_inflows['I_SLV006'] - df_rim_inflows['I_BSH003']
+    df_location = (df_location - df_rim_inflows['I_PYR001'] - df_rim_inflows['I_ALOHA'] - df_rim_inflows['I_SFA076'] - df_rim_inflows['I_CAPLS'] - df_rim_inflows['I_SILVR']
+                   - df_rim_inflows['I_SLF009'] - df_rim_inflows['I_SFA066'] - df_rim_inflows['I_ALD004'] - df_rim_inflows['I_ALD002'] - df_rim_inflows['I_PLM001']
+                   - df_rim_inflows['I_UNVLY'] - df_rim_inflows['I_ICEHS'] - df_rim_inflows['I_SLV015'] - df_rim_inflows['I_SLV006'] - df_rim_inflows['I_BSH003'])
 
     # redistribute negatives
     df_location_positive = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
@@ -1605,16 +1569,9 @@ def I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows):
     None
     """
 
-    # Folsom uses random old versions of the data that we will just read in
-    df_FOLSM_data = pd.read_csv('./Inputs/FOLSM_data.csv', parse_dates=True, index_col=0)
-
-    # replace these timeseries
-    df_rim_inflows_copy = df_rim_inflows.copy()
-    df_rim_inflows_copy[df_FOLSM_data.columns] = df_FOLSM_data
-
-    df_location = df_unimpaired_data['CalSim3'] - df_rim_inflows_copy[['I_NNA013', 'I_NFA054','I_LKVLY', 'I_NFA022',  'I_CYN009', 'I_FRMDW_F','I_RUB002', 'I_STMPY', 'I_PLC007', 'I_SLC003', 'I_LNG012',
+    df_location = df_unimpaired_data['CalSim3'] - df_rim_inflows[['I_NNA013', 'I_NFA054','I_LKVLY', 'I_NFA022',  'I_CYN009', 'I_FRMDW','I_RUB002', 'I_STMPY', 'I_PLC007', 'I_SLC003', 'I_LNG012',
                                                             'I_NLC003',  'I_SFR006', 'I_GERLE','I_LOONL', 'I_LRB004', 'I_HHOLE', 'I_RUB047','I_NMA003', 'I_MFA036', 'I_DCC010', 'I_MFA025', 'I_MFA023',
-                                                            'I_PLM001_ALT',  'I_ALD004_ALT', 'I_ALD002_ALT', 'I_UNVLY_ALT', 'I_ICEHS','I_SFA066','I_SLF009', 'I_SFA076', 'I_CAPLS_ALT', 'I_SILVR', 'I_SFA040', 'I_SFA030',
+                                                            'I_PLM001',  'I_ALD004', 'I_ALD002', 'I_UNVLY', 'I_ICEHS','I_SFA066','I_SLF009', 'I_SFA076', 'I_CAPLS', 'I_SILVR', 'I_SFA040', 'I_SFA030',
                                                             'I_MFA001', 'I_SLV015', 'I_SLV006', 'I_ALOHA', 'I_BSH003', 'I_PYR001', 'I_RCK001', 'I_WBR001', 'I_NFA016']].sum(axis=1)
 
     # subtract out this flow
@@ -1650,7 +1607,7 @@ def I_ECHOL(df_extended_data, df_rim_inflows):
     """
 
     # pull out Caples
-    df_location = df_rim_inflows['I_CAPLS_ALT'] * 0.385 + 0.311
+    df_location = df_rim_inflows['I_CAPLS'] * 0.385 + 0.311
 
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0

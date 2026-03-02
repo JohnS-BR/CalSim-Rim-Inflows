@@ -204,7 +204,6 @@ def calc_evap_11436950(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11436950_evap'] = calculate_evap_data(df_storage_data['11436950'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
-    df_storage_data['11436950_CAPLS_evap'] = calculate_evap_data(df_storage_data['11436950_CAPLS'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
 
 
 def calc_evap_11435900(s_dss_file, df_storage_data):
@@ -251,7 +250,6 @@ def calc_evap_11435900(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11435900_evap'] = calculate_evap_data(df_storage_data['11435900'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
-    df_storage_data['11435900_ALT_evap'] = calculate_evap_data(df_storage_data['11435900_ALT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
 
 
 def calc_evap_11434900(s_dss_file, df_storage_data):
@@ -306,8 +304,6 @@ def calc_evap_11434900(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11434900_evap'] = calculate_evap_data(df_storage_data['11434900'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
-    # calculate the alternative evaporation that uses different Aloha data
-    df_storage_data['11434900_ALT_evap'] = calculate_evap_data(df_storage_data['11434900_ALT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
 
 
 def calc_evap_11428700(s_dss_file, df_storage_data):
@@ -483,52 +479,6 @@ def calc_evap_EDN(s_dss_file, df_storage_data):
     df_storage_data['EDN_evap'] = calculate_evap_data(df_storage_data['EDN'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
 
 
-def calc_evap_11429350_MFA001(s_dss_file, df_storage_data):
-    """
-    Calculate the evaporation amount for USGS 11429350 LOON LK NR MEEKS BAY CA. Follows the logic in CS3_I_MFA001_Rev2022G. This location has more data than when this reservoirs is used normally
-
-    Parameters
-    ----------
-    s_dss_file: str
-        Path to DSS file with evaporation rates
-    df_storage_data: dataframe
-        Storage data containing the reservoir
-
-    Returns
-    -------
-    None
-    """
-
-    # get the evap rates from the dss file
-    df_evap_rates = read_evap_data(s_dss_file, 'ER_LOONL')
-
-    # read in the area capacity table
-    df_area_capacity = pd.read_csv(r"./Area Capacities/11429350_AC.csv")
-
-    # get the TAF capacity
-    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
-
-    # the sheet gets the averages for each neighboring set of points and uses those, not sure why, but we will replicate
-    df_area_capacity['Elevation'] = (df_area_capacity['Elevation (ft)'] + df_area_capacity['Elevation (ft)'].shift(1)) / 2
-    df_area_capacity['Capacity'] = (df_area_capacity['TAF'] + df_area_capacity['TAF'].shift(1)) / 2
-
-    # fill NAs with zero as the sheet does, this will populate the first row
-    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
-
-    # area = diff in capacity/ diff in elevation (ac-ft/ft=ac)
-    df_area_capacity['Area'] = (df_area_capacity['Capacity (acre-feet)'].shift(1) - df_area_capacity['Capacity (acre-feet)']) / (
-            df_area_capacity['Elevation (ft)'].shift(1) - df_area_capacity['Elevation (ft)'])
-
-    # again fill first row (lowest elevation) with zeros
-    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
-
-    # make sure none of the areas are above a maximum of 1450
-    df_area_capacity.loc[df_area_capacity['Area'] > 1450, 'Area'] = 1450
-
-    # calculate and set the evaporation
-    df_storage_data['11429350_MFA001_evap'] = calculate_evap_data(df_storage_data['11429350_MFA001'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
-
-
 def calc_evap_11426170(s_dss_file, df_storage_data):
     """
     Calculate the evaporation amount for USGS 11426170 LAKE VALLEY RESERVOIR NEAR CISCO  CA. Follows the logic in CS3_I_LKVLY_Rev2022F.
@@ -651,7 +601,6 @@ def calc_evap_11441100(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['11441100_evap'] = calculate_evap_data(df_storage_data['11441100'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
-    df_storage_data['11441100_SFA040_evap'] = calculate_evap_data(df_storage_data['11441100_SFA040'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
 
 
 def calc_evap_folsom(s_dss_file, df_storage_data):
@@ -680,7 +629,8 @@ def calc_evap_folsom(s_dss_file, df_storage_data):
     df_area_capacity.rename(columns={'Capacity (TAF)': 'Capacity', 'Area (acres)': 'Area'}, inplace=True)
 
     # calculate and set the evaporation
-    df_storage_data['Folsom_evap'] = calculate_evap_data(df_storage_data['Folsom'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+    df_storage_data['Folsom_evap_calculated'] = calculate_evap_data(df_storage_data['Folsom'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+
 
 def calc_evap_NAT(s_dss_file, df_storage_data):
     """
@@ -715,5 +665,5 @@ def calc_evap_NAT(s_dss_file, df_storage_data):
     df_area_capacity['Capacity'] = df_area_capacity['Capacity (acre-feet)'] / 1000
 
     # calculate and set the evaporation
-    df_storage_data['NAT_evap'] = calculate_evap_data(df_storage_data['NAT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
+    df_storage_data['NAT_evap_calculated'] = calculate_evap_data(df_storage_data['NAT'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], False)
 

@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from dataretrieval import waterdata
 import urllib3
+import os
 
 urllib3.disable_warnings()
 
@@ -567,7 +568,7 @@ def create_final_flow_plots(df_final_flow, il_oberved_years, s_current_location)
     plt.hlines(d_long_term_avg, df_final_flow_plotting['Water Year'].min(), df_final_flow_plotting['Water Year'].max(), color= 'darkblue', linestyle='--', label=f'Long Term Average ({s_current_location})')
 
     # format and save
-    plt.ylabel('Average Flow (TAF)')
+    plt.ylabel('Total Flow (TAF)')
     plt.grid(alpha=0.3)
     plt.legend()
     plt.savefig(F'./Figures/{s_current_location} Annual Final Flows', bbox_inches='tight', dpi=300)
@@ -885,3 +886,148 @@ def calculate_watershed_factors(s_path):
     df_watershed_factors['Factor'] = df_watershed_factors['Area Proportion'] * df_watershed_factors['Precip Proportion'] / (df_watershed_factors['Area Proportion'] * df_watershed_factors['Precip Proportion']).sum()
 
     return df_watershed_factors
+
+
+def gap_fill(df_data, c_locations, i_final_year):
+    """
+    Gap fill the specified locations with monthly averages.
+
+    Parameters
+    ----------
+    df_data: dataframe
+        Dataframe with data to be gap filled
+    c_locations: dict
+        Dictionary of locations and water years to fill
+    i_final_year: int
+        Final year to consider for gap fill
+
+    Returns
+    -------
+    None
+    """
+
+    # loop through the locations
+    for location in c_locations:
+
+        # pull out the location
+        df_location = df_data[location].to_frame(location)
+
+        # add month and water year in there
+        df_location['Month'] = df_location.index.month
+        df_location['Water Year'] = np.where(df_location.index.month < 10, df_location.index.year, df_location.index.year + 1)
+
+        # calculate the monthly average
+        df_monthly_averages = df_data.loc[:datetime(i_final_year, 9, 30), location].groupby(df_data.loc[:datetime(i_final_year, 9, 30), location].index.month).mean().to_frame('Mean')
+
+        # merge temporarily to get the monthly value for each time step
+        df_location = df_monthly_averages.merge(df_location, how='right', left_index=True, right_on='Month')
+
+        # fill but only for the water years specified
+        df_data.loc[df_location['Water Year'].isin(c_locations[location]), location] = df_location[location].fillna(df_location['Mean'])
+
+
+def create_rim_inflow_comparison_plots(df_new, df_old):
+    """
+    Creates plots to compare two sets of rim inflows.
+    Parameters
+    ----------
+    df_new: dataframe
+        Dataframe with new rim inflows
+    df_old: dataframe
+        Dataframe with old rim inflows
+
+    Returns
+    -------
+    None
+    """
+
+    # make the folder to hold the figures
+    os.makedirs('./Figures/Comparison', exist_ok=True)
+
+    # loop through each location
+    for location in df_new.columns:
+
+        # First plot is just the values
+        # set figure size
+        plt.figure(figsize=(10, 5))
+
+        # Plot the data
+        plt.fill_between(df_old.index, df_old[location], label='Previous Extension', color='royalblue')
+        plt.fill_between(df_new.index, df_new[location], label='New Inflows', color='red', alpha=0.5)
+
+        # format the plot
+        plt.grid(alpha= 0.5)
+        plt.legend(loc='upper left')
+        plt.xlabel('Date')
+        plt.ylabel('Rim Inflow (TAF)')
+        plt.axis('tight')
+
+        # save the figure
+        plt.savefig(f'Figures/Comparison/{location}_comparison.png', bbox_inches='tight', dpi=300)
+        plt.close()
+
+        # next plot is looking at yearly totals
+        # sum by water year
+        df_old_year_sum = df_old.groupby(np.where(df_old.index.month < 10, df_old.index.year, df_old.index.year + 1)).sum()[location]
+        df_new_year_sum = df_new.groupby(np.where(df_new.index.month < 10, df_new.index.year, df_new.index.year + 1)).sum()[location]
+
+        # get the long term average water year total
+        d_long_term_avg_old = df_old_year_sum.mean()
+        d_long_term_avg_new = df_new_year_sum.mean()
+
+        # now we will plot, start with setting the plot size
+        plt.figure(figsize=(10, 5))
+
+        # plot the derived and the observed
+        plt.bar(df_old_year_sum.index, df_old_year_sum, color='royalblue', label='Previous Extension')
+        plt.bar(df_new_year_sum.index, df_new_year_sum, color='red', alpha=0.5, label='New Inflows')
+
+        # plot the long term average
+        plt.hlines(d_long_term_avg_old, df_old_year_sum.index.min(), df_old_year_sum.index.max(), color='royalblue', linestyle='--',
+                   label=f'Previous Extension Long Term Average')
+        plt.hlines(d_long_term_avg_new, df_new_year_sum.index.min(), df_new_year_sum.index.max(), color='red', linestyle='--',
+                   label=f'New Inflows Long Term Average')
+
+        # format and save
+        plt.ylabel('Water Year Total (TAF)')
+        plt.grid(alpha=0.3)
+        plt.legend(loc='upper left')
+        plt.savefig(F'./Figures/Comparison/{location} Annual Flows', bbox_inches='tight', dpi=300)
+        plt.close()
+
+        # next plot is looking at the monthly pattern
+        # get the monthly averages for the derived, observed, and long term average
+        df_old_month_avgs = df_old.groupby(df_old.index.month)[location].mean()
+        df_new_month_avgs = df_new.groupby(df_new.index.month)[location].mean()
+
+        # set the bar width and month order to plot
+        width = 0.3
+        il_month_order = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        sl_month_names = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+
+        # now we will plot, start with setting the plot size
+        plt.figure(figsize=(10, 5))
+
+        # plot the bars next to each other
+        plt.bar(np.array(range(12)) + (width / 2), df_old_month_avgs[il_month_order], width=width, color='royalblue', label='Previous Extension')
+        plt.bar(np.array(range(12)) - (width / 2), df_new_month_avgs[il_month_order], width=width, color='red', label='New Inflows')
+
+        # use the month names as the x ticks
+        plt.xticks(np.array(range(12)), sl_month_names)
+
+        # format and save
+        plt.ylabel('Monthly Average Flow (TAF)')
+        plt.grid(alpha=0.5)
+        plt.legend(loc='upper left')
+        plt.savefig(f'./Figures/Comparison/{location} Monthly Average', bbox_inches='tight', dpi=300)
+        plt.close()
+
+
+        plt.scatter(df_old[location].values, df_new[location].values, color='royalblue')
+        plt.xlabel('Previous Extension (TAF)')
+        plt.ylabel('New Inflows (TAF)')
+        plt.grid(alpha=0.5)
+        plt.axis('equal')
+        plt.savefig(f'./Figures/Comparison/{location}', bbox_inches='tight', dpi=300)
+        plt.close()
+

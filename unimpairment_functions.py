@@ -1,7 +1,4 @@
 import pandas as pd
-from pandas import interval_range
-from scipy.stats import alpha
-
 from extension_functions import unimpaired_flows, get_diversions
 import numpy as np
 from datetime import datetime
@@ -28,10 +25,10 @@ def unimpaired_11439501(df_gauge_data):
     # 11436950: Caples Lake
     # 11435900: Silver Lake
     # 11434900: Lake Aloha
-    # currently gap fillinf aloha with 0s but this would probably want to change in the future
+
     df_unimpaired = unimpaired_flows(df_gauge_data['11439501'],
-                                     fl_storages=[df_gauge_data['11436950'], df_gauge_data['11435900'], df_gauge_data['11434900'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11436950_evap'], df_gauge_data['11435900_evap'], df_gauge_data['11434900_evap'].fillna(0)],
+                                     fl_storages=[df_gauge_data['11436950'].fillna(0), df_gauge_data['11435900'], df_gauge_data['11434900'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_evap'].fillna(0), df_gauge_data['11435900_evap'], df_gauge_data['11434900_evap'].fillna(0)],
                                      fl_subtractions=[df_gauge_data['11434500']])
 
     return df_unimpaired
@@ -212,14 +209,14 @@ def unimpaired_11429500(df_gauge_data):
     df_unimpaired_all = unimpaired_flows(df_gauge_data['11429500'],
                                      fl_storages=[df_gauge_data['11429350'].fillna(0)],
                                      fl_additions=[df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11429340'].fillna(0)],
-                                     fl_subtractions=[df_gauge_data['11428300_LL'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11428300'].fillna(0)],
                                      )
 
     # this will be when there is no data for 11429340 but is reservoir data
     df_unimpaired_no_ph = unimpaired_flows(df_gauge_data['11429500'],
                                          fl_storages=[df_gauge_data['11429350'].fillna(0)],
                                          fl_additions=[df_gauge_data['11429350_evap'].fillna(0)],
-                                         fl_subtractions=[df_gauge_data['11428300_LL'].fillna(0)],
+                                         fl_subtractions=[df_gauge_data['11428300'].fillna(0)],
                                          )
 
     # combine these with the gauge data used when it is the only data
@@ -233,7 +230,7 @@ def unimpaired_11429500(df_gauge_data):
 
 def unimpaired_11430000(df_gauge_data):
     """
-    Calculate the unimpaired flow for USGS 11430000 SF RUBICON R BL GERLE C NR GEORGETOWN CA. Follows the logic from CS3_I_LOONL_Rev2022G
+    Calculate the unimpaired flow for USGS 11430000 SF RUBICON R BL GERLE C NR GEORGETOWN CA. Follows the logic from CS3_I_SFR006_Rev2022G
 
     Parameters
     ----------
@@ -263,7 +260,7 @@ def unimpaired_11430000(df_gauge_data):
 
     return df_unimpaired
 
-def unimpaired_11419340(df_gauge_data):
+def unimpaired_11433040(df_gauge_data):
     """
     Calculate the unimpaired flow for USGS 11433040 PILOT C BL MUTTON CANYON NR GEORGETOWN CA. Follows the logic from CS3_I_STMPY_Rev2022G
 
@@ -380,8 +377,8 @@ def unimpaired_11433500(df_gauge_data):
 
     # if any are nans, fill with zeros so they can be skipped
     df_unimpaired = unimpaired_flows(df_gauge_data['11433500'],
-                                     fl_storages=[df_gauge_data['11429350_MFA001'].fillna(0), df_gauge_data['11428700'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['EDN'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11429350_MFA001_evap'].fillna(0), df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
+                                     fl_storages=[df_gauge_data['11429350'].fillna(0), df_gauge_data['11428700'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['EDN'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
                                                    df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11432000'], df_gauge_data['11429300'].fillna(0)]
                                      )
 
@@ -412,13 +409,7 @@ def unimpaired_11435100(df_gauge_data):
                                      fl_additions=[df_gauge_data['11434900_evap'].fillna(0)]
                                      )
 
-    # calculate the alternative unimpairment that uses different Aloha data
-    df_unimpaired_ALT = unimpaired_flows(df_gauge_data['11435100'],
-                                     fl_storages=[df_gauge_data['11434900_ALT']],
-                                     fl_additions=[df_gauge_data['11434900_ALT_evap'].fillna(0)]
-                                     )
-
-    return pd.concat([df_unimpaired, df_unimpaired_ALT], axis=1)
+    return df_unimpaired
 
 
 def unimpaired_11437000(df_gauge_data):
@@ -444,16 +435,10 @@ def unimpaired_11437000(df_gauge_data):
     # first fill what is missing with release + spill
     df_gauge_data['11437000_EXT'] = df_gauge_data['11437000'].fillna(df_gauge_data['11436999'] + df_gauge_data['11437500'])
 
-    # replicate the calculations done in the CAPLS sheet
-    df_storage_temp = df_gauge_data['11436950_CAPLS']
-    df_storage_temp.loc[datetime(1922, 9, 30)] = 1.2
-    df_storage_temp.loc[datetime(1924, 2, 29)] = df_storage_temp.loc[datetime(1924, 3, 31)]
-    df_storage_temp.interpolate('linear', inplace=True)
-
     # if any are nans, fill with zeros so they can be skipped
     df_unimpaired = unimpaired_flows(df_gauge_data['11437000_EXT'],
-                                     fl_storages=[df_storage_temp],
-                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0)]
+                                     fl_storages=[df_gauge_data['11436950']],
+                                     fl_additions=[df_gauge_data['11436950_evap']]
                                      )
 
     return df_unimpaired
@@ -490,7 +475,7 @@ def unimpaired_11436000(df_gauge_data):
     # if any are nans, fill with zeros so they can be skipped
     df_unimpaired = unimpaired_flows(df_gauge_data['11436000'],
                                      fl_storages=[df_gauge_data['11435900'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11435900_seepage']]
+                                     fl_additions=[df_gauge_data['11435900_evap'].fillna(0), df_gauge_data['11435900_seepage']]
                                      )
 
     return df_unimpaired
@@ -637,7 +622,7 @@ def unimpaired_11441500(df_gauge_data):
 
     df_unimpaired = unimpaired_flows(df_gauge_data['11441500'],
                                      fl_storages=[df_gauge_data['11441100'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11440900_ICEHS'].fillna(0), df_gauge_data['11441100_evap'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11440900'].fillna(0), df_gauge_data['11441100_evap'].fillna(0)],
                                      )
 
     return df_unimpaired
@@ -675,28 +660,17 @@ def unimpaired_11443500(df_gauge_data):
     df_location.loc[datetime(1922,10,31): datetime(1964, 11, 30)] = df_gauge_data.loc[datetime(1922,10,31): datetime(1964, 11, 30), '11443501']
 
     df_unimpaired = unimpaired_flows(df_location,
-                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0), df_gauge_data['11441001'].fillna(0),
-                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
-                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
-                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
-                                     )
-
-    df_unimpaired_alt = unimpaired_flows(df_location,
-                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900_ALT'].fillna(0),
-                                                  df_gauge_data['11441001'].fillna(0),
-                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
-                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
-                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
+                                     fl_storages=[df_gauge_data['11436950'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0), df_gauge_data['11441001'].fillna(0),
+                                                  df_gauge_data['11441100'].fillna(0), df_gauge_data['11443450'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_evap'].fillna(0), df_gauge_data['11435900_evap'].fillna(0), df_gauge_data['11434900_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300'].fillna(0), df_gauge_data['11434500'].fillna(0)]
                                      )
 
     df_unimpaired.loc[datetime(1921, 10, 31): datetime(1922, 9, 30)] = np.nan
     df_unimpaired.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = np.nan
-    df_unimpaired_alt.loc[datetime(1921, 10, 31): datetime(1922, 9, 30)] = np.nan
-    df_unimpaired_alt.loc[datetime(1967,10, 31): datetime(1973, 9, 30)] = np.nan
 
-    return pd.concat([df_unimpaired, df_unimpaired_alt], axis=1)
+    return df_unimpaired
 
 
 def unimpaired_11444500(df_gauge_data):
@@ -726,23 +700,14 @@ def unimpaired_11444500(df_gauge_data):
     # 11443450: Slab Creek Reservoir
 
     df_unimpaired = unimpaired_flows(df_gauge_data['11444500'],
-                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0), df_gauge_data['11441001'].fillna(0),
-                                                  df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
-                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
-                                     fl_subtractions=[df_gauge_data['11429300_SFA040'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
-                                     )
+                                     fl_storages=[df_gauge_data['11436950'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0), df_gauge_data['11441001'].fillna(0),
+                                                  df_gauge_data['11441100'].fillna(0), df_gauge_data['11443450'].fillna(0)],
+                                     fl_additions=[df_gauge_data['11436950_evap'].fillna(0), df_gauge_data['11435900_evap'].fillna(0), df_gauge_data['11434900_evap'].fillna(0),
+                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
+                                     fl_subtractions=[df_gauge_data['11429300'].fillna(0), df_gauge_data['11434500'].fillna(0)]
+                                    )
 
-    # alternate version of this data that just uses different versions of some data sources
-    df_unimpaired_SFA030 = unimpaired_flows(df_gauge_data['11444500'],
-                                     fl_storages=[df_gauge_data['11436950_SFA040'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0),
-                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450_SFA030'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0), df_gauge_data['11434900_ALT_evap'].fillna(0),
-                                                   df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0), df_gauge_data['El Dorado'].fillna(0)],
-                                     fl_subtractions=[df_gauge_data['11429300'].fillna(0), df_gauge_data['11434500_SFA040'].fillna(0)]
-                                            )
-
-    return pd.concat([df_unimpaired, df_unimpaired_SFA030], axis=1)
+    return df_unimpaired
 
 
 def unimpaired_11444201(df_gauge_data):
@@ -820,17 +785,17 @@ def unimpaired_calsim3(df_gauge_data):
     df_gd_ditch_returns = df_gauge_data['11432000'] * 0.8 * 0.25
 
     df_unimpaired = unimpaired_flows(df_gauge_data['11446500'],
-                                     fl_storages=[df_gauge_data['11426170'].fillna(0), df_gauge_data['11436950_CAPLS'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900_ALT'].fillna(0),
-                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100_SFA040'].fillna(0), df_gauge_data['11443450_FOLSM'].fillna(0), df_gauge_data['EDN'].fillna(0),
-                                                  df_gauge_data['11429350_FOLSM'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['11428700_FOLSM'].fillna(0), df_gauge_data['Folsom'].fillna(0),
+                                     fl_storages=[df_gauge_data['11426170'].fillna(0), df_gauge_data['11436950'].fillna(0), df_gauge_data['11435900'].fillna(0), df_gauge_data['11434900'].fillna(0),
+                                                  df_gauge_data['11441001'].fillna(0), df_gauge_data['11441100'].fillna(0), df_gauge_data['11443450'].fillna(0), df_gauge_data['EDN'].fillna(0),
+                                                  df_gauge_data['11429350'].fillna(0), df_gauge_data['11427400'].fillna(0), df_gauge_data['11428700'].fillna(0), df_gauge_data['Folsom'].fillna(0),
                                                   df_gauge_data['NAT'].fillna(0)],
-                                     fl_additions=[df_gauge_data['11426170_evap'].fillna(0), df_gauge_data['11436950_CAPLS_evap'].fillna(0), df_gauge_data['11435900_ALT_evap'].fillna(0),
-                                                   df_gauge_data['11434900_ALT_evap'].fillna(0), df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_SFA040_evap'].fillna(0),
+                                     fl_additions=[df_gauge_data['11426170_evap'].fillna(0), df_gauge_data['11436950_evap'].fillna(0), df_gauge_data['11435900_evap'].fillna(0),
+                                                   df_gauge_data['11434900_evap'].fillna(0), df_gauge_data['11441001_evap'].fillna(0), df_gauge_data['11441100_evap'].fillna(0),
                                                    df_gauge_data['EDN_evap'].fillna(0), df_gauge_data['11429350_evap'].fillna(0), df_gauge_data['11427400_evap'].fillna(0),
                                                    df_gauge_data['11428700_evap'].fillna(0), df_gauge_data['Folsom_evap'].fillna(0), df_gauge_data['NAT_evap'].fillna(0),
                                                    df_gauge_data['PCWA Pump Station'], df_gauge_data['El Dorado'], df_gauge_data['11432000'], df_gauge_data['11426190'],
                                                    df_gauge_data['EID Diversions'], df_gauge_data['Folsom Diversions'], df_gauge_data['Folsom South Canal']],
-                                     fl_subtractions=[df_temporary, df_gauge_data['11434500_SFA040'], df_gd_ditch_returns])
+                                     fl_subtractions=[df_temporary, df_gauge_data['11434500'], df_gd_ditch_returns])
 
     return df_unimpaired
 

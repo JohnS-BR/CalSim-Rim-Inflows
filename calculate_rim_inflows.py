@@ -1,4 +1,3 @@
-import os
 from extension_functions import *
 from unimpairment_functions import *
 from rim_inflow_functions import *
@@ -51,10 +50,17 @@ if __name__ == "__main__":
     # save to a csv
     df_full_data.to_csv('./Intermediate/full_gauge_data.csv')
 
+    # gap fill the data sets that need it
+    gap_fill(df_full_data, {'11428300': list(range(2016,2022)), '11436950': [1922, 1923, 1924],
+                            '11435900': [1922, 1923], '11434900': list(range(1929, 1933)),'11442000': [1922]},
+             i_final_year)
+
+    # save to csv
+    df_full_data.to_csv('./Intermediate/full_gauge_data_gap_filled.csv')
+
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
-    # calculate_evap_multiple(df_full_data, c_reservoirs, s_evap_dss_path)
     calc_evap_11427400(s_evap_dss_path, df_full_data)
     calc_evap_11436950(s_evap_dss_path, df_full_data)
     calc_evap_11435900(s_evap_dss_path, df_full_data)
@@ -63,7 +69,6 @@ if __name__ == "__main__":
     calc_evap_11429350(s_evap_dss_path, df_full_data)
     calc_evap_11429600(s_evap_dss_path, df_full_data)
     calc_evap_EDN(s_evap_dss_path, df_full_data)
-    calc_evap_11429350_MFA001(s_evap_dss_path, df_full_data)
     calc_evap_11426170(s_evap_dss_path, df_full_data)
     calc_evap_11441000(s_evap_dss_path, df_full_data)
     calc_evap_11441100(s_evap_dss_path, df_full_data)
@@ -86,11 +91,11 @@ if __name__ == "__main__":
     df_unimpaired_data['11428800'] = unimpaired_11428800(df_full_data)
     df_unimpaired_data['11429500'] = unimpaired_11429500(df_full_data)
     df_unimpaired_data['11430000'] = unimpaired_11430000(df_full_data)
-    df_unimpaired_data['11433040'] = unimpaired_11419340(df_full_data)
+    df_unimpaired_data['11433040'] = unimpaired_11433040(df_full_data)
     df_unimpaired_data['11433100'] = unimpaired_11433100(df_full_data)
     df_unimpaired_data['11433300'] = unimpaired_11433300(df_full_data)
     df_unimpaired_data['11433500'] = unimpaired_11433500(df_full_data)
-    df_unimpaired_data[['11435100', '11435100_ALT']] = unimpaired_11435100(df_full_data)
+    df_unimpaired_data['11435100'] = unimpaired_11435100(df_full_data)
     df_unimpaired_data['11437000'] = unimpaired_11437000(df_full_data)
     df_unimpaired_data['11436000'] = unimpaired_11436000(df_full_data)
     df_unimpaired_data['11426190'] = unimpaired_11426190(df_full_data)
@@ -98,8 +103,8 @@ if __name__ == "__main__":
     df_unimpaired_data['11426500'] = unimpaired_11426500(df_full_data)
     df_unimpaired_data['11441000'] = unimpaired_11441000(df_full_data)
     df_unimpaired_data['11441500'] = unimpaired_11441500(df_full_data)
-    df_unimpaired_data[['11443500', '11443500_ALT']] = unimpaired_11443500(df_full_data)
-    df_unimpaired_data[['11444500', '11444500_SFA030']] = unimpaired_11444500(df_full_data)
+    df_unimpaired_data['11443500'] = unimpaired_11443500(df_full_data)
+    df_unimpaired_data['11444500'] = unimpaired_11444500(df_full_data)
     df_unimpaired_data['11444201'] = unimpaired_11444201(df_full_data)
     df_unimpaired_data['CalSim3'] = unimpaired_calsim3(df_full_data)
 
@@ -124,7 +129,6 @@ if __name__ == "__main__":
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11439501'], df_extended_data, df_synthetic_data, 1923, i_final_year, False, '11439501', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_full_data['11427700'], df_extended_data, df_synthetic_data, 1961, i_final_year, False, '11427700', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427500'], df_extended_data, df_synthetic_data, 1966, 2007,True, '11427500', i_final_year=i_final_year)
-    extend_data(df_full_data['11439501_ALTERED'], df_pos_unimpaired_data['11427500'], df_extended_data, df_synthetic_data, 1966, 2007,True, '11427500_ALTERED', i_final_year=2021)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11427760'], df_extended_data, df_synthetic_data, 1966, 2007, False, '11427760', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11428000'], df_extended_data, df_synthetic_data, 1957, 1986, False, '11428000', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11428400'], df_extended_data, df_synthetic_data, 1991, 2015, False, '11428400', i_final_year=i_final_year)
@@ -132,44 +136,37 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11429500'], df_extended_data, df_synthetic_data, 1963, i_final_year, False, '11429500', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11430000'], df_extended_data, df_synthetic_data, 1963, 2021, False, '11430000', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11433040'], df_extended_data, df_synthetic_data, 1962, 2017, True, '11433040', i_final_year=i_final_year)
-    extend_data(df_full_data['11439501_ALTERED'], df_unimpaired_data['11433040'], df_extended_data, df_synthetic_data, 1962, 2017, True, '11433040_ALTERED', i_final_year=2021)
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11433100'], df_extended_data, df_synthetic_data, 1967, 1992, False, '11433100', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_unimpaired_data['11433100'], df_extended_data, df_synthetic_data, 1967, 1992, False, '11433100_AMF', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_full_data['11433260'], df_extended_data, df_synthetic_data, 1966, 1985, False, '11433260', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11433300'], df_extended_data, df_synthetic_data, 1959, i_final_year, False, '11433300', i_final_year=i_final_year)
     df_extended_data['11433500'] = flow_from_two_unimp(df_unimpaired_data['11433500'], df_unimpaired_data['11433300'], 1.06)
-    extend_data(df_full_data['AMF'], df_unimpaired_data['11435100_ALT'][~df_unimpaired_data.index.isin(pd.date_range(datetime(2002, 10, 31), datetime(2012, 9, 30)))], df_extended_data, df_synthetic_data, 1971, 2002, True, '11435100_C', i_final_year=i_final_year)
+    extend_data(df_full_data['AMF'], df_unimpaired_data['11435100'][~df_unimpaired_data.index.isin(pd.date_range(datetime(2002, 10, 31), datetime(2012, 9, 30)))], df_extended_data, df_synthetic_data, 1971, 2002, True, '11435100_C', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_unimpaired_data['11435100'].loc[datetime(2011, 9, 30):], df_extended_data, df_synthetic_data, 2012, 2021, False, '11435100_A', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_unimpaired_data['11435100'].loc[datetime(2011, 9, 30):], df_extended_data, df_synthetic_data, 2012, 2021, False, '11435100_B', i_final_year=i_final_year)
-    extend_data(df_full_data['AMF'], df_unimpaired_data['11435100_ALT'], df_extended_data, df_synthetic_data, 1971, 2002, True, '11435100_ALT_A', i_final_year=i_final_year)
-    extend_data(df_full_data['11439501_ALTERED'], df_unimpaired_data['11435100_ALT'], df_extended_data, df_synthetic_data, 1971, 2002, True, '11435100_ALT_B', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, True, '11437000_A', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, False, '11437000_B', i_final_year=i_final_year)
-    extend_data(df_full_data['11439501_ALTERED'], df_pos_unimpaired_data['11437000'], df_extended_data, df_synthetic_data, 1923, 1992, True, '11437000_ALT_B', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_pos_unimpaired_data['11436000'], df_extended_data, df_synthetic_data, 1923, i_final_year, False, '11436000', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_full_data['11440000'], df_extended_data, df_synthetic_data, 1923, 1981, False, '11440000_A', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_full_data['11440000'], df_extended_data, df_synthetic_data, 1923, 1981, False, '11440000_B', i_final_year=i_final_year)
-    extend_data(df_full_data['11439501_ALTERED'], df_full_data['11440000'], df_extended_data, df_synthetic_data, 1923, 1981, False, '11440000_ALT_B', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_full_data['11440500'], df_extended_data, df_synthetic_data, 1923, 1939, False, '11440500_A', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], df_full_data['11440500'], df_extended_data, df_synthetic_data, 1923, 1939, False, '11440500_B', i_final_year=i_final_year)
-    extend_data(df_full_data['11439501_ALTERED'], df_full_data['11440500'], df_extended_data, df_synthetic_data, 1923, 1939, False, '11440500_ALT_B', i_final_year=i_final_year)
     extend_data(df_extended_data['11439501'], monthly_to_timeseries(timeseries_to_monthly(df_unimpaired_data['11441000']).dropna(how='any', axis=0).drop(1962, axis=0))['TAF'], df_extended_data, df_synthetic_data, 1925, 1960, True, '11441000', i_final_year=i_final_year)
     # wy 1981 and 1994 use the synthetic values
     df_extended_data.loc[pd.date_range(datetime(1980, 10, 31), datetime(1981, 9, 30), freq='ME'), '11441000'] = df_synthetic_data.loc[pd.date_range(datetime(1980, 10, 31), datetime(1981, 9, 30), freq='ME'), '11441000'].values
     df_extended_data.loc[pd.date_range(datetime(1993, 10, 31), datetime(1994, 9, 30), freq='ME'), '11441000'] = df_synthetic_data.loc[pd.date_range(datetime(1993, 10, 31), datetime(1994, 9, 30), freq='ME'), '11441000'].values
-    extend_data(df_full_data['11439501_ALTERED'], monthly_to_timeseries(timeseries_to_monthly(df_unimpaired_data['11441000']).dropna(how='any', axis=0).drop(1962, axis=0))['TAF'], df_extended_data, df_synthetic_data, 1925, 1960, True, '11441000_ALT', i_final_year=i_final_year)
     extend_data(df_full_data['11442000'], df_pos_unimpaired_data['11441500'], df_extended_data, df_synthetic_data, 1925, i_final_year, True, '11441500', i_final_year=1961)
     # wy 1962 and on are blank, fill with the original values
     df_extended_data.fillna({'11441500': df_pos_unimpaired_data['11441500']}, inplace=True)
-    extend_data(df_extended_data['11439501'], df_full_data['11442000_SLV006'], df_extended_data, df_synthetic_data, 1923, 1961, False, '11442000', i_final_year=i_final_year)
-    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11443500_ALT'], df_extended_data, df_synthetic_data, 1974, 2021, True, '11443500_A', i_final_year=i_final_year)
+    extend_data(df_extended_data['11439501'], df_full_data['11442000'], df_extended_data, df_synthetic_data, 1923, 1961, False, '11442000', i_final_year=i_final_year)
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11443500'], df_extended_data, df_synthetic_data, 1974, 2021, True, '11443500_A', i_final_year=i_final_year)
     df_extended_data.loc[df_pos_unimpaired_data.loc[:datetime(2021,9,30), '11443500'].dropna().index, '11443500_A'] = df_pos_unimpaired_data.loc[:datetime(2021,9,30), '11443500'].dropna()
     extend_data(df_pos_unimpaired_data['11444500'], df_pos_unimpaired_data['11443500'], df_extended_data, df_synthetic_data, 1974, 2021, True, '11443500_D', i_x_start_year=1965, i_final_year=i_final_year)
     df_extended_data.fillna({'11443500_D': df_pos_unimpaired_data['11443500']}, inplace=True)
     extend_data(df_full_data['AMF'], df_unimpaired_data['11444201'], df_extended_data, df_synthetic_data, 1987, 2008, True, '11444201', i_final_year=i_final_year)
     # replace the end of wy 2017
     df_extended_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201'] = df_unimpaired_data.loc[datetime(2016, 11, 30): datetime(2017, 9, 30), '11444201']
-    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11444500_SFA030'], df_extended_data, df_synthetic_data, 1965, i_final_year, False, '11444500', i_final_year=i_final_year)
+    extend_data(df_full_data['AMF'], df_pos_unimpaired_data['11444500'], df_extended_data, df_synthetic_data, 1965, i_final_year, False, '11444500', i_final_year=i_final_year)
     extend_data(df_full_data['AMF'], df_full_data['11446000'], df_extended_data, df_synthetic_data, 1944, 1959, False, '11446000', i_final_year=i_final_year)
 
     # save to csv
@@ -233,6 +230,10 @@ if __name__ == "__main__":
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
 
     # df_reference = pd.read_excel("CS3_Sac_ReadAllInflowDatatoDSS_05.018.23.xlsm", sheet_name='Inflows', skiprows=[0,2,3,4,5,6,7,8,9,10,11],header=0, index_col=0, parse_dates=True)
-    # df_diffs = abs(df_reference - df_rim_inflows).max().dropna()
+    # df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
+    # df_diffs['Max Percent Difference'] = (abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)).max() / df_reference[df_rim_inflows.columns].mean()
     # print("Maximum differences:")
-    # print(df_diffs[df_diffs > 0].to_string())
+    # print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
+    #
+    # print('Creating comparison plots...')
+    # create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)
