@@ -2,11 +2,13 @@ name: extension
 channels:
   - conda-forge
 dependencies:
+  - python=3.13
   - pip
   - pip:
       - pydsstools
   - scikit-learn
-  - pandas=2.3.3
-  - numpy=1.26.4
+  - pandas
+  - numpy
   - matplotlib
   - dataretrieval
+  - openpyxl
