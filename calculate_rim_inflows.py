@@ -18,7 +18,7 @@ if __name__ == "__main__":
                         '11432000', '11433100', '11433260', '11433300', '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170', '11427000', '11426500',
                         '11440000', '11440500', '11441000', '11441002', '11441001', '11440900', '11429300', '11441500', '11441100', '11442000', '11443500', '11443460', '11443450', '11444500',
                         '11443501', '11444201', '11444280', '11446000', '11446500', '11425416', '11433930']
-    sl_cdec_stations = ['AMF', 'EDN', 'NAT']
+    sl_cdec_stations = ['AMF', 'EDN', 'NAT', 'BEV']
     sl_other_stations = ['YB236', 'El Dorado', 'PCWA Pump Station', 'EID Diversions', 'Folsom Diversions', 'Folsom South Canal', 'Folsom', 'YB90', 'YB91', 'Folsom Fair Oaks']
 
     # time range to pull USGS data for
@@ -39,6 +39,8 @@ if __name__ == "__main__":
     # combine all the gauge data
     df_gauge_data_original = pd.merge(df_usgs_data_original, df_cdec_data_original, how='outer', left_index=True, right_index=True)
     df_gauge_data_monthly_taf = pd.merge(df_usgs_data_monthly_taf, df_cdec_data_monthly_taf, how='outer', left_index=True, right_index=True)
+
+    df_gauge_data_monthly_taf.rename(columns={'BEV': 'YB90'}, inplace=True)
 
     # save to csvs
     df_gauge_data_original.to_csv('./Intermediate/gauge_data_original.csv')
