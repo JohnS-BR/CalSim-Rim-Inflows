@@ -5,7 +5,7 @@ dependencies:
   - python=3.13
   - pip
   - pip:
-      - pydsstools=3.0
+      - pydsstools==3.0.1
   - scikit-learn=1.8
   - pandas=3.0
   - numpy=2.4
