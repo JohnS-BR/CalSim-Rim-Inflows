@@ -5,10 +5,10 @@ dependencies:
   - python=3.13
   - pip
   - pip:
-      - pydsstools
-  - scikit-learn
-  - pandas
-  - numpy
-  - matplotlib
-  - dataretrieval
-  - openpyxl
+      - pydsstools=3.0
+  - scikit-learn=1.8
+  - pandas=3.0
+  - numpy=2.4
+  - matplotlib=3.10
+  - dataretrieval=1.1
+  - openpyxl=3.1
