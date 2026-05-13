@@ -28,7 +28,7 @@ def read_evap_data(s_path, s_b_part):
     o_file = HecDss.Open(s_path)
 
     # get the potential paths for this b part
-    ls_paths = o_file.getPathnameList(f"/CALSIM/{s_b_part}/EVAPORATION-RATE/*/1Month/*/")
+    ls_paths = o_file.search_path(f"/CALSIM/{s_b_part}/EVAPORATION-RATE/*/1Month/*/")
 
     # if there are no paths, it doesn't exist and we want to fail
     if ls_paths == []:
@@ -47,7 +47,8 @@ def read_evap_data(s_path, s_b_part):
         raise Exception(f"Empty timeseries at path: {s_final_path}")
 
     # put it in a dataframe with the units as the column name
-    df_dss_data = pd.DataFrame(o_timeseries.values, index=o_timeseries.pytimes, columns=[o_timeseries.units])
+    ol_times = [o_time.datetime() for o_time in o_timeseries.times]
+    df_dss_data = pd.DataFrame(o_timeseries.values, index=ol_times, columns=[o_timeseries.data_units])
 
     # adjust the dates to match what they should be
     df_dss_data.index = df_dss_data.index + timedelta(days=-1)

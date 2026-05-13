@@ -737,6 +737,7 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
 
         # construct the url to get the CDEC data
         s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=65&dur_code=M&Start={s_start_date}&End={s_end_date}"
+        s_units = 'AF'
 
         # get the data
         # Make the request, retrying up to 5 times if connection fails
@@ -756,6 +757,7 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
 
             # construct the url to get the CDEC data
             s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=15&dur_code=M&Start={s_start_date}&End={s_end_date}"
+            s_units = 'AF'
 
             # get the data
             # Make the request, retrying up to 5 times if connection fails
@@ -769,9 +771,28 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
                     time.sleep(1)
                     o_outflow_file = ''
                     continue
+            # we if have something too short to be real, try again with a different url
+            if o_outflow_file == '' or len(o_outflow_file.text) < 100:
+
+                # construct the url to get the CDEC data
+                s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=110&dur_code=D&Start={s_start_date}-01&End={s_end_date}-30"
+                s_units = 'CFS'
+
+                # get the data
+                # Make the request, retrying up to 5 times if connection fails
+                i_num_tries = 0
+                while i_num_tries <= 5:
+                    try:
+                        i_num_tries += 1
+                        o_outflow_file = requests.get(s_url, allow_redirects=True, timeout=60, verify=False)
+                        break
+                    except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
+                        time.sleep(1)
+                        o_outflow_file = ''
+                        continue
 
         # if the connection never worked, skip this station
-        if o_outflow_file == '':
+        if o_outflow_file == '' or len(o_outflow_file.text) < 100:
             print(f"Failed to pull CDEC data for: {station}")
             continue
 
@@ -782,9 +803,18 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
 
         df_gauge_data_original = df_gauge_data_original.join(df_current['VALUE'].to_frame(station), how='outer')
 
-        # this data is monthly so it just needs to be moved to the end of the month and divided by 1000
-        # groupby and mean in case its more than monthly or not exactly on the first of the month but this should just move the data to the end of the month
-        df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current.groupby(pd.Grouper(freq='ME')).mean()['VALUE'] / 1000).to_frame(station), how='outer')
+        if s_units == 'AF':
+            # this data is monthly so it just needs to be moved to the end of the month and divided by 1000
+            # groupby and mean in case its more than monthly or not exactly on the first of the month but this should just move the data to the end of the month
+            df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current.groupby(pd.Grouper(freq='ME')).mean()['VALUE'] / 1000).to_frame(station), how='outer')
+
+        elif s_units == 'CFS':
+
+            # this data is daily
+            df_current = df_current.resample('ME').mean()
+            df_current = df_current.mul(df_current.index.day * 24 * 60 * 60 / (220 * 22 * 9 * 1000), axis=0)
+            df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join(
+                df_current.rename(columns= {'VALUE': station}), how='outer')
 
     # remove the name from the index for both data frames
     df_gauge_data_original.index.name = None
