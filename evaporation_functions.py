@@ -28,7 +28,7 @@ def read_evap_data(s_path, s_b_part):
     o_file = HecDss.Open(s_path)
 
     # get the potential paths for this b part
-    ls_paths = o_file.search_path(f"/CALSIM/{s_b_part}/EVAPORATION-RATE/*/1Month/*/")
+    ls_paths = o_file.search_path(f"/CALSIM/{s_b_part}/EVAPORATION-RATE/*/*/*/")
 
     # if there are no paths, it doesn't exist and we want to fail
     if ls_paths == []:
