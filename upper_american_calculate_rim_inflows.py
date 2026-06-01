@@ -15,7 +15,7 @@ if __name__ == "__main__":
     os.makedirs('./Outputs', exist_ok=True)
 
     # read in the data that we already read in
-    df_full_data = pd.read_csv('./Intermediate/upper_american_full_gauge_data.csv')
+    df_full_data = pd.read_csv('./Intermediate/upper_american_full_gauge_data.csv', index_col=0, parse_dates=True)
 
     # gap fill the data sets that need it
     gap_fill(df_full_data, {'11428300': list(range(2016,2022)), '11436950': [1922, 1923, 1924],
