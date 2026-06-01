@@ -15,6 +15,8 @@ All the updates were done to improve consistency across inflows.
 The Upper American Basin has been completed. First it was replicated (see american-replicated tag) and then a few improvements around multiple versions of the data were made.
 All the Upper American related files are named with the 'upper_american_' prefix.
 
+The *upper_american_2022_extension_data.csv* file contains the data used in the previous extension. Where possible, the gap filling was removed and moved to be done in the code. Places where the DWR COMP model was used, were not removed.
+
 ## To calculate the rim inflows
 
 ### To create an environment
