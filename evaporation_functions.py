@@ -270,9 +270,7 @@ def calc_evap_11434900(s_dss_file, df_storage_data):
     """
 
     # the original need uses different evap rates from the dss file so we will pull from a csv
-    # df_evap_rates = read_evap_data(s_dss_file, 'ER_ALOHA')
-    df_evap_rates = pd.read_csv(r"./Inputs/modified_evap_rates.csv", index_col=0, parse_dates=True)[['ALOHA']]
-    df_evap_rates.columns = ['IN']
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_ALOHA')
 
     # read in the area capacity table
     df_area_capacity = pd.read_csv(r"./Area Capacities/11434900_AC.csv")
@@ -497,9 +495,7 @@ def calc_evap_11426170(s_dss_file, df_storage_data):
     """
 
     # get the evap rates from the dss file
-    # df_evap_rates = read_evap_data(s_dss_file, 'ER_LKVLY')
-    df_evap_rates = pd.read_csv(r"./Inputs/modified_evap_rates.csv", index_col=0, parse_dates=True)[['LKVLY']]
-    df_evap_rates.columns = ['IN']
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_LKVLY')
 
     # read in the area capacity table
     df_area_capacity = pd.read_csv(r"./Area Capacities/11426170_AC.csv")
@@ -650,11 +646,7 @@ def calc_evap_NAT(s_dss_file, df_storage_data):
     """
 
     # get the evap rates from the dss file
-    # df_evap_rates = read_evap_data(s_dss_file, 'ER_NTOMA')
-
-    # read alternate rates from sheet
-    df_evap_rates = pd.read_csv(r"./Inputs/modified_evap_rates.csv", index_col=0, parse_dates=True)[['NTOMA']]
-    df_evap_rates.columns = ['IN']
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_NTOMA')
 
     # read in the area capacity table
     df_area_capacity = pd.read_csv(r"./Area Capacities/NAT_AC.csv")
