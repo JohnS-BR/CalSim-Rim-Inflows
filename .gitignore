@@ -3,3 +3,4 @@ __pycache__/
 Figures/
 Intermediate/
 Outputs/
+*.ipynb
