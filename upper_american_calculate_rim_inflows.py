@@ -15,7 +15,7 @@ if __name__ == "__main__":
     os.makedirs('./Outputs', exist_ok=True)
 
     # read in the data that we already read in
-    df_full_data = pd.read_csv('./Intermediate/full_gauge_data.csv')
+    df_full_data = pd.read_csv('./Intermediate/upper_american_full_gauge_data.csv')
 
     # gap fill the data sets that need it
     gap_fill(df_full_data, {'11428300': list(range(2016,2022)), '11436950': [1922, 1923, 1924],
@@ -23,7 +23,7 @@ if __name__ == "__main__":
              i_final_year)
 
     # save to csv
-    df_full_data.to_csv('./Intermediate/full_gauge_data_gap_filled.csv')
+    df_full_data.to_csv('./Intermediate/upper_american_full_gauge_data_gap_filled.csv')
 
     print("Calculating evaporation...")
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     # calc_evap_NAT(s_evap_dss_path, df_full_data)
 
 
-    df_full_data.to_csv('./Intermediate/full_gauge_data_wevap.csv')
+    df_full_data.to_csv('./Intermediate/upper_american_full_gauge_data_wevap.csv')
 
     ### unimpairing the data
     df_unimpaired_data = pd.DataFrame()
@@ -79,13 +79,13 @@ if __name__ == "__main__":
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 
     # save to csv
-    df_unimpaired_data.to_csv('./Intermediate/unimpaired_data.csv')
+    df_unimpaired_data.to_csv('./Intermediate/upper_american_unimpaired_data.csv')
 
     # redistribute negatives
     df_pos_unimpaired_data = remove_negatives_timeseries(df_unimpaired_data)
 
     # save to csv
-    df_pos_unimpaired_data.to_csv('./Intermediate/unimpaired_data_pos.csv')
+    df_pos_unimpaired_data.to_csv('./Intermediate/upper_american_unimpaired_data_pos.csv')
 
     df_extended_data = pd.DataFrame()
     df_synthetic_data = pd.DataFrame()
@@ -137,8 +137,8 @@ if __name__ == "__main__":
     extend_data(df_full_data['AMF'], df_full_data['11446000'], df_extended_data, df_synthetic_data, 1944, 1959, False, '11446000', i_final_year=i_final_year)
 
     # save to csv
-    df_extended_data.to_csv('./Intermediate/extended_data.csv')
-    df_synthetic_data.to_csv('./Intermediate/synthetic_data.csv')
+    df_extended_data.to_csv('./Intermediate/upper_american_extended_data.csv')
+    df_synthetic_data.to_csv('./Intermediate/upper_american_synthetic_data.csv')
 
     df_lake_valley_watershed = calculate_watershed_factors("./Inputs/lake_valley_watershed.csv")
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     I_FOLSM(df_full_data, df_unimpaired_data, df_rim_inflows)
     I_ECHOL(df_extended_data, df_rim_inflows)
 
-    df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
+    df_rim_inflows.to_csv('./Outputs/upper_american_rim_inflows.csv')
 
     # df_reference = pd.read_excel("CS3_Sac_ReadAllInflowDatatoDSS_05.018.23.xlsm", sheet_name='Inflows', skiprows=[0,2,3,4,5,6,7,8,9,10,11],header=0, index_col=0, parse_dates=True)
     # df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
