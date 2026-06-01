@@ -12,6 +12,11 @@ if __name__ == "__main__":
     # this holds the USGS data (sometimes gap filled) from the previous extension
     s_previous_data = r".\Inputs\2022_extension_data.csv"
 
+    # option to plot comparison
+    b_compareData = True
+    s_prev_rim_inflows_fn = "CS3_Sac_ReadAllInflowDatatoDSS_05.18.23.xlsm" # file path and name must be provided to plot/calculate comparison
+    s_prev_rim_inflow_sheet = "Inflows"
+
     # USGS stations to pull data for
     sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500', '11436950', '11435900', '11434900', '11428000', '11427940', '11428400',
                         '11428300', '11428800', '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000', '11429300', '11429600', '11419340', '11433040',
@@ -53,6 +58,12 @@ if __name__ == "__main__":
     df_full_data.to_csv('./Intermediate/full_gauge_data.csv')
 
     # gap fill the data sets that need it
+
+    # fill with zeros 
+    df_full_data.loc[(df_full_data['11436950'].isna()) & (df_full_data.index.year >= 1922) & (df_full_data.index.year <= 1924),'11436950'] = 0 # Caples Lake
+    df_full_data.loc[(df_full_data['11435900'].isna()) & (df_full_data.index.year >= 1922) & (df_full_data.index.year < 1923),'11436900'] = 0 # Lake Aloha
+
+    # fill missing data with monthly averages
     gap_fill(df_full_data, {'11428300': list(range(2016,2022)), '11436950': [1922, 1923, 1924],
                             '11435900': [1922, 1923], '11434900': list(range(1929, 1933)),'11442000': [1922]},
              i_final_year)
@@ -231,11 +242,14 @@ if __name__ == "__main__":
 
     df_rim_inflows.to_csv('./Outputs/rim_inflows.csv')
 
-    # df_reference = pd.read_excel("CS3_Sac_ReadAllInflowDatatoDSS_05.018.23.xlsm", sheet_name='Inflows', skiprows=[0,2,3,4,5,6,7,8,9,10,11],header=0, index_col=0, parse_dates=True)
-    # df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
-    # df_diffs['Max Percent Difference'] = (abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)).max() / df_reference[df_rim_inflows.columns].mean()
-    # print("Maximum differences:")
-    # print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
-    #
-    # print('Creating comparison plots...')
-    # create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)
+    # Comparison with Previous Rim Inflow dataset
+    if b_compareData:
+        df_reference = pd.read_excel(s_prev_rim_inflows_fn, sheet_name=s_prev_rim_inflow_sheet, skiprows=[0,2,3,4,5,6,7,8,9,10,11],header=0, index_col=0, parse_dates=True)
+        df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
+        df_diffs['Median Value - Original'] = df_reference[df_rim_inflows.columns].mean()
+        df_diffs['Max Percent Difference'] = (abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)).max() / df_reference[df_rim_inflows.columns].mean()*100
+        print("Maximum differences:")
+        print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
+
+        print('Creating comparison plots...')
+        create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)
