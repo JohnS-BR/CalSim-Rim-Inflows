@@ -8,18 +8,14 @@ if __name__ == "__main__":
     # this holds the USGS data (sometimes gap filled) from the previous extension
     s_previous_data = r".\Inputs\2022_extension_data.csv"
 
+    s_station_list = r'.\Inputs\upper_american_data_stations.csv'
+
+    df_station_list = pd.read_csv(s_station_list, header=0)
+
     # USGS stations to pull data for
-    sl_usgs_stations = ['11427500', '11427400', '11427200', '11427700', '11427750', '11427760', '11439501', '11434500',
-                        '11436950', '11435900', '11434900', '11428000', '11427940', '11428400', '11428300', '11428800',
-                        '11428700', '11428600', '11433060', '11433080', '11429500', '11429340', '11429350', '11430000',
-                        '11429300', '11429600', '11419340', '11433040', '11432000', '11433100', '11433260', '11433300',
-                        '11433500', '11435100', '11437000', '11436999', '11437500', '11436000', '11426190', '11426170',
-                        '11427000', '11426500', '11440000', '11440500', '11441000', '11441002', '11441001', '11440900',
-                        '11429300', '11441500', '11441100', '11442000', '11443500', '11443460', '11443450', '11444500',
-                        '11443501', '11444201', '11444280', '11446000', '11446500', '11425416', '11433930']
-    sl_cdec_stations = ['AMF', 'EDN', 'NAT', 'BEV']
-    sl_other_stations = ['YB236', 'El Dorado', 'PCWA Pump Station', 'EID Diversions', 'Folsom Diversions',
-                         'Folsom South Canal', 'Folsom', 'YB90', 'YB91', 'Folsom Fair Oaks']
+    sl_usgs_stations = df_station_list[df_station_list['Source'] == 'USGS']['Station ID'].to_list()
+    sl_cdec_stations = df_station_list[df_station_list['Source'] == 'CDEC']['Station ID'].to_list()
+    sl_other_stations = df_station_list[df_station_list['Source'] == 'Other']['Station ID'].to_list()
 
     # time range to pull USGS data for
     s_start_date = '2021-10-01'
