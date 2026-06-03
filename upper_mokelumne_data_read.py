@@ -3,12 +3,12 @@ from extension_functions import *
 
 if __name__ == "__main__":
 
-    # this file reads in the upper american USGS and CDEC data amd combines it with the previous data
+    # this file reads in the Upper Mokelumne USGS and CDEC data amd combines it with the previous data
 
     # this holds the USGS data (sometimes gap filled) from the previous extension
-    s_previous_data = r".\Inputs\upper_american_2022_extension_data.csv"
+    s_previous_data = r".\Inputs\upper_mokelumne_2022_extension_data.csv"
 
-    s_station_list = r'.\Inputs\upper_american_data_stations.csv'
+    s_station_list = r'.\Inputs\upper_mokelumne_data_stations.csv'
 
     df_station_list = pd.read_csv(s_station_list, header=0)
 
@@ -19,10 +19,15 @@ if __name__ == "__main__":
 
     # time range to pull USGS data for
     s_start_date = '2021-10-01'
-    s_end_date = '2024-09-30'
+    s_end_date = '2024-08-31'
 
     # first if the needed output folders don't exist, create them
     os.makedirs('./Intermediate', exist_ok=True)
+
+    # TODO: figure out why this this list element is coming in as an int instead
+    # of a string. in the equivalent upper american file, it's a string.
+    # casting it to string here.
+    sl_usgs_stations = list(map(str, sl_usgs_stations))
 
     # pull USGS data
     df_usgs_data_original, df_usgs_data_monthly_taf = pull_usgs_data(sl_usgs_stations, s_start_date, s_end_date)
@@ -39,10 +44,10 @@ if __name__ == "__main__":
     df_gauge_data_monthly_taf.rename(columns={'BEV': 'YB90'}, inplace=True)
 
     # save to csvs
-    df_gauge_data_original.to_csv('./Intermediate/upper_american_gauge_data_original.csv')
-    df_gauge_data_monthly_taf.to_csv('./Intermediate/upper_american_gauge_data_monthly_taf.csv')
+    df_gauge_data_original.to_csv('./Intermediate/upper_mokelumne_gauge_data_original.csv')
+    df_gauge_data_monthly_taf.to_csv('./Intermediate/upper_mokelumne_gauge_data_monthly_taf.csv')
 
     # combine the new data with the previous data
     df_full_data = read_previous_data(s_previous_data, df_gauge_data_monthly_taf)
     # save to a csv
-    df_full_data.to_csv('./Intermediate/upper_american_full_gauge_data.csv')
+    df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data.csv')
