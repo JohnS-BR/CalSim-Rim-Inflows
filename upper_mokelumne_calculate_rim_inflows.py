@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # read in the data that we already read in
     df_full_data = pd.read_csv('./Intermediate/upper_mokelumne_full_gauge_data.csv', index_col=0, parse_dates=True)
 
-    # gap fill the data sets that need it.
+    # gap fill the data sets that need it. this gap fills the location with monthly averages
     # nothing needed yet
 
     # save to csv
@@ -70,6 +70,8 @@ if __name__ == "__main__":
     print("Extending flows...")
 
     # extend all with the s-curve disaggregation
+    extend_data(df_full_data['11317000'], df_full_data['11318500'], \
+        df_extended_data, df_synthetic_data, 1934, i_final_year, False, '11318500', i_final_year=i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_mokelumne_extended_data.csv')
@@ -84,6 +86,7 @@ if __name__ == "__main__":
     # TODO add function calls to rim inflow functions here
 
     I_MFM008(df_full_data, df_rim_inflows)
+    I_SFM005(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
