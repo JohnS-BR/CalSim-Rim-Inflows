@@ -104,5 +104,13 @@ if __name__ == "__main__":
         print("Maximum differences:")
         print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
 
-        print('Creating comparison plots...')
-        create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)
+        # TODO figure out the size of the two data frames df_rim_inflows and df_reference. 
+        # currently df_rim_inflows is 1236 rows X 2 columms and
+        # df_reference is 1200 rows x 81 columns
+        # I think the row difference is the problem. It has to do with the years represented on each.
+#        print('Creating comparison plots...')
+
+#        print("df_rim_inflows is", df_rim_inflows)
+#        print("and df_reference is", df_reference)
+
+#        create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)

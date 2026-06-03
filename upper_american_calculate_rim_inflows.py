@@ -216,4 +216,5 @@ if __name__ == "__main__":
         print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
 
         print('Creating comparison plots...')
+
         create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)
