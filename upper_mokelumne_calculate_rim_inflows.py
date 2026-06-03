@@ -10,7 +10,7 @@ if __name__ == "__main__":
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
     # option to plot comparison
-    b_compareData = False
+    b_compareData = True
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm" # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflow_sheet = "Inflows"
 
