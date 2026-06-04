@@ -6,6 +6,10 @@ from evaporation_functions import *
 if __name__ == "__main__":
     i_final_year = 2021
 
+    # adding some control switches to help code run faster when debugging
+
+    b_runFullCode = False
+
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
@@ -14,10 +18,11 @@ if __name__ == "__main__":
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm" # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflow_sheet = "Inflows"
 
-    # first if the needed output folders don't exist, create them
-    os.makedirs('./Intermediate', exist_ok=True)
-    os.makedirs('./Figures', exist_ok=True)
-    os.makedirs('./Outputs', exist_ok=True)
+    if(b_runFullCode):
+        # first if the needed output folders don't exist, create them
+        os.makedirs('./Intermediate', exist_ok=True)
+        os.makedirs('./Figures', exist_ok=True)
+        os.makedirs('./Outputs', exist_ok=True)
 
     # read in the data that we already read in
     df_full_data = pd.read_csv('./Intermediate/upper_mokelumne_full_gauge_data.csv', index_col=0, parse_dates=True)
@@ -30,22 +35,24 @@ if __name__ == "__main__":
     # for COL003, EBMUD is main historical gage (pre 2021) but NaNs are filled with CDEC MKM
     df_full_data['EBMUD']= flow_from_two_unimp(df_full_data['EBMUD'], df_full_data['MKM'], 1.0)
     # as a continuation of the previous operation the "filled out" EBMUD is now used as the historical
-    # data for USGS 11319500
+    # data for USGS 11319500. Then the filled out USGS 11319500 is used for s-curve on the COL003
+    # gage, which is USGS 11315000
     df_full_data['11319500'] = flow_from_two_unimp(df_full_data['11319500'], df_full_data['EBMUD'], 1.0)
     
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
 
-    print("Calculating evaporation...")
+    if(b_runFullCode):
+        print("Calculating evaporation...")
 
-    # calculate the evaporation amounts for all of our reservoirs
-
-
-    # calc_evap_folsom(s_evap_dss_path, df_full_data)
-    # calc_evap_NAT(s_evap_dss_path, df_full_data)
+        # calculate the evaporation amounts for all of our reservoirs
 
 
-    df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
+        # calc_evap_folsom(s_evap_dss_path, df_full_data)
+        # calc_evap_NAT(s_evap_dss_path, df_full_data)
+
+
+        df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
 
     ### unimpairing the data
     df_unimpaired_data = pd.DataFrame()
@@ -77,9 +84,19 @@ if __name__ == "__main__":
 
     print("Extending flows...")
 
-    # extend all with the s-curve disaggregation
+    # extend all with the s-curve disaggregation, round 1
     extend_data(df_full_data['11317000'], df_full_data['11318500'], \
-        df_extended_data, df_synthetic_data, 1934, i_final_year, False, '11318500', i_final_year=i_final_year)
+                df_extended_data, df_synthetic_data, 1934, i_final_year, False, '11318500', i_final_year=i_final_year) 
+  
+    ### unimpairing the data for those that rely on previously s-curved data
+
+    print("Calculating second round of unimpaired flows...")
+    df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data)
+
+    # extend with s-curve disaggregation, using second round unimpaired data
+
+    extend_data(df_full_data['11319500'], df_full_data['11315000'], \
+                df_extended_data, df_synthetic_data, 1927, i_final_year, False, '11315000', i_final_year=i_final_year)
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_mokelumne_extended_data.csv')
