@@ -1068,3 +1068,26 @@ def create_rim_inflow_comparison_plots(df_new, df_old):
         plt.savefig(f'./Figures/Comparison/{location}', bbox_inches='tight', dpi=300)
         plt.close()
 
+def merge_gages(df_data, s_mainGage, s_supplementalGage1, s_supplementalGage2, i_startYear, i_endYear):
+    """
+    Takes a main gage and fills in gaps with data from supplemental gages.
+    Parameters
+    ----------
+    df_data: dataframe
+        Dataframe with both gages
+    s_mainGage:
+        String with name of the main gage
+    s_supplementalGage1
+        String with name of first supplemental gage
+    s_supplementalGage2
+        String with name of second supplemental gage
+    i_startYear
+        The first year to perform the merge
+    i_endYear
+        The last year to perform the merge
+
+    Returns
+    -------
+    None
+    """
+    print(df_data['MKM'])
