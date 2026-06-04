@@ -1067,4 +1067,3 @@ def create_rim_inflow_comparison_plots(df_new, df_old):
         plt.axis('equal')
         plt.savefig(f'./Figures/Comparison/{location}', bbox_inches='tight', dpi=300)
         plt.close()
-

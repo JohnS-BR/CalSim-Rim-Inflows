@@ -26,9 +26,12 @@ if __name__ == "__main__":
     # nothing needed yet
 
     # merge gages that need it. 
-    print(df_full_data['EBMUD'])
+
+    # for COL003, EBMUD is main historical gage (pre 2021) but NaNs are filled with CDEC MKM
     df_full_data['EBMUD']= flow_from_two_unimp(df_full_data['EBMUD'], df_full_data['MKM'], 1.0)
-    print("and now, ", df_full_data['EBMUD'])
+    # as a continuation of the previous operation the "filled out" EBMUD is now used as the historical
+    # data for USGS 11319500
+    df_full_data['11319500'] = flow_from_two_unimp(df_full_data['11319500'], df_full_data['EBMUD'], 1.0)
     
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
