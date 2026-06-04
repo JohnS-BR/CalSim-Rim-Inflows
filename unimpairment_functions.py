@@ -799,3 +799,28 @@ def unimpaired_calsim3(df_gauge_data):
 
     return df_unimpaired
 
+def unimpaired_11319500(df_gauge_data):
+    """
+    Calculate the unimpaired flow for USGS  11319500:  MOKELUMNE R NR MOKELUMNE HILL CA.
+    Follows the logic from CS3_I_COL003_Rev2022G.xlsm
+
+    Parameters
+    ----------
+    df_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. in TAF
+
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11319500:  MOKELUMNE R NR MOKELUMNE HILL CA (what we are unimpairing)
+    # 11318500:  SF MOKELUMNE R NR WEST POINT CA (aka SFM005)
+    # 11317000:  MF MOKELUMNE R A WEST POINT CA (aka MFM008)
+
+    df_unimpaired = unimpaired_flows(df_gauge_data['11319500'],
+                                     fl_subtractions=[df_gauge_data['11318500'], df_gauge_data['11317000']]
+                                     )
+
+    return df_unimpaired

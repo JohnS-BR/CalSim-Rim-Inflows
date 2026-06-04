@@ -3,68 +3,6 @@ import numpy as np
 from extension_functions import create_final_flow_plots, area_scale, remove_negatives_timeseries
 from datetime import datetime
 
-def I_SFM005(df_extended_data, df_rim_inflows):
-    """
-    Calculate the final rim inflow for CalSim. Location: I_SFM005
-
-    Parameters
-    ----------
-    df_extended_data: dataframe
-        Dataframe of the extended data to pull from
-    df_rim_inflows: dataframe
-        Dataframe of rim inflows that have been calculated already
-
-    Returns
-    -------
-    None
-    """
-    # pull out the relevant station
-    df_location = df_extended_data['11318500']
-
-    # set anything negative to zero
-    df_location.loc[df_location < 0] = 0
-
-    # round to two decimal places
-    df_location = df_location.round(2)
-
-    # add into the rim inflow dataframe
-    df_rim_inflows['I_SFM005'] = df_location
-
-    # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1934, 2025)), 'I_SFM005')
-
-
-def I_MFM008(df_full_data, df_rim_inflows):
-    """
-    Calculate the final rim inflow for CalSim. Location: I_MFM008
-
-    Parameters
-    ----------
-    df_full_data: dataframe
-        Dataframe of the gauge data to pull from
-    df_rim_inflows: dataframe
-        Dataframe of rim inflows that have been calculated already
-
-    Returns
-    -------
-    None
-    """
-
-    # pull out the relevant station
-    df_location = df_full_data['11317000']
-
-    # set anything negative to zero
-    df_location.loc[df_location < 0] = 0
-
-    # round to two decimal places
-    df_location = df_location.round(2)
-
-    # add into the rim inflow dataframe
-    df_rim_inflows['I_MFM008'] = df_location
-
-    # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1921, 2025)), 'I_MFM008')
-
 def I_DCC010(df_extended_data, df_rim_inflows):
     """
     Calculate the final rim inflow for CalSim. Location: I_DCC010
@@ -1682,3 +1620,99 @@ def I_ECHOL(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, [], 'I_ECHOL')
+
+# Upper Mokelumne rim inflows begin here
+
+def I_SFM005(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SFM005
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of the extended data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+    # pull out the relevant station
+    df_location = df_extended_data['11318500']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SFM005'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1934, 2025)), 'I_SFM005')
+
+
+def I_MFM008(df_full_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_MFM008
+
+    Parameters
+    ----------
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_full_data['11317000']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_MFM008'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1921, 2025)), 'I_MFM008')
+
+def I_COL003(df_full_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_COL003
+
+    Parameters
+    ----------
+    df_full_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+
+    # pull out the relevant station
+    df_location = df_full_data['TODO']
+
+    # set anything negative to zero
+    df_location.loc[df_location < 0] = 0
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_MFM008'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1921, 2025)), 'I_MFM008')
+
