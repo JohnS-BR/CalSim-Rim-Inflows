@@ -25,6 +25,9 @@ if __name__ == "__main__":
     # gap fill the data sets that need it. this gap fills the location with monthly averages
     # nothing needed yet
 
+    # merge gages that need it. 
+    merge_gages(df_full_data, '11319500', 'MKM', 'EBMUD', 1921, i_final_year)
+
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
 
