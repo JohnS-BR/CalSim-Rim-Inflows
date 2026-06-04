@@ -125,6 +125,10 @@ if __name__ == "__main__":
         # read in data
         df_reference = pd.read_excel(s_prev_rim_inflows_fn, sheet_name=s_prev_rim_inflow_sheet, skiprows=[0,2,3,4,5,6,7,8,9,10,11],header=0, index_col=0, parse_dates=True)
 
+        #trim our new inflows (from df_rim_inflows) to have the same number of rows as our reference
+        i_targetLen=len(df_reference)
+        df_rim_inflows_trimmed = df_rim_inflows.iloc[:i_targetLen].copy()
+
         # calculate differences
         df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
         df_diffs['Median Value - Original'] = df_reference[df_rim_inflows.columns].mean()
@@ -137,9 +141,6 @@ if __name__ == "__main__":
         # currently df_rim_inflows is 1236 rows X 2 columms and
         # df_reference is 1200 rows x 81 columns
         # I think the row difference is the problem. It has to do with the years represented on each.
-#        print('Creating comparison plots...')
+        print('Creating comparison plots...')
 
-#        print("df_rim_inflows is", df_rim_inflows)
-#        print("and df_reference is", df_reference)
-
-#        create_rim_inflow_comparison_plots(df_rim_inflows, df_reference)
+        create_rim_inflow_comparison_plots(df_rim_inflows_trimmed, df_reference)
