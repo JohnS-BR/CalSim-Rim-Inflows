@@ -52,7 +52,7 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     # trim the x data to just the specified years
     df_x_data = df_x_data.loc[i_x_start_year:i_x_end_year,:]
 
-    # trim the y data to only the x years incase the y is longer for some reason
+    # trim the y data to only the x years in case the y is longer for some reason
     df_y_data = df_y_data.loc[i_x_start_year:i_x_end_year, :]
 
     # first we want the x value monthly average for just the years of y data we want to keep

@@ -1702,8 +1702,7 @@ def I_COL003(df_full_data, df_rim_inflows):
     """
 
     # pull out the relevant station
-    df_location = df_full_data['TODO']
-
+    df_location = df_full_data['11315000']
     # set anything negative to zero
     df_location.loc[df_location < 0] = 0
 
@@ -1711,8 +1710,8 @@ def I_COL003(df_full_data, df_rim_inflows):
     df_location = df_location.round(2)
 
     # add into the rim inflow dataframe
-    df_rim_inflows['I_MFM008'] = df_location
+    df_rim_inflows['I_COL003'] = df_location
 
     # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1921, 2025)), 'I_MFM008')
+    create_final_flow_plots(df_location, list(range(1921, 2025)), 'I_COL003')
 

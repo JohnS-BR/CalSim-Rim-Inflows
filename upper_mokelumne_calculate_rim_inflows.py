@@ -92,12 +92,14 @@ if __name__ == "__main__":
 
     print("Calculating second round of unimpaired flows...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data)
-
+    
     # extend with s-curve disaggregation, using second round unimpaired data
 
     extend_data(df_full_data['11319500'], df_full_data['11315000'], \
-                df_extended_data, df_synthetic_data, 1927, i_final_year, False, '11315000', i_final_year=i_final_year)
+                df_extended_data, df_synthetic_data, 1928, i_final_year, False, '11315000', i_final_year=i_final_year)
+    df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)
 
+    print("feb of '43 is ", df_extended_data.at['1943-02-28','11315000'])
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_mokelumne_extended_data.csv')
     df_synthetic_data.to_csv('./Intermediate/upper_mokelumne_synthetic_data.csv')
@@ -112,6 +114,7 @@ if __name__ == "__main__":
 
     I_MFM008(df_full_data, df_rim_inflows)
     I_SFM005(df_extended_data, df_rim_inflows)
+    I_COL003(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
