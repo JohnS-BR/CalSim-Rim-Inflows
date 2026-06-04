@@ -26,8 +26,10 @@ if __name__ == "__main__":
     # nothing needed yet
 
     # merge gages that need it. 
-    merge_gages(df_full_data, '11319500', 'MKM', 'EBMUD', 1921, i_final_year)
-
+    print(df_full_data['EBMUD'])
+    df_full_data['EBMUD']= flow_from_two_unimp(df_full_data['EBMUD'], df_full_data['MKM'], 1.0)
+    print("and now, ", df_full_data['EBMUD'])
+    
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
 
