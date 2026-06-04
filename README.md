@@ -1,5 +1,7 @@
 # CalSim Rim Inflow Extension
 
+***Please note that this repository has been released under a provisional release and is in no way a finished product. A significant amount of development is expected.***
+
 Rim watersheds represent the foothill and mountain regions that drain into California’s Central Valley. The time series of these inflows are an input into CalSim 3. 
 These inflows were developed from a variety of sources, including direct gauge measurements, correlations with streamflow records from adjacent watersheds, depletion analyses, reservoir operations reports, and reservoir simulation models.
 
