@@ -97,9 +97,10 @@ if __name__ == "__main__":
 
     extend_data(df_full_data['11319500'], df_full_data['11315000'], \
                 df_extended_data, df_synthetic_data, 1928, i_final_year, False, '11315000', i_final_year=i_final_year)
+  
+    # copy synthetic data to extended data where extended data is NaN
     df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)
 
-    print("feb of '43 is ", df_extended_data.at['1943-02-28','11315000'])
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_mokelumne_extended_data.csv')
     df_synthetic_data.to_csv('./Intermediate/upper_mokelumne_synthetic_data.csv')
