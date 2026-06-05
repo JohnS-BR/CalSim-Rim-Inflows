@@ -85,6 +85,7 @@ if __name__ == "__main__":
 
     print("Calculating second round of unimpaired flows...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
+#    print("in calc rim, df_unimp 9500 around 6/1924 is", df_unimpaired_data.iloc[31:38]['11319500'])
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -92,12 +93,17 @@ if __name__ == "__main__":
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
-
     # extend with s-curve disaggregation, using second round unimpaired data
+#    print("1in calc rim, df_full 5000 around 6/1924 is", df_full_data.iloc[31:38]['11315000'])
 
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
-                df_extended_data, df_synthetic_data, 1928, i_final_year, False, '11315000', i_final_year=i_final_year)
-  
+                df_extended_data, df_synthetic_data, 1944, i_final_year, False, '11315000', i_final_year=i_final_year)
+
+#    print("2in calc rim, df_extended 5000 around 6/1924 is", df_extended_data.iloc[31:38]['11315000'])
+#    print("3in calc rim, df_synthetic 5000 around 6/1924 is", df_synthetic_data.iloc[31:38]['11315000'])
+
+    df_synthetic_data['11315000'].to_csv('./Intermediate/upper_mokelumne_synthetic_11315000_data.csv')
+
     # copy synthetic data to extended data where extended data is NaN
     df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)
 
