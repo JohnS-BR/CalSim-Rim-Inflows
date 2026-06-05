@@ -819,9 +819,19 @@ def unimpaired_11319500(df_full_gauge_data, df_extended_gauge_data):
     # 11319500:  MOKELUMNE R NR MOKELUMNE HILL CA (what we are unimpairing)
     # 11318500:  SF MOKELUMNE R NR WEST POINT CA (aka SFM005)
     # 11317000:  MF MOKELUMNE R A WEST POINT CA (aka MFM008)
+#    print("in unimp_9500 funcation, 8500 is", df_extended_gauge_data.iloc[31:38]['11318500'])
+#    print("in unimp_9500 funcation, 7000 is", df_full_gauge_data.iloc[31:38]['11317000'])
+    
+    # round to two decimal places
+    df_11318500_rounded = df_extended_gauge_data['11318500'].round(2)
+    df_11317000_rounded = df_full_gauge_data['11317000'].round(2)
+#    print("in unimp_9500 funcation, 8500 is", df_extended_gauge_data.iloc[31:38]['11318500'])
+#    print("in unimp_9500 funcation, 8500 is", df_extended_gauge_data.iloc[31:38]['11318500'])
+
+#    print("in unimp_9500 funcation, rounded 8500 is", df_11318500_rounded.iloc[31:38])
 
     df_unimpaired = unimpaired_flows(df_full_gauge_data['11319500'],
-                                     fl_subtractions=[df_extended_gauge_data['11318500'], df_full_gauge_data['11317000']]
+                                     fl_subtractions=[df_11318500_rounded, df_11317000_rounded]
                                      )
 
     return df_unimpaired

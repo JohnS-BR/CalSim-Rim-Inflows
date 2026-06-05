@@ -894,7 +894,9 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     -------
     None
     """
-
+#    print("in extension functions (extend_data),")
+#    print("df_ref is", df_reference_data)
+#    print("df_current is ", df_current_data.iloc[71:81])
     # do the s-curve disaggregation
     df_curr_final_data, df_curr_synthetic_data = s_curve_disaggregation(df_reference_data,
                                                                         df_current_data,
