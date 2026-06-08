@@ -40,6 +40,10 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
         Full timeseries of synthetic y data.
     """
 
+# TODO remove debugging csv's
+    df_x_data.to_csv('./Intermediate/x_data.csv')
+    df_y_data.to_csv('./Intermediate/y_data.csv')
+
     # if it is a series, get it into the monthly format
     if isinstance(df_x_data, pd.Series):
         df_x_data = timeseries_to_monthly(df_x_data.to_frame('TAF'))
@@ -54,6 +58,10 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
 
     # trim the y data to only the x years in case the y is longer for some reason
     df_y_data = df_y_data.loc[i_x_start_year:i_x_end_year, :]
+
+# TODO remove debugging csv'sv
+    df_x_data.to_csv('./Intermediate/trimmed_x_data.csv')
+    df_y_data.to_csv('./Intermediate/trimmed_y_data.csv')
 
     # first we want the x value monthly average for just the years of y data we want to keep
     dl_x_month_avgs = [0] + df_x_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
@@ -113,7 +121,8 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     o_lin_model.fit(df_x_year_totals.loc[df_y_year_totals.index,], df_y_year_totals)
     d_slope = o_lin_model.coef_[0][0]
     d_intercept = o_lin_model.intercept_[0]
-
+#TODO remove print
+    print("In s_curve_disagg, slope and y int are ", d_slope, d_intercept)
     # get the scaled y yearly totals
     df_y_year_totals_scaled = df_x_year_totals * d_slope + d_intercept
 
@@ -179,6 +188,8 @@ def s_curve_comparison_plots(df_final_y_dat, df_y_data_synthetic, df_x_data, df_
 
     # fit a line of best fit
     slope, intercept = np.polyfit(df_x_totals.values, df_y_totals.values, 1)
+#TODO remove print
+    print("slope is", slope, " and intercept is ", intercept)
     dl_line_vals = intercept + slope * df_x_totals.values
     r2 = r2_score(df_y_totals.values, dl_line_vals)
 

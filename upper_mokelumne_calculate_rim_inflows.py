@@ -96,6 +96,9 @@ if __name__ == "__main__":
     # extend with s-curve disaggregation, using second round unimpaired data
 #    print("1in calc rim, df_full 5000 around 6/1924 is", df_full_data.iloc[31:38]['11315000'])
 
+#TODO REMOVE    extend_data(df_unimpaired_data['11319500'], df_full_data.loc['1927-10-31':'2021-09-30','11315000'], \
+#                df_extended_data, df_synthetic_data, 1928, i_final_year, True, '11315000', i_final_year=i_final_year)
+
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
                 df_extended_data, df_synthetic_data, 1944, i_final_year, False, '11315000', i_final_year=i_final_year)
 
