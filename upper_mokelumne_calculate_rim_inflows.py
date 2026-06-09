@@ -1,3 +1,5 @@
+import pandas as pd
+
 from extension_functions import *
 from unimpairment_functions import *
 from rim_inflow_functions import *
@@ -10,7 +12,7 @@ if __name__ == "__main__":
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
     # option to plot comparison
-    b_compareData = True
+    b_compare_data = True
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm" # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflow_sheet = "Inflows"
 
@@ -37,6 +39,7 @@ if __name__ == "__main__":
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
 
+    print("Calculating evaporation...")
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
@@ -85,7 +88,6 @@ if __name__ == "__main__":
 
     print("Calculating second round of unimpaired flows...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
-#    print("in calc rim, df_unimp 9500 around 6/1924 is", df_unimpaired_data.iloc[31:38]['11319500'])
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -93,17 +95,20 @@ if __name__ == "__main__":
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
-    # extend with s-curve disaggregation, using second round unimpaired data
-#    print("1in calc rim, df_full 5000 around 6/1924 is", df_full_data.iloc[31:38]['11315000'])
+    # prepare for s-curve disaggregation, using second round unimpaired data
 
-#TODO REMOVE    extend_data(df_unimpaired_data['11319500'], df_full_data.loc['1927-10-31':'2021-09-30','11315000'], \
-#                df_extended_data, df_synthetic_data, 1928, i_final_year, True, '11315000', i_final_year=i_final_year)
+    # make a copy of 11319500 with 1943 dropped from it for use in extending data for 11315000
+    # first create a list of the index of rows to drop
+    dl_rows_to_drop = df_unimpaired_data.loc['1942-10-31':'1943-09-30'].index
+    # then drop those rows of the columb named '11319500'
+    df_11319500_dropped = df_unimpaired_data['11319500'].drop(dl_rows_to_drop)
 
-    extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
-                df_extended_data, df_synthetic_data, 1944, i_final_year, False, '11315000', i_final_year=i_final_year)
+    # do s-curve disaggregation, using second round unimpaired data
+    extend_data(df_11319500_dropped, df_full_data['11315000'], \
+                df_extended_data, df_synthetic_data, 1928, i_final_year, False, '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
 
-#    print("2in calc rim, df_extended 5000 around 6/1924 is", df_extended_data.iloc[31:38]['11315000'])
-#    print("3in calc rim, df_synthetic 5000 around 6/1924 is", df_synthetic_data.iloc[31:38]['11315000'])
+    # copy synthetic data onto gaps in 11315000
+
 
     df_synthetic_data['11315000'].to_csv('./Intermediate/upper_mokelumne_synthetic_11315000_data.csv')
 
@@ -120,7 +125,6 @@ if __name__ == "__main__":
     df_rim_inflows = pd.DataFrame()
 
     print("Calculating rim inflows...")
-    # TODO add function calls to rim inflow functions here
 
     I_MFM008(df_full_data, df_rim_inflows)
     I_SFM005(df_extended_data, df_rim_inflows)
@@ -129,7 +133,7 @@ if __name__ == "__main__":
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
     # Comparison with Previous Rim Inflow dataset
-    if b_compareData:
+    if b_compare_data:
 
         # read in data
         df_reference = pd.read_excel(s_prev_rim_inflows_fn, sheet_name=s_prev_rim_inflow_sheet, skiprows=[0,2,3,4,5,6,7,8,9,10,11],header=0, index_col=0, parse_dates=True)

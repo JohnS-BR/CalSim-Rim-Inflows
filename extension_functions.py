@@ -11,7 +11,7 @@ import os
 
 urllib3.disable_warnings()
 
-def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year, i_y_end_year, b_use_all_y=False):
+def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year, i_y_end_year, b_use_all_y=False, b_is_COL003=False):
     """
     Takes in the x data and the y data and generated a full timeseries of synthetic y data.
     This is meant to replicate what the Excel/VBA does for the S-Curve disaggregation.
@@ -40,10 +40,6 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
         Full timeseries of synthetic y data.
     """
 
-# TODO remove debugging csv's
-    df_x_data.to_csv('./Intermediate/x_data.csv')
-    df_y_data.to_csv('./Intermediate/y_data.csv')
-
     # if it is a series, get it into the monthly format
     if isinstance(df_x_data, pd.Series):
         df_x_data = timeseries_to_monthly(df_x_data.to_frame('TAF'))
@@ -59,12 +55,12 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     # trim the y data to only the x years in case the y is longer for some reason
     df_y_data = df_y_data.loc[i_x_start_year:i_x_end_year, :]
 
-# TODO remove debugging csv'sv
-    df_x_data.to_csv('./Intermediate/trimmed_x_data.csv')
-    df_y_data.to_csv('./Intermediate/trimmed_y_data.csv')
-
     # first we want the x value monthly average for just the years of y data we want to keep
-    dl_x_month_avgs = [0] + df_x_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
+    # if working on COL003 (11315000), we need to use only 1944 to 2021 for monthly averages
+    if (b_is_COL003):
+        dl_x_month_avgs = [0] + df_x_data.loc[1944:i_y_end_year, :].mean(axis=0).tolist()
+    else:
+        dl_x_month_avgs = [0] + df_x_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
 
     # get the sum of this for a yearly average value
     d_x_year_total_avg = sum(dl_x_month_avgs)
@@ -82,13 +78,18 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
 
     # now we want the same cumulative proportion of the monthly averages as before but for the y data
     # first get the averages for the months
-    dl_y_month_avgs = [0] + df_y_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
+    # if doing COL003 (11315000) only average the y months from 1944 to present
+    if(b_is_COL003):
+        dl_y_month_avgs = [0] + df_y_data.loc[1944:i_y_end_year, :].mean(axis=0).tolist()
+    else:
+        dl_y_month_avgs = [0] + df_y_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
 
     # get the sum of this for a yearly average value
-    d_x_year_total_avg = sum(dl_y_month_avgs)
+    # TODO changed this from d_x... to d_y and also in the next line for clarity of naming. Also do in American?
+    d_y_year_total_avg = sum(dl_y_month_avgs)
 
     # proportion for the months
-    dl_y_avg_cumulative_proportions = [0] + [dl_y_month_avgs[i] / d_x_year_total_avg for i in range(1, len(dl_y_month_avgs))]
+    dl_y_avg_cumulative_proportions = [0] + [dl_y_month_avgs[i] / d_y_year_total_avg for i in range(1, len(dl_y_month_avgs))]
 
     # get the cumulative sum
     dl_y_avg_cumulative_proportions = np.cumsum(dl_y_avg_cumulative_proportions)
@@ -121,12 +122,11 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     o_lin_model.fit(df_x_year_totals.loc[df_y_year_totals.index,], df_y_year_totals)
     d_slope = o_lin_model.coef_[0][0]
     d_intercept = o_lin_model.intercept_[0]
-#TODO remove print
-    print("In s_curve_disagg, slope and y int are ", d_slope, d_intercept)
+
     # get the scaled y yearly totals
     df_y_year_totals_scaled = df_x_year_totals * d_slope + d_intercept
 
-    # multiply df_y_cumulative_proportions byt the scaled yearly totals to get df_y_cumulative_totals which is the equivalent of df_x_data after the cumulative sum
+    # multiply df_y_cumulative_proportions by the scaled yearly totals to get df_y_cumulative_totals which is the equivalent of df_x_data after the cumulative sum
     df_y_cumulative_totals = df_y_cumulative_proportions.mul(df_y_year_totals_scaled.values, axis=0)
 
     # do the reverse of a cumulative sum to get the scaled version of df_x_data
@@ -188,8 +188,6 @@ def s_curve_comparison_plots(df_final_y_dat, df_y_data_synthetic, df_x_data, df_
 
     # fit a line of best fit
     slope, intercept = np.polyfit(df_x_totals.values, df_y_totals.values, 1)
-#TODO remove print
-    print("slope is", slope, " and intercept is ", intercept)
     dl_line_vals = intercept + slope * df_x_totals.values
     r2 = r2_score(df_y_totals.values, dl_line_vals)
 
@@ -867,9 +865,8 @@ def read_previous_data(s_path, df_new_data):
 
 
 def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthetic_data,
-                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922, i_final_year=2021):
+                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922, i_final_year=2021, b_is_COL003=False):
 
-    #TODO i x start year is 1922, i final year is 2021
     """
     Extends data using the s-curve disaggregation. Also creates the plots and saves the data into dataframes.
 
@@ -893,7 +890,8 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
         Name of current station
     i_final_year: int
         Final year for the x data
-
+    b_is_COL003: bool
+        Flag for if we are analyzing COL003 (11315000) as our y data
     Returns
     -------
     None
@@ -906,7 +904,7 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
                                                                         df_current_data,
                                                                         i_x_start_year, i_final_year,
                                                                         i_y_start_year, i_y_end_year,
-                                                                        b_use_all_y_data)
+                                                                        b_use_all_y_data, b_is_COL003)
     # generate the comparison plots
     s_curve_comparison_plots(df_curr_final_data, df_curr_synthetic_data,
                              timeseries_to_monthly(df_reference_data), timeseries_to_monthly(df_current_data),
