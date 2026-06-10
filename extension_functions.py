@@ -101,41 +101,113 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     # now if we ever had any that landed at the end they would be set to len(dl_x_avg_cumulative_proportions) but we want them to be len(dl_x_avg_cumulative_proportions) - 1 so we don't go out of bounds
     il_indices = np.clip(il_indices, 0, len(dl_x_avg_cumulative_proportions) - 1)
 
+    b_new_method = True
+    if(b_new_method):
+        ## TODO remove: begin addition to previous code with bug fix
+        ## when x_cumulative_proprotions for year X, month Y is greater than 1, find the prior month's value and copy it to
+        ## the end of the year.
+
+        # create a boolean mask of whether to overwrite df_factors elements by checking to see if they are greater than
+        # or equal to 1
+        bf_mask = df_x_cumulative_proportions.ge(1)
+
+        # find the edges where a row switches from false to true
+        bf_starts = bf_mask & ~bf_mask.shift(axis=1, fill_value=False)
+
+        # Identify the *first* start per row (column label). Rows with no trigger become NaN.
+        bf_has_trigger = bf_mask.any(axis=1)
+        bf_first_start_col = bf_starts.idxmax(axis=1).where(bf_has_trigger)
+
+        # Build a one-hot mask that is True only at the *first* start column in each row
+        #    (pure pandas: get_dummies -> align to df columns -> cast to boolean)
+        bf_first_only = (
+            pd.get_dummies(bf_first_start_col)
+            .reindex(columns=df_x_cumulative_proportions.columns, fill_value=False)
+            .astype(bool)
+        )
+
+        # Build the mask of positions to overwrite: from the first start onward across the row
+        bf_at_or_after = bf_starts.cumsum(axis=1).gt(0)
+
+        # if ONLY the last column is over 1, don't do the overwrite
+        i_last_col = df_x_cumulative_proportions.columns[-1]
+
+        # True if last column > threshold
+        bf_last_over = df_x_cumulative_proportions[i_last_col].ge(1)
+
+        # True if any other column > threshold
+        bf_others_over = df_x_cumulative_proportions.drop(columns=i_last_col).ge(1).any(axis=1)
+
+        # We only disable overwrite at the last column when it's the ONLY one over threshold
+        bf_last_only = bf_last_over & ~bf_others_over
+
+        # Turn off overwrite for the last column in those rows
+        bf_at_or_after.loc[bf_last_only, i_last_col] = False
+
+        # Compute the "previous column" value per row, taken only at the *first* start:
+        #    Shift df right by 1 so the desired previous value aligns with the first start column,
+        #    then multiply by the one-hot and sum across columns.
+        #    min_count=1 ensures rows without a valid previous column yield NaN (not 0).
+        df_prev_val = (df_x_cumulative_proportions.shift(1, axis=1) * bf_first_only).sum(axis=1, min_count=1)
+
+        # Rows where the first start is in the very first column have no "previous" value.
+        # Disable overwriting for those rows.
+        bf_valid_rows = df_prev_val.notna()
+        bf_at_or_after.loc[~bf_valid_rows, :] = False
+
+        # Broadcast the per-row previous value across all columns,
+        # then assign in place only where at_or_after is True.
+        df_prev_val_df = pd.concat([df_prev_val] * df_x_cumulative_proportions.shape[1], axis=1)
+        df_prev_val_df.columns = df_x_cumulative_proportions.columns
+
+        df_x_cumulative_proportions[bf_at_or_after] = df_prev_val_df[bf_at_or_after]
+
+        #TODO remove: end addition to function for bug fix with handling years where flow goes to 100% early
+
     # calculate the factors that df_x_cumulative_proportions is different by
     # if (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1]) is zero, add a little bit to it so we don't divide by zero (this is what the VBA does)
 
-    df_factors = pd.DataFrame(np.where((dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1]) == 0,
-                (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1] + 0.000001),
-                (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1])),
-                columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
+    df_factors = pd.DataFrame(
+        np.where((dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices - 1]) == 0,
+                 (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices - 1]) / (
+                             dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[
+                         il_indices - 1] + 0.000001),
+                 (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices - 1]) / (
+                             dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[
+                         il_indices - 1])),
+        columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
+    if(b_new_method):
+        # Start one column earlier by shifting the 'starts' mask to the left,
+        # then cumsum across columns to build the "from previous column onward" mask.
+        mask_factors = bf_starts.shift(-1, axis=1, fill_value=False).cumsum(axis=1).gt(0)
 
-    # when x_cumulative_proprotions for year X, month Y is greater than 1, find the prior month's value and copy it to
-    # the end of the year.
+        # Disable rows with trigger in first column (no left neighbor to copy)
+        mask_factors.loc[~bf_valid_rows, :] = False
 
-    # create a boolean mask of whether to overwrite df_factors elements by checking to see if they are greater than
-    # or equal to 1
-    bf_mask = df_x_cumulative_proportions.ge(1)
+        # Make sure mask is boolean and aligned
+        mask_factors = mask_factors.reindex_like(df_factors).astype(bool)
 
-    # find the edges where a row switches from false to true
-    bf_first_true = bf_mask & ~bf_mask.shift(axis=1, fill_value=False)
+        # Guarantee boolean dtype and alignment
+#        mask_factors = (
+#            mask_factors
+#            .reindex_like(df_factors)  # align index & columns to df_factors
+#            .astype(bool)  # enforce boolean dtype
+#        )
 
-    # build a mask covering all columns from the first True on
-    bf_at_or_after = bf_first_true.cumsum(axis=1).gt(0)
+        # 10) Per-row value to broadcast IN df_factors: left neighbor of the first trigger
+        prev_factor_val = (df_factors.shift(1, axis=1) * bf_first_only).sum(axis=1, min_count=1)
 
-    # if the very first column is greater than 1 (hydrologically unlikely, all the flow would have to take place in
-    # October), we need to handle that differently by skipping that row
-    # Selecting the first column
-    bf_rows_first_col = bf_first_true.iloc[:, 0]
+        # 11) Broadcast to a DataFrame with same shape/columns
+        prev_factor_df = pd.concat([prev_factor_val] * df_factors.shape[1], axis=1)
+        prev_factor_df.columns = df_factors.columns
+        prev_factor_df = prev_factor_df.reindex_like(df_factors)
 
-    # Using the boolean value of the first column to get an index of all true values, the set the whole row in
-    # bf_at_or_after to False
-    bf_at_or_after.loc[bf_rows_first_col[bf_rows_first_col].index, :] = False
+        # 12) In-place overwrite only where mask_factors is True
+        df_factors[mask_factors] = prev_factor_df[mask_factors]
 
-    # do an in-place overwrite of df_cumulative_proportions for the months greater than or equal to 1
-    df_x_cumulative_proportions[bf_at_or_after] = df_x_cumulative_proportions.shift(1, axis=1)[bf_at_or_after]
+        # Final factor for each year is set to 1
+        df_factors.iloc[:,-1] = 1
 
-    # TODO remove following line. It is only here to show the error clearly in 1924 of COL003
-    df_factors_temp= df_factors.loc[[1924]].copy()
     # now use these factors get df_y_cumulative_proportions by doing the reverse of that operation but with dl_y_avg_cumulative_proportions instead of dl_x_avg_cumulative_proportions
     # these are the scaled version of the df_x_cumulative_proportions numbers
     df_y_cumulative_proportions = dl_y_avg_cumulative_proportions[il_indices- 1] + df_factors * (dl_y_avg_cumulative_proportions[il_indices] - dl_y_avg_cumulative_proportions[il_indices- 1])
