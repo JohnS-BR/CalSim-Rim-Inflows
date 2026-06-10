@@ -109,7 +109,32 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
                 (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1])),
                 columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
 
-    # TODO remove
+    # when x_cumulative_proprotions for year X, month Y is greater than 1, find the prior month's value and copy it to
+    # the end of the year.
+
+    # create a boolean mask of whether to overwrite df_factors elements by checking to see if they are greater than
+    # or equal to 1
+    bf_mask = df_x_cumulative_proportions.ge(1)
+
+    # find the edges where a row switches from false to true
+    bf_first_true = bf_mask & ~bf_mask.shift(axis=1, fill_value=False)
+
+    # build a mask covering all columns from the first True on
+    bf_at_or_after = bf_first_true.cumsum(axis=1).gt(0)
+
+    # if the very first column is greater than 1 (hydrologically unlikely, all the flow would have to take place in
+    # October), we need to handle that differently by skipping that row
+    # Selecting the first column
+    bf_rows_first_col = bf_first_true.iloc[:, 0]
+
+    # Using the boolean value of the first column to get an index of all true values, the set the whole row in
+    # bf_at_or_after to False
+    bf_at_or_after.loc[bf_rows_first_col[bf_rows_first_col].index, :] = False
+
+    # do an in-place overwrite of df_cumulative_proportions for the months greater than or equal to 1
+    df_x_cumulative_proportions[bf_at_or_after] = df_x_cumulative_proportions.shift(1, axis=1)[bf_at_or_after]
+
+    # TODO remove following line. It is only here to show the error clearly in 1924 of COL003
     df_factors_temp= df_factors.loc[[1924]].copy()
     # now use these factors get df_y_cumulative_proportions by doing the reverse of that operation but with dl_y_avg_cumulative_proportions instead of dl_x_avg_cumulative_proportions
     # these are the scaled version of the df_x_cumulative_proportions numbers
