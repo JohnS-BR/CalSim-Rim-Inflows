@@ -103,11 +103,14 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
 
     # calculate the factors that df_x_cumulative_proportions is different by
     # if (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1]) is zero, add a little bit to it so we don't divide by zero (this is what the VBA does)
-    df_factors = pd.DataFrame(np.where((dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1]) == 0,
-                                       (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1] + 0.000001),
-                                       (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1])),
-                              columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
 
+    df_factors = pd.DataFrame(np.where((dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1]) == 0,
+                (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1] + 0.000001),
+                (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices-1]) / (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1])),
+                columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
+
+    # TODO remove
+    df_factors_temp= df_factors.loc[[1924]].copy()
     # now use these factors get df_y_cumulative_proportions by doing the reverse of that operation but with dl_y_avg_cumulative_proportions instead of dl_x_avg_cumulative_proportions
     # these are the scaled version of the df_x_cumulative_proportions numbers
     df_y_cumulative_proportions = dl_y_avg_cumulative_proportions[il_indices- 1] + df_factors * (dl_y_avg_cumulative_proportions[il_indices] - dl_y_avg_cumulative_proportions[il_indices- 1])
@@ -130,6 +133,7 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     df_y_cumulative_totals = df_y_cumulative_proportions.mul(df_y_year_totals_scaled.values, axis=0)
 
     # do the reverse of a cumulative sum to get the scaled version of df_x_data
+    # TODO for COL003 because of the time range in df_x_data.columns we can't just pass 1944 to present for the x data. it won't do synthetic data before 1944 then. is this the flag we should change?
     df_y_data_synthetic = pd.DataFrame(np.diff(df_y_cumulative_totals, prepend=0), index=df_x_data.index, columns=df_x_data.columns)
 
     # put the range of original y to keep back in
