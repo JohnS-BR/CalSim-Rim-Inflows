@@ -100,7 +100,7 @@ if __name__ == "__main__":
     # make a copy of 11319500 with 1943 dropped from it for use in extending data for 11315000
     # first create a list of the index of rows to drop
     dl_rows_to_drop = df_unimpaired_data.loc['1942-10-31':'1943-09-30'].index
-    # then drop those rows of the columb named '11319500'
+    # then drop those rows of the column named '11319500'
     df_11319500_dropped = df_unimpaired_data['11319500'].drop(dl_rows_to_drop)
 
     # do s-curve disaggregation, using second round unimpaired data
