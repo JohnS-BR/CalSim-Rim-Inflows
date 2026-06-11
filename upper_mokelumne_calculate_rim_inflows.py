@@ -7,7 +7,7 @@ from evaporation_functions import *
 
 if __name__ == "__main__":
     i_final_year = 2021
-
+    print("done with imports")
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
@@ -29,12 +29,101 @@ if __name__ == "__main__":
 
     # merge gages that need it. 
 
-    # for COL003, EBMUD is main historical gage (pre 2021) but NaNs are filled with CDEC MKM
+    # for COL003 (11319500), EBMUD is main historical gage (pre 2021) but NaNs are filled with CDEC MKM
     df_full_data['EBMUD_11319500']= flow_from_two_unimp(df_full_data['EBMUD_11319500'], df_full_data['MKM'], 1.0)
+
     # as a continuation of the previous operation the "filled out" EBMUD is now used as the historical
     # data for USGS 11319500. Then the filled out USGS 11319500 is used for s-curve on the COL003
     # gage, which is USGS 11315000
+    if '11319500' not in df_full_data.columns:
+        df_full_data['11319500'] = np.nan
     df_full_data['11319500'] = flow_from_two_unimp(df_full_data['11319500'], df_full_data['EBMUD_11319500'], 1.0)
+
+    ### ----- for SLTSP -----
+    ## we create Unimpaired Lower Bear and Salt Springs ('LBearSS')
+    # there are two errors in the sheets. to reproduce the error, set b_make_errors_sltsp = True.
+    # to do the calculation correctly, set b_make_errors_sltsp = False.
+    b_make_errors_sltsp = True
+
+    # but only when all three inputs exist (are not NaN).
+    # first, create the column for our target flow, LBearSS.
+    if 'LBearSS' not in df_full_data.columns:
+        df_full_data['LBearSS'] = np.nan
+
+    # second, create the 11315030 dataset, which includes a timeshifting error reproduced here
+    # create a deep copy of 11315030 dataset
+    df_11315030 = df_full_data[['11315030']].copy(deep=True)
+# TODO Remove
+#    print(df_11315030)
+#    print(type(df_11315030))
+    if(b_make_errors_sltsp):
+        # create a copy of 11315030 timeshifted forward by 3 months to help reproduce an error in excel
+        df_shifted_11315030 = df_full_data[['11315030']].copy(deep=True).shift(3)
+
+    ## calculate the monthly averages of the correct 11315030 data
+    # set a cutoff date so we can reproducte the monthly averages of the sheets
+    cutoff = '2021-09-30'
+
+    # create a cutoff copy of the data
+    df_11315030_cutoff = df_11315030.loc[:cutoff]
+
+    #count the number of non-NaN values per month
+    df_counts_by_month = df_11315030_cutoff.groupby(df_11315030_cutoff.index.month).count()
+
+    # sum of non‑NaN values for each month
+    df_sums_by_month = df_11315030_cutoff.groupby(df_11315030_cutoff.index.month).sum()
+
+    df_sums_by_month.columns = ['11315030']
+
+    if(b_make_errors_sltsp):
+        # this reproduces the error in CS3_I_SLTSP_Rev2022G.xlsm on sheet "Cole 11315030 in Cells W127 to AH127
+        df_counts_by_month = df_counts_by_month - 6
+    # find the average by diving the summed month value by the data count for that month
+#    # convert to Series
+#    ds_sums_by_month = df_sums_by_month[:, 0]
+#    ds_counts_by_month = df_counts_by_month[:, 0]
+    # if any counts are zero, put NaN in df_monthly_average
+    df_monthly_average = df_sums_by_month.div(df_counts_by_month.replace(0, pd.NA))
+
+
+    # Build a DataFrame of fill values based on each row's month. df_month_map has the same row index as
+    # df_shifted_11315030 but with monthly averages for all months
+    if(b_make_errors_sltsp):
+        df_month_map = (
+            df_shifted_11315030.index.to_frame(index=False)
+            .set_index(df_shifted_11315030.index)
+        )
+    else:
+        df_month_map = (
+            df_11315030.index.to_frame(index=False)
+            .set_index(df_11315030.index)
+        )
+    df_month_map['month'] = df_month_map.index.month
+
+    df_fill_values = (
+        df_month_map[['month']]
+        .merge(df_monthly_average, left_on='month', right_index=True)
+        .iloc[:, 1:]  # keep only the monthly-average column
+    )
+    if(b_make_errors_sltsp):
+        df_fill_values.columns = df_shifted_11315030.columns  # match original column name
+    else:
+        df_fill_values.columns = df_11315030.columns  # match original column name
+
+    # Fill NaNs
+    if(b_make_errors_sltsp):
+        df_filled_11315030 = df_shifted_11315030.fillna(df_fill_values)
+    else:
+        df_filled_11315030 = df_11315030.fillna(df_fill_values)
+    df_filled_11315030.to_csv('./Intermediate/upper_mokelumne_11315030_wrong.csv')
+
+    df_full_data['11315030'] = df_filled_11315030
+    # Calculate storage differences for Salt Springs and Lower Bear
+    
+    # Combine flows
+    sum_if_all_not_nan(df_full_data, 'LBearSS', ['11315900', '11314000', '11314500',
+                                                 '11315030', 'SS_HIST_EVAP', 'LB_HIST_EVAP'])
+
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
