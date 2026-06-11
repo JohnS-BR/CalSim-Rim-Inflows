@@ -40,21 +40,15 @@ if __name__ == "__main__":
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
 
     print("Calculating evaporation...")
-    print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
-
-
-    # calc_evap_folsom(s_evap_dss_path, df_full_data)
-    # calc_evap_NAT(s_evap_dss_path, df_full_data)
-
 
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
 
     ### unimpairing the data
     df_unimpaired_data = pd.DataFrame()
 
-    print("Calculating unimpaired flows...")
+    print("Calculating unimpaired flows, round 1 ...")
 
     # TODO I don't understand what the following (commented out) line does
     # df_unimpaired_data['CalSim3'] = unimpaired_calsim3(df_full_data)
@@ -86,7 +80,7 @@ if __name__ == "__main__":
       
     ### unimpairing the data for those that rely on previously s-curved data
 
-    print("Calculating second round of unimpaired flows...")
+    print("Calculating unimpaired flows, round 2...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
 
     # drop the first row which is only for calculating storage differences
@@ -95,20 +89,18 @@ if __name__ == "__main__":
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
-    # prepare for s-curve disaggregation, using second round unimpaired data
+    # prepare for s-curve disaggregation round 2, using second round unimpaired data
 
+    # TODO REMOVE the dropping 1943 lines below (next 5 lines)
     # make a copy of 11319500 with 1943 dropped from it for use in extending data for 11315000
     # first create a list of the index of rows to drop
-    dl_rows_to_drop = df_unimpaired_data.loc['1942-10-31':'1943-09-30'].index
+#    dl_rows_to_drop = df_unimpaired_data.loc['1942-10-31':'1943-09-30'].index
     # then drop those rows of the column named '11319500'
-    df_11319500_dropped = df_unimpaired_data['11319500'].drop(dl_rows_to_drop)
+#    df_11319500_dropped = df_unimpaired_data['11319500'].drop(dl_rows_to_drop)
 
     # do s-curve disaggregation, using second round unimpaired data
-    extend_data(df_11319500_dropped, df_full_data['11315000'], \
+    extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
                 df_extended_data, df_synthetic_data, 1928, i_final_year, False, '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
-
-    # copy synthetic data onto gaps in 11315000
-
 
     df_synthetic_data['11315000'].to_csv('./Intermediate/upper_mokelumne_synthetic_11315000_data.csv')
 
