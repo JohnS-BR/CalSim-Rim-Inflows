@@ -52,10 +52,6 @@ if __name__ == "__main__":
     # combine the new data with the previous data
     df_full_data = read_previous_data(s_previous_data, df_gauge_data_monthly_taf)
 
-    #TODO : not working : intension is get rid of these next two lines and uncomment out the previous one to run a full run with 2021-2024 included
-#    df_previous_data = pd.read_csv(s_previous_data, index_col=0, parse_dates=True)
-#    df_full_data = df_previous_data
-
     # save to a csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data.csv')
     
