@@ -1731,19 +1731,52 @@ def I_SLTSP(df_extended_data, df_rim_inflows):
     None
     """
     # take extended LBearSS and subtract rounded 11315000
-    df_extended_data['LBearSS'] = df_extended_data['LBearSS'] - df_extended_data['11315000'].round(2)
+    df_location = df_extended_data['LBearSS'] - df_extended_data['11315000'].round(2)
 
     # redistribute negatives in extended LBearSS
-    df_extended_data['LBearSS'] = remove_negatives_timeseries(df_extended_data[['LBearSS']])
+    df_location = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
 
-    # multiply LBearSS by (169)/(169+37.3) to match "Final Inflow" tab in sheets
-    df_extended_data['LBearSS'] = df_extended_data['LBearSS'] * (169 / (169 + 37.3))
+    # multiply by (169)/(169+37.3) to match "Final Inflow" tab in sheets
+    df_location = df_location * (169 / (169 + 37.3))
 
     # round to two decimal places
-    df_location = df_extended_data['LBearSS'].round(2)
+    df_location = df_location.round(2)
 
     # add into the rim inflow dataframe
     df_rim_inflows['I_SLTSP'] = df_location
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SLTSP')
+
+def I_UBEAR(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+    # take extended LBearSS and subtract rounded 11315000
+    df_location = df_extended_data['LBearSS'] - df_extended_data['11315000'].round(2)
+
+    # redistribute negatives in extended LBearSS
+    df_location = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
+
+    # multiply by (37.3)/(169+37.3) to match "Final Inflow" tab in sheets
+    df_location = df_location * (37.3 / (169 + 37.3))
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_UBEAR'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_UBEAR')

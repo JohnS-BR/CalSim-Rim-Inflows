@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
     # merge gages that need it. 
 
-    # for COL003 (11319500), EBMUD is main historical gage (pre 2021) but NaNs are filled with CDEC MKM
+    # -- start COL003 merge --
+    # with COL003 (11319500), EBMUD is main historical gage (pre 2021) but NaNs are filled with CDEC MKM
     df_full_data['EBMUD_11319500']= flow_from_two_unimp(df_full_data['EBMUD_11319500'], df_full_data['MKM'], 1.0)
 
     # as a continuation of the previous operation the "filled out" EBMUD is now used as the historical
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     if '11319500' not in df_full_data.columns:
         df_full_data['11319500'] = np.nan
     df_full_data['11319500'] = flow_from_two_unimp(df_full_data['11319500'], df_full_data['EBMUD_11319500'], 1.0)
+    # -- end COL003 merge --
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
@@ -77,7 +79,6 @@ if __name__ == "__main__":
                 '11318500', i_final_year=i_final_year)
       
     # unimpairing the data for those that rely on previously s-curved data
-
     print("Calculating unimpaired flows, round 2...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
 
@@ -86,7 +87,6 @@ if __name__ == "__main__":
 
     # extend with the s-curve disaggregation, round 2
     print("Extending flows, part 2...")
-
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
                 df_extended_data, df_synthetic_data, 1928, i_final_year, False,
                 '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
@@ -112,6 +112,7 @@ if __name__ == "__main__":
     I_SFM005(df_extended_data, df_rim_inflows)
     I_COL003(df_extended_data, df_rim_inflows)
     I_SLTSP(df_extended_data, df_rim_inflows)
+    I_UBEAR(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
