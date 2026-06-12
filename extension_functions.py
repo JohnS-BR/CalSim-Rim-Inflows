@@ -1174,15 +1174,17 @@ def create_rim_inflow_comparison_plots(df_new, df_old):
         plt.savefig(f'./Figures/Comparison/{location}', bbox_inches='tight', dpi=300)
         plt.close()
 
-def sum_if_all_not_nan(df_full_data, s_sum_name, sl_source_names):
+def sum_if_all_not_nan(df_target_data, s_sum_name, df_source_data, sl_source_names):
     """
     This function creates a new dataset by summing two or more sources of data, but only when all sources are not NaN
     Parameters
     ----------
-    df_full_data: dataframe
-        Full data dataframe
+    df_target_data: dataframe
+        The dataframe where the result ends up.
     s_sum_name: string
-        Column name in df_full_data where we will put the sum
+        Column name in df_target_data where we will put the sum
+    df_source_data: dataframe
+        The dataframe that contains the items being summed.
     sl_source_names: list of strings
         List of column names for the source data sets
 
@@ -1190,8 +1192,8 @@ def sum_if_all_not_nan(df_full_data, s_sum_name, sl_source_names):
     -------
     None
     """
-    df_full_data[s_sum_name] = np.where(
-        df_full_data[sl_source_names].notna().all(axis=1),
-        df_full_data[sl_source_names].sum(axis=1),
+    df_target_data[s_sum_name] = np.where(
+        df_source_data[sl_source_names].notna().all(axis=1),
+        df_source_data[sl_source_names].sum(axis=1),
         np.nan
     )
