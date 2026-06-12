@@ -1,5 +1,6 @@
 import pandas as pd
 
+#from Examples.Example_SingleRimInflow_I_RCK001 import df_unimpaired_data
 from extension_functions import *
 from unimpairment_functions import *
 from rim_inflow_functions import *
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     if '11319500' not in df_full_data.columns:
         df_full_data['11319500'] = np.nan
     df_full_data['11319500'] = flow_from_two_unimp(df_full_data['11319500'], df_full_data['EBMUD_11319500'], 1.0)
-    
+
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
 
@@ -71,31 +72,32 @@ if __name__ == "__main__":
     df_extended_data = pd.DataFrame()
     df_synthetic_data = pd.DataFrame()
 
-    print("Extending flows...")
+    print("Extending flows, part 1...")
 
-    # extend all with the s-curve disaggregation, round 1
-    extend_data(df_full_data['11317000'], df_full_data['11318500'], \
-                df_extended_data, df_synthetic_data, 1934, i_final_year, False, '11318500', i_final_year=i_final_year)
+    # extend with the s-curve disaggregation, round 1
+    extend_data(df_full_data['11317000'], df_full_data['11318500'],
+                df_extended_data, df_synthetic_data, 1934, i_final_year, False,
+                '11318500', i_final_year=i_final_year)
       
     ### unimpairing the data for those that rely on previously s-curved data
 
     print("Calculating unimpaired flows, round 2...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
 
-    # drop the first row which is only for calculating storage differences
-    df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
+    print("Extending flows, part 2...")
+    # extend with the s-curve disaggregation, round 2
 
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
+#   TODO figure out why the next line of code is giving me a year of NaNs at the strt of df_extended_data['LBearSS']
+#    # drop the first row which is only for calculating storage differences
+#    df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
+
+    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS'],
+                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
+                'LBearSS', i_final_year=i_final_year)
 
     # prepare for s-curve disaggregation round 2, using second round unimpaired data
-
-    # TODO REMOVE the dropping 1943 lines below (next 5 lines)
-    # make a copy of 11319500 with 1943 dropped from it for use in extending data for 11315000
-    # first create a list of the index of rows to drop
-#    dl_rows_to_drop = df_unimpaired_data.loc['1942-10-31':'1943-09-30'].index
-    # then drop those rows of the column named '11319500'
-#    df_11319500_dropped = df_unimpaired_data['11319500'].drop(dl_rows_to_drop)
 
     # do s-curve disaggregation, using second round unimpaired data
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
