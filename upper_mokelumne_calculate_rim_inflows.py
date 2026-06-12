@@ -46,10 +46,11 @@ if __name__ == "__main__":
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
+    # nothing needed yet
 
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
 
-    ### unimpairing the data
+    # unimpairing the data
     df_unimpaired_data = pd.DataFrame()
 
     print("Calculating unimpaired flows, round 1 ...")
@@ -63,11 +64,7 @@ if __name__ == "__main__":
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
     # redistribute negatives
-    # TODO see previous
-    # df_pos_unimpaired_data = remove_negatives_timeseries(df_unimpaired_data)
-
-    # save to csv
-    #df_pos_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data_pos.csv')
+    # not needed yet
 
     df_extended_data = pd.DataFrame()
     df_synthetic_data = pd.DataFrame()
@@ -79,33 +76,25 @@ if __name__ == "__main__":
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,
                 '11318500', i_final_year=i_final_year)
       
-    ### unimpairing the data for those that rely on previously s-curved data
+    # unimpairing the data for those that rely on previously s-curved data
 
     print("Calculating unimpaired flows, round 2...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
 
-    print("Extending flows, part 2...")
-    # extend with the s-curve disaggregation, round 2
-
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
-#   TODO figure out why the next line of code is giving me a year of NaNs at the strt of df_extended_data['LBearSS']
-#    # drop the first row which is only for calculating storage differences
-#    df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 
+    # extend with the s-curve disaggregation, round 2
+    print("Extending flows, part 2...")
+
+    extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
+                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
+                '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
     extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS'],
                 df_extended_data, df_synthetic_data, 1989, i_final_year, False,
                 'LBearSS', i_final_year=i_final_year)
 
-    # prepare for s-curve disaggregation round 2, using second round unimpaired data
-
-    # do s-curve disaggregation, using second round unimpaired data
-    extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'], \
-                df_extended_data, df_synthetic_data, 1928, i_final_year, False, '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
-
-    df_synthetic_data['11315000'].to_csv('./Intermediate/upper_mokelumne_synthetic_11315000_data.csv')
-
-    # copy synthetic data to extended data where extended data is NaN
+    # copy synthetic data to extended data where extended data is NaN for 11315000
     df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)
 
     # save to csv
@@ -122,6 +111,7 @@ if __name__ == "__main__":
     I_MFM008(df_full_data, df_rim_inflows)
     I_SFM005(df_extended_data, df_rim_inflows)
     I_COL003(df_extended_data, df_rim_inflows)
+    I_SLTSP(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 

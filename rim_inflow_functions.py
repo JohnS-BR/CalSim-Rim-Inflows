@@ -1715,3 +1715,35 @@ def I_COL003(df_full_data, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1921, 2025)), 'I_COL003')
 
+def I_SLTSP(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+    # take extended LBearSS and subtract rounded 11315000
+    df_extended_data['LBearSS'] = df_extended_data['LBearSS'] - df_extended_data['11315000'].round(2)
+
+    # redistribute negatives in extended LBearSS
+    df_extended_data['LBearSS'] = remove_negatives_timeseries(df_extended_data[['LBearSS']])
+
+    # multiply LBearSS by (169)/(169+37.3) to match "Final Inflow" tab in sheets
+    df_extended_data['LBearSS'] = df_extended_data['LBearSS'] * (169 / (169 + 37.3))
+
+    # round to two decimal places
+    df_location = df_extended_data['LBearSS'].round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SLTSP'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SLTSP')
