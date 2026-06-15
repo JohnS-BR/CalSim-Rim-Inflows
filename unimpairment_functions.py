@@ -809,7 +809,7 @@ def unimpaired_11319500(df_full_gauge_data, df_extended_gauge_data):
     df_full_gauge_data: dataframe
         Gauge data that contains the current station and all needed to unimpair the flows. in TAF. this is full dataset
     df_extended_gauge_data: dataframe
-        Guage data that contains any extended gauge data sets needed to unimpair the flows. in TAF.
+        Gauge data that contains any extended gauge data sets needed to unimpair the flows. in TAF.
     Returns
     -------
     df_unimpaired: dataframe
@@ -823,10 +823,6 @@ def unimpaired_11319500(df_full_gauge_data, df_extended_gauge_data):
     # round to two decimal places
     df_11318500_rounded = df_extended_gauge_data['11318500'].round(2)
     df_11317000_rounded = df_full_gauge_data['11317000'].round(2)
-#    print("in unimp_9500 funcation, 8500 is", df_extended_gauge_data.iloc[31:38]['11318500'])
-#    print("in unimp_9500 funcation, 8500 is", df_extended_gauge_data.iloc[31:38]['11318500'])
-
-#    print("in unimp_9500 funcation, rounded 8500 is", df_11318500_rounded.iloc[31:38])
 
     df_unimpaired = unimpaired_flows(df_full_gauge_data['11319500'],
                                      fl_subtractions=[df_11318500_rounded, df_11317000_rounded]
@@ -943,3 +939,64 @@ def unimpaired_lbear_salt_springs_fnf(df_gauge_data, b_reproduce_error_lbear_ss)
                                                                             df_gauge_data['LB_STORAGE'],
                                                                             df_gauge_data['PGE_OLD_RES']])
     return df_unimpaired
+
+def unimpaired_11316600(df_full_gauge_data, df_extended_gauge_data, df_unimpaired_data):
+    """
+    Calculate the unimpaired flow for USGS  11316600: NF MOKELUMNE R AB TIGER CREEK CA
+    Follows the logic from CS3_I_NFM010_Rev2022G.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    df_extended_gauge_data: dataframe
+        Gauge data that contains any extended gauge data sets needed to unimpair the flows. In TAF.
+    df_unimpaired_data: dataframe
+        Unimpaired gauge data from other sites used to unimpaire this flow. In TAF.
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+
+    # 11313500: SALT SPRINGS RES NR WEST POINT CA
+    # 11315600: LOWER BEAR R RES NR NICHOLL CA
+    # 11316600: NF MOKELUMNE R AB TIGER CREEK CA
+    # 11316605: TIGER CREEK BW REGULATOR RESERVOIR NR PIONEER CA
+    # 11316610: TIGER CREEK POWERHOUSE NR WEST POINT CA
+    # 11319500: MOKELUMNE R NR MOKELUMNE HILL CA, using this from the df_unimpaired_data, so already subtracted
+    #                   I_SFM005 and I_MFM008
+
+    # set a cutoff date for the montly averages so we get better agreement with the excel sheet
+    s_cutoff = "2021-09-30"
+
+    # create monthly average list for 11316605
+    dl_monthly_avg_11316605 = (
+        df_full_gauge_data.loc[:s_cutoff]  # keep rows ≤ 2021-09-30
+        .groupby(df_full_gauge_data.loc[:s_cutoff].index.month)["11316605"]
+        .mean()
+        .tolist()
+    )
+
+    # fill list into dataframe so each month in index is filled with the correct monthly average
+    df_monthly_avg_11316605 = (
+        df_full_gauge_data.index.to_series().dt.month
+        .map(lambda m: dl_monthly_avg_11316605[m - 1])
+    )
+
+    #copy our source data that we're unimpairing (df_full_gauge_data['11316600']) into a new dataframe with column
+    # called 'TAF'
+
+    df_temporary = unimpaired_flows(df_full_gauge_data['11316600'],
+                                     fl_storages=[df_full_gauge_data['SS_STORAGE'].fillna(0),
+                                                  df_full_gauge_data['LB_STORAGE'].fillna(0),
+                                                  df_full_gauge_data['PGE_OLD_RES'].fillna(0),],
+                                     fl_additions=[df_full_gauge_data['11316610'],
+                                                   df_monthly_avg_11316605,
+                                                   df_full_gauge_data['LB_HIST_EVAP'].fillna(0),
+                                                   df_full_gauge_data['SS_HIST_EVAP'].fillna(0),]
+                                     )
+    # take the lesser value of 1) unimpaired 6600 and 2) unimpaired 11319500 and put it in df_temporary
+    df_temporary = np.minimum(df_unimpaired_data["11319500"], df_temporary)
+
+    return df_temporary
