@@ -1780,3 +1780,46 @@ def I_UBEAR(df_extended_data, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_UBEAR')
+
+def I_NFM010(df_extended_data, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+
+    Parameters
+    ----------
+    df_extended_data: dataframe
+        Dataframe of the gauge data to pull from
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already
+
+    Returns
+    -------
+    None
+    """
+    # take extended 11316600 and subtract I_UBEAR, I_SLTSP, and I_COL003
+    temp1 = df_extended_data['11316600']
+    temp2 = df_rim_inflows['I_UBEAR'].round(2)
+    temp3 = df_rim_inflows['I_SLTSP'].round(2)
+    temp4 = df_rim_inflows['I_COL003'].round(2)
+    df_location = (df_extended_data['11316600'] - df_rim_inflows['I_UBEAR'].round(2)  - df_rim_inflows['I_SLTSP'].round(2)
+                   - df_rim_inflows['I_COL003'].round(2))
+
+    # redistribute negatives
+    df_location = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']
+
+    # multiply by (333-21-169-37.3-7.35)/(333-21-169-37.3) to match "Final Inflow" tab in sheets
+    df_location = df_location * ( 333 - 21 - 169 - 37.3 - 7.35 ) / ( 333 - 21 - 169 - 37.3 )
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # set anything negative to zero. this occurs because 1924, 1977, and 1987 had negative annual water after the
+    # subtraction step a dozen lines above.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFM010'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFM010')
+

@@ -11,7 +11,8 @@ import os
 
 urllib3.disable_warnings()
 
-def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year, i_y_end_year, b_use_all_y=False, b_is_COL003=False):
+def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year,
+                           i_y_end_year, b_use_all_y=False, b_is_COL003=False):
     """
     Takes in the x data and the y data and generated a full timeseries of synthetic y data.
     This is meant to replicate what the Excel/VBA does for the S-Curve disaggregation.
@@ -966,7 +967,8 @@ def read_previous_data(s_path, df_new_data):
 
 
 def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthetic_data,
-                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922, i_final_year=2021, b_is_COL003=False):
+                i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922,
+                i_final_year=2021, b_is_COL003=False):
 
     """
     Extends data using the s-curve disaggregation. Also creates the plots and saves the data into dataframes.
@@ -997,9 +999,6 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     -------
     None
     """
-#    print("in extension functions (extend_data),")
-#    print("df_ref is", df_reference_data)
-#    print("df_current is ", df_current_data.iloc[71:81])
     # do the s-curve disaggregation
     df_curr_final_data, df_curr_synthetic_data = s_curve_disaggregation(df_reference_data,
                                                                         df_current_data,
