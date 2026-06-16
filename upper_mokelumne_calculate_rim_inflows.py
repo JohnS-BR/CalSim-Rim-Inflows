@@ -91,7 +91,7 @@ if __name__ == "__main__":
     # extend with the s-curve disaggregation, round 1
     extend_data(df_full_data['11317000'], df_full_data['11318500'],
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,
-                '11318500', i_final_year=i_final_year)
+                '11318500', i_final_year=i_final_year, b_new_method_no_loop=False, b_run_loop=False)
       
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
@@ -102,9 +102,11 @@ if __name__ == "__main__":
 
     # extend with the s-curve disaggregation, round 2
     print("Extending flows, part 2...")
+    # TODO remove comment marks on 10 lines below
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'],
                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
-               '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
+               '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True,
+                b_new_method_no_loop=True, b_run_loop=False)
     extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS'],
                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
                'LBearSS', i_final_year=i_final_year)
