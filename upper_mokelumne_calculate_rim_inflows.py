@@ -17,7 +17,14 @@ if __name__ == "__main__":
 
     # option to run current operation with "given" SV INPUT values from sheets rather than from internally
     # calculated values
-    b_use_upstream_sheets = True
+    b_use_upstream_sv_inputs = True
+
+    # this flag initiates two things. 1) It runs the upstream code up until we reach the inputs for the s-curve
+    # disaggregation. It then checks the x watershed and y watershed against data in files that end in
+    # "input_to_s_curve.csv".  2) It takes the s-curve from the sheets (found in files that end in
+    # "output_from_s_curve.csv") and runs the code downstream of that point. It compares the final output to the
+    # SV INPUT tab of the sheets (found in "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm").
+    b_replicate_sheets = True
 
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm" # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflow_sheet = "Inflows"
@@ -31,7 +38,7 @@ if __name__ == "__main__":
     df_full_data = pd.read_csv('./Intermediate/upper_mokelumne_full_gauge_data.csv', index_col=0, parse_dates=True)
 
     # read in upstream sheet SV INPUT sheet data
-    if b_use_upstream_sheets:
+    if b_use_upstream_sv_inputs:
         s_upstream_sheets_path = r".\Inputs\upper_mokelumne_2022_sv_inputs.csv"
 
         # read the CSV
@@ -91,7 +98,7 @@ if __name__ == "__main__":
     # extend with the s-curve disaggregation, round 1
     extend_data(df_full_data['11317000'], df_full_data['11318500'],
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,
-                '11318500', i_final_year=i_final_year, b_new_method_no_loop=False, b_run_loop=False)
+                '11318500', i_final_year=i_final_year)
       
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
@@ -105,8 +112,7 @@ if __name__ == "__main__":
     # TODO remove comment marks on 10 lines below
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'],
                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
-               '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True,
-                b_new_method_no_loop=True, b_run_loop=False)
+               '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
     extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS'],
                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
                'LBearSS', i_final_year=i_final_year)

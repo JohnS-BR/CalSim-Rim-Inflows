@@ -12,8 +12,7 @@ import os
 urllib3.disable_warnings()
 
 def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year,
-                           i_y_end_year, b_use_all_y=False, b_is_COL003=False,
-                           b_new_method_no_loop=False, b_run_loop=False):
+                           i_y_end_year, b_use_all_y=False, b_is_COL003=False):
     """
     Takes in the x data and the y data and generated a full timeseries of synthetic y data.
     This is meant to replicate what the Excel/VBA does for the S-Curve disaggregation.
@@ -33,6 +32,8 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
         End year of y data to use
     b_use_all_y: bool
         Whether to use all y data or just the section in the Y years
+    b_is_COL003: bool
+        Set to true if running sheet COL003 in Upper Mokelumne. This triggers an unusual handling of monthly averages.
 
     Returns
     -------
@@ -87,7 +88,6 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
         dl_y_month_avgs = [0] + df_y_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
 
     # get the sum of this for a yearly average value
-    # TODO changed this from d_x... to d_y and also in the next line for clarity of naming. Also do in American?
     d_y_year_total_avg = sum(dl_y_month_avgs)
 
     # proportion for the months
@@ -103,154 +103,20 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     # now if we ever had any that landed at the end they would be set to len(dl_x_avg_cumulative_proportions) but we want them to be len(dl_x_avg_cumulative_proportions) - 1 so we don't go out of bounds
     il_indices = np.clip(il_indices, 0, len(dl_x_avg_cumulative_proportions) - 1)
 
-    if(b_new_method_no_loop):
-        ## This is the beginning of an s-curve modification to more closely match excel. It matches somewhat better,
-        ## but it doesn't really match, because it's not polluting the current year's df_y_cumulative_proportions with
-        ## old values.  For that, look to the loop code below.
 
-        # create a boolean mask of whether to overwrite df_factors elements by checking to see if they are greater than
-        # or equal to 1
-        bf_mask = df_x_cumulative_proportions.ge(1)
+    df_factors = pd.DataFrame(
+        np.where((dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices - 1]) == 0,
+                 (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices - 1]) / (
+                             dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[
+                         il_indices - 1] + 0.000001),
+                 (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices - 1]) / (
+                             dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[
+                         il_indices - 1])),
+        columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
 
-        # find the edges where a row switches from false to true
-        bf_starts = bf_mask & ~bf_mask.shift(axis=1, fill_value=False)
-
-        # Identify the *first* start per row (column label). Rows with no trigger become NaN.
-        bf_has_trigger = bf_mask.any(axis=1)
-        bf_first_start_col = bf_starts.idxmax(axis=1).where(bf_has_trigger)
-
-        # Build a one-hot mask that is True only at the *first* start column in each row
-        #    (pure pandas: get_dummies -> align to df columns -> cast to boolean)
-        bf_first_only = (
-            pd.get_dummies(bf_first_start_col)
-            .reindex(columns=df_x_cumulative_proportions.columns, fill_value=False)
-            .astype(bool)
-        )
-
-        # Build the mask of positions to overwrite: from the first start onward across the row
-        bf_at_or_after = bf_starts.cumsum(axis=1).gt(0)
-
-        # if ONLY the last column is over 1, don't do the overwrite
-        i_last_col = df_x_cumulative_proportions.columns[-1]
-
-        # True if last column > threshold
-        bf_last_over = df_x_cumulative_proportions[i_last_col].ge(1)
-
-        # True if any other column > threshold
-        bf_others_over = df_x_cumulative_proportions.drop(columns=i_last_col).ge(1).any(axis=1)
-
-        # We only disable overwrite at the last column when it's the ONLY one over threshold
-        bf_last_only = bf_last_over & ~bf_others_over
-
-        # Turn off overwrite for the last column in those rows
-        bf_at_or_after.loc[bf_last_only, i_last_col] = False
-
-        # Compute the "previous column" value per row, taken only at the *first* start:
-        #    Shift df right by 1 so the desired previous value aligns with the first start column,
-        #    then multiply by the one-hot and sum across columns.
-        #    min_count=1 ensures rows without a valid previous column yield NaN (not 0).
-        df_prev_val = (df_x_cumulative_proportions.shift(1, axis=1) * bf_first_only).sum(axis=1, min_count=1)
-
-        # Rows where the first start is in the very first column have no "previous" value.
-        # Disable overwriting for those rows.
-        bf_valid_rows = df_prev_val.notna()
-        bf_at_or_after.loc[~bf_valid_rows, :] = False
-
-        # Broadcast the per-row previous value across all columns,
-        # then assign in place only where at_or_after is True.
-        df_prev_val_df = pd.concat([df_prev_val] * df_x_cumulative_proportions.shape[1], axis=1)
-        df_prev_val_df.columns = df_x_cumulative_proportions.columns
-
-        df_x_cumulative_proportions[bf_at_or_after] = df_prev_val_df[bf_at_or_after]
-
-    # calculate the factors that df_x_cumulative_proportions is different by
-    # if (dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices-1]) is zero, add a little bit to it so we don't divide by zero (this is what the VBA does)
-
-    if b_run_loop:
-        # this is where we keep the prior values of df_y_cumulative_proportions to reproduce the error of old years
-        # copying onto new once new years reach at or over 100% flow
-        dl_old_SNCUM = pd.Series(np.nan, index=range(12))
-
-        #create the blank dataframe for cumulative proprotions
-        df_y_cumulative_proportions = pd.DataFrame(np.nan, index=range(i_x_start_year, i_x_end_year + 1),
-                                                   columns=range(12))
-        for year in range(i_x_start_year, i_x_end_year+1):
-            # clear out this year's list for y cumulative proportions. We need to test if we have written values or
-            # if they are still NaN at the end of the year. At year's end, we take values from dl_old_SNCUM and fill
-            # into the corresponding NaN months of dl_SNCUM.
-            dl_SNCUM = pd.Series(np.nan, index=range(12))
-            for i_k in range(12):
-                for i_n in range(12):
-                    # create variables to match excel macro
-                    d_TNCUM_k = df_x_cumulative_proportions.loc[year, i_k]
-                    d_TCUM_n = dl_x_avg_cumulative_proportions[i_n]
-                    d_SCUM_n = dl_y_avg_cumulative_proportions[i_n]
-                    if( i_n == 0):
-                        d_SCUM_n_prev = 0
-                        d_TCUM_n_prev = 0
-                    else:
-                        d_SCUM_n_prev = dl_y_avg_cumulative_proportions[i_n - 1]
-                        d_TCUM_n_prev = dl_x_avg_cumulative_proportions[i_n - 1]
-
-                    # now we enter the loop under very strange conditions. The first part of the OR statement is
-                    # modeled elsewhere in the code starting at the comment
-                    # " # now we want the same cumulative proportion ..." and the following lines
-                    # the second part of the or statement enters the IF if we are at the last month and d_TNCUM_k is
-                    # exactly 1.
-                    if ( d_TNCUM_k <= d_TCUM_n ) or ( d_TNCUM_k + i_n == 14):
-                        if d_TCUM_n - d_TCUM_n_prev == 0:
-                            d_FACT = (d_TNCUM_k - d_TCUM_n_prev) / (d_TCUM_n - d_TCUM_n_prev + 0.000001)
-                        else:
-                            d_FACT = ( d_TNCUM_k - d_TCUM_n_prev ) / ( d_TCUM_n - d_TCUM_n_prev)
-                        dl_SNCUM[i_k] = d_SCUM_n_prev + d_FACT * ( d_SCUM_n - d_SCUM_n_prev)
-            # at year's end, test if there are any NaN's in dl_SNCUM and if so, fill them in with previous year
-            dl_SNCUM = dl_SNCUM.fillna(dl_old_SNCUM)
-
-            # write that out to df_y_cumulative_proportions
-            df_y_cumulative_proportions.loc[year, :] = dl_SNCUM.values.copy()
-
-            # update the old SNCUM
-            dl_old_SNCUM = dl_SNCUM.copy()
-
-    else:
-        df_factors = pd.DataFrame(
-            np.where((dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[il_indices - 1]) == 0,
-                     (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices - 1]) / (
-                                 dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[
-                             il_indices - 1] + 0.000001),
-                     (df_x_cumulative_proportions - dl_x_avg_cumulative_proportions[il_indices - 1]) / (
-                                 dl_x_avg_cumulative_proportions[il_indices] - dl_x_avg_cumulative_proportions[
-                             il_indices - 1])),
-            columns=df_x_cumulative_proportions.columns, index=df_x_cumulative_proportions.index)
-
-        if(b_new_method_no_loop):
-            # Start one column earlier by shifting the 'starts' mask to the left,
-            # then cumsum across columns to build the "from previous column onward" mask.
-            mask_factors = bf_starts.shift(-1, axis=1, fill_value=False).cumsum(axis=1).gt(0)
-
-            # Disable rows with trigger in first column (no left neighbor to copy)
-            mask_factors.loc[~bf_valid_rows, :] = False
-
-            # Make sure mask is boolean and aligned
-            mask_factors = mask_factors.reindex_like(df_factors).astype(bool)
-
-            # 10) Per-row value to broadcast IN df_factors: left neighbor of the first trigger
-            prev_factor_val = (df_factors.shift(1, axis=1) * bf_first_only).sum(axis=1, min_count=1)
-
-            # 11) Broadcast to a DataFrame with same shape/columns
-            prev_factor_df = pd.concat([prev_factor_val] * df_factors.shape[1], axis=1)
-            prev_factor_df.columns = df_factors.columns
-            prev_factor_df = prev_factor_df.reindex_like(df_factors)
-
-            # 12) In-place overwrite only where mask_factors is True
-            df_factors[mask_factors] = prev_factor_df[mask_factors]
-
-            # Final factor for each year is set to 1
-            df_factors.iloc[:,-1] = 1
-
-        # now use these factors get df_y_cumulative_proportions by doing the reverse of that operation but with dl_y_avg_cumulative_proportions instead of dl_x_avg_cumulative_proportions
-        # these are the scaled version of the df_x_cumulative_proportions numbers
-        df_y_cumulative_proportions = dl_y_avg_cumulative_proportions[il_indices- 1] + df_factors * (dl_y_avg_cumulative_proportions[il_indices] - dl_y_avg_cumulative_proportions[il_indices- 1])
+    # now use these factors get df_y_cumulative_proportions by doing the reverse of that operation but with dl_y_avg_cumulative_proportions instead of dl_x_avg_cumulative_proportions
+    # these are the scaled version of the df_x_cumulative_proportions numbers
+    df_y_cumulative_proportions = dl_y_avg_cumulative_proportions[il_indices- 1] + df_factors * (dl_y_avg_cumulative_proportions[il_indices] - dl_y_avg_cumulative_proportions[il_indices- 1])
 
     # now we will fit a linear regression on all the data we have y data for even if it's larger than the y window
     # first get the year totals
@@ -1006,7 +872,7 @@ def read_previous_data(s_path, df_new_data):
 
 def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthetic_data,
                 i_y_start_year, i_y_end_year, b_use_all_y_data, s_name, i_x_start_year=1922,
-                i_final_year=2021, b_is_COL003=False, b_new_method_no_loop = False, b_run_loop=False):
+                i_final_year=2021, b_is_COL003=False):
 
     """
     Extends data using the s-curve disaggregation. Also creates the plots and saves the data into dataframes.
@@ -1042,8 +908,7 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
                                                                         df_current_data,
                                                                         i_x_start_year, i_final_year,
                                                                         i_y_start_year, i_y_end_year,
-                                                                        b_use_all_y_data, b_is_COL003,
-                                                                        b_run_loop=b_run_loop)
+                                                                        b_use_all_y_data, b_is_COL003)
     # generate the comparison plots
     s_curve_comparison_plots(df_curr_final_data, df_curr_synthetic_data,
                              timeseries_to_monthly(df_reference_data), timeseries_to_monthly(df_current_data),
