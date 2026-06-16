@@ -1107,3 +1107,29 @@ def sum_if_all_not_nan(df_target_data, s_sum_name, df_source_data, sl_source_nam
         df_source_data[sl_source_names].sum(axis=1),
         np.nan
     )
+
+def compare_two_df(df_data_1, df_data_2, s_data_1_name, s_data_2_name):
+        """
+        This function prints some statements to the console about how similar two dataframe series are, element by
+        element
+        ----------
+        df_data_1: dataframe
+            The dataframe of one data set to be compared.
+        df_data_2: dataframe
+            The dataframe of the other data set to be compared.
+        s_data_1_name: string
+            The name of data_1 to be printed.
+        s_data_2_name: string
+            The name of data_2 to be printed.
+        Returns
+        -------
+        None
+        """
+
+        # calculate differences
+        d_diffs = (df_data_2 - df_data_1).abs().to_numpy().max()
+        d_data_1_mean = df_data_1.mean()
+        d_data_2_mean = df_data_1.mean()
+        print("The mean for ", s_data_1_name, " is ", d_data_1_mean)
+        print("The mean for ", s_data_2_name, " is ", d_data_2_mean)
+        print("Their maximum difference is ", d_diffs)
