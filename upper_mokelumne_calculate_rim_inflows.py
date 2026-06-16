@@ -15,8 +15,8 @@ if __name__ == "__main__":
     # option to plot comparison
     b_compare_data = True
 
-    # option to run current operation with "given" SV INPUT values from sheets rather than from internally
-    # calculated values
+    # option to run each element using "upstream" (antecedent) SV INPUT values from sheets rather than from the values
+    # calculated within the python code.
     b_use_upstream_sv_inputs = True
 
     # this flag initiates two things. 1) It runs the upstream code up until we reach the inputs for the s-curve
@@ -25,6 +25,12 @@ if __name__ == "__main__":
     # "output_from_s_curve.csv") and runs the code downstream of that point. It compares the final output to the
     # SV INPUT tab of the sheets (found in "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm").
     b_replicate_sheets = True
+
+    # true on this b_reproduce_error_lbear_ss reproduces two errors in the sheets. 1) time shifts the monthly averages
+    # relative to where they belong by 3 months to replicate sheet. 2) calculates monthly averages with an incorrect
+    # denominator. The flag is set at the top of this document. Set this to false to run a more correct version of
+    # I_SLTSP.
+    b_reproduce_error_lbear_ss = True
 
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm" # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflow_sheet = "Inflows"
@@ -39,20 +45,25 @@ if __name__ == "__main__":
 
     # read in upstream sheet SV INPUT sheet data
     if b_use_upstream_sv_inputs:
-        s_upstream_sheets_path = r".\Inputs\upper_mokelumne_2022_sv_inputs.csv"
+        # read in data
+        df_sv_inputs = pd.read_excel(s_prev_rim_inflows_fn, sheet_name=s_prev_rim_inflow_sheet,
+                                     skiprows=[0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], header=0, index_col=0,
+                                     parse_dates=True)
 
-        # read the CSV
-        df_upstream_sheets = pd.read_csv(s_upstream_sheets_path, index_col=0, parse_dates=True)
-
-        # set -901 to nan
-        df_upstream_sheets.replace(-901, np.nan, inplace=True)
+    if b_replicate_sheets:
+        # read in files that contain the sheet data from just before and just after the s-curve process, to isolate that
+        # factor. The "after s" files are the fully synthetic data from the sheets.
+        df_COL003_before_s = pd.read_csv('./Inputs/s_curve_replication/col003_input_to_s_curve.csv',
+                                           index_col=0, parse_dates=True)
+        df_COL003_after_s = pd.read_csv('./Inputs/s_curve_replication/col003_output_from_s_curve.csv',
+                                           index_col=0, parse_dates=True)
 
     # gap fill the data sets that need it. this gap fills the location with monthly averages
     # nothing needed yet
 
     # merge gauges that need it.
 
-    # -- start COL003 merge --
+    # -- begin COL003 merge --
     # with COL003 (11319500), EBMUD is main historical gage (pre 2021) but NaN's are filled with CDEC MKM
     df_full_data['EBMUD_11319500']= flow_from_two_unimp(df_full_data['EBMUD_11319500'], df_full_data['MKM'], 1.0)
 
@@ -79,7 +90,9 @@ if __name__ == "__main__":
 
     print("Calculating unimpaired flows, round 1 ...")
 
-    df_unimpaired_data['LBearSS'] = unimpaired_lbear_salt_springs_fnf(df_full_data, b_reproduce_error_lbear_ss=True)
+    # see the top of this doc for details on the lbear_ss errors.
+    df_unimpaired_data['LBearSS'] = unimpaired_lbear_salt_springs_fnf(df_full_data,
+                                            b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -93,8 +106,12 @@ if __name__ == "__main__":
     df_extended_data = pd.DataFrame()
     df_synthetic_data = pd.DataFrame()
 
+    if b_replicate_sheets:
+        print("Checking inputs to s-curve, part 1...")
+        # TODO compare df_full_data['11317000'] to SV INPUT MFM008
+        compare_two_df(df_full_data['11317000'], df_sv_inputs['I_MFM008'], '11317000',
+                       'SV_INPUT_MFM008')
     print("Extending flows, part 1...")
-
     # extend with the s-curve disaggregation, round 1
     extend_data(df_full_data['11317000'], df_full_data['11318500'],
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,

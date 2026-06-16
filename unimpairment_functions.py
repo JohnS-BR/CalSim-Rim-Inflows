@@ -922,22 +922,18 @@ def unimpaired_lbear_salt_springs_fnf(df_gauge_data, b_reproduce_error_lbear_ss)
         df_filled_11315030 = df_shifted_11315030.fillna(df_fill_values)
     else:
         df_filled_11315030 = df_11315030.fillna(df_fill_values)
-    df_filled_11315030.to_csv('./Intermediate/upper_mokelumne_11315030_wrong.csv')
 
     df_gauge_data['11315030'] = df_filled_11315030
-    # Calculate storage differences for Salt Springs and Lower Bear
-
-    #
-    # if 'LBearSS' not in df_unimpaired.columns:
-    #     df_unimpaired['LBearSS'] = np.nan
 
     # Combine flows by adding gauge data, but if any of them are NaN return Nan.
     sum_if_all_not_nan(df_unimpaired, 'LBearSS', df_gauge_data, ['11315900', '11314000', '11314500',
                                                 '11315030', 'SS_HIST_EVAP', 'LB_HIST_EVAP'])
-    # Add in upstream storages
-    df_unimpaired = unimpaired_flows(df_unimpaired['LBearSS'], fl_storages=[df_gauge_data['SS_STORAGE'],
-                                                                            df_gauge_data['LB_STORAGE'],
-                                                                            df_gauge_data['PGE_OLD_RES']])
+
+    # Unimpair Little Bear Salt Springs
+    df_unimpaired = unimpaired_flows(df_unimpaired['LBearSS'],
+                                fl_storages = [df_gauge_data['SS_STORAGE'], df_gauge_data['LB_STORAGE'],
+                                               df_gauge_data['PGE_OLD_RES']]
+    )
     return df_unimpaired
 
 def unimpaired_11316600(df_full_gauge_data, df_extended_gauge_data, df_unimpaired_data):
