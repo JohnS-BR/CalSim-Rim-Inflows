@@ -9,9 +9,8 @@ from evaporation_functions import *
 if __name__ == "__main__":
     i_final_year = 2021
     print("done with imports")
-    # this holds the already extended evap rates
-    s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
+    # --- Begin Flags ---
     # option to plot comparison
     b_compare_data = True
 
@@ -32,7 +31,16 @@ if __name__ == "__main__":
     # I_SLTSP.
     b_reproduce_error_lbear_ss = True
 
-    s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm" # file path and name must be provided to plot/calculate comparison
+    # --- End Flags
+
+
+
+    # this holds the already extended evap rates
+    s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
+
+    # file path and name must be provided to plot/calculate comparison and to use SV INPUTS from sheets as upstream
+    # data
+    s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm"
     s_prev_rim_inflow_sheet = "Inflows"
 
     # first if the needed output folders don't exist, create them
@@ -52,11 +60,19 @@ if __name__ == "__main__":
 
     if b_replicate_sheets:
         # read in files that contain the sheet data from just before and just after the s-curve process, to isolate that
-        # factor. The "after s" files are the fully synthetic data from the sheets.
-        df_COL003_before_s = pd.read_csv('./Inputs/s_curve_replication/col003_input_to_s_curve.csv',
-                                           index_col=0, parse_dates=True)
-        df_COL003_after_s = pd.read_csv('./Inputs/s_curve_replication/col003_output_from_s_curve.csv',
-                                           index_col=0, parse_dates=True)
+        # factor. The "after s" files are the data from the sheets after merging the synthetic output into the gaps in
+        # the data.
+
+        # create a list of lists. inner elements are ['column_name', 'path to before csv', 'path to after csv']
+        ls_sheet_info = [['COL003', './Inputs/s_curve_replication/col003_input_to_s_curve.csv',
+                          './Inputs/s_curve_replication/col003_output_from_s_curve.csv'],
+                         ['SLTSP', './Inputs/s_curve_replication/sltsp_input_to_s_curve.csv',
+                          './Inputs/s_curve_replication/sltsp_output_from_s_curve.csv']]
+        # create the dataframes where we keep the before and after data
+        df_before_s = pd.DataFrame()
+        df_after_s = pd.DataFrame()
+
+        read_replication_data(ls_sheet_info, df_before_s, df_after_s)
 
     # gap fill the data sets that need it. this gap fills the location with monthly averages
     # nothing needed yet
@@ -108,25 +124,39 @@ if __name__ == "__main__":
 
     if b_replicate_sheets:
         print("Checking inputs to s-curve, part 1...")
-        # TODO compare df_full_data['11317000'] to SV INPUT MFM008
-        compare_two_df(df_full_data['11317000'], df_sv_inputs['I_MFM008'], '11317000',
+        # compare unrounded 11317000
+        # TODO update. the next line should really be comparing the code's 11317000 (full data) to a sheet copied in from
+        #  the scurve inputs of sheet SFM005
+        compare_two_df(df_full_data['11317000'].drop(df_full_data['11317000'].index[0]), df_sv_inputs['I_MFM008'], '11317000',
                        'SV_INPUT_MFM008')
+        # compare rounded 11317000
+        compare_two_df(df_full_data['11317000'].drop(df_full_data['11317000'].index[0]).round(2), df_sv_inputs['I_MFM008'], '11317000',
+                       'SV_INPUT_MFM008')
+
     print("Extending flows, part 1...")
     # extend with the s-curve disaggregation, round 1
     extend_data(df_full_data['11317000'], df_full_data['11318500'],
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,
                 '11318500', i_final_year=i_final_year)
-      
+
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
     df_unimpaired_data['11316600'] = unimpaired_11316600(df_full_data, df_extended_data, df_unimpaired_data)
+
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
     # extend with the s-curve disaggregation, round 2
     print("Extending flows, part 2...")
-    # TODO remove comment marks on 10 lines below
+
+    if b_replicate_sheets:
+        print("Checking inputs to s-curve, part 2...")
+        compare_two_df(df_before_s['COL003'], df_unimpaired_data['11319500'], 'col003_before_s',
+                       '11319500')
+        compare_two_df(df_before_s['SLTSP'], df_unimpaired_data['11319500'], 'sltsp_before_s',
+                       '11319500')
+
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'],
                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
                '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
@@ -150,12 +180,18 @@ if __name__ == "__main__":
 
     print("Calculating rim inflows...")
 
-    I_MFM008(df_full_data, df_rim_inflows)
-    I_SFM005(df_extended_data, df_rim_inflows)
-    I_COL003(df_extended_data, df_rim_inflows)
-    I_SLTSP(df_extended_data, df_rim_inflows)
-    I_UBEAR(df_extended_data, df_rim_inflows)
-    I_NFM010(df_extended_data, df_rim_inflows)
+    if b_replicate_sheets:
+        I_MFM008(df_full_data, df_rim_inflows)
+        I_SFM005(df_extended_data, df_rim_inflows)
+        I_COL003(df_after_s[['COL003']].rename(columns={"COL003":"11315000"}), df_rim_inflows)
+        I_SLTSP(df_after_s['SLTSP'], df_sv_inputs['I_COL003'], df_rim_inflows)
+    else:
+        I_MFM008(df_full_data, df_rim_inflows)
+        I_SFM005(df_extended_data, df_rim_inflows)
+        I_COL003(df_extended_data, df_rim_inflows)
+        I_SLTSP(df_extended_data['LBearSS'], df_extended_data['11315000'], df_rim_inflows)
+        I_UBEAR(df_extended_data, df_rim_inflows)
+        I_NFM010(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 

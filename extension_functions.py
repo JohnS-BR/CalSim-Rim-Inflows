@@ -1109,27 +1109,77 @@ def sum_if_all_not_nan(df_target_data, s_sum_name, df_source_data, sl_source_nam
     )
 
 def compare_two_df(df_data_1, df_data_2, s_data_1_name, s_data_2_name):
-        """
-        This function prints some statements to the console about how similar two dataframe series are, element by
-        element
-        ----------
-        df_data_1: dataframe
-            The dataframe of one data set to be compared.
-        df_data_2: dataframe
-            The dataframe of the other data set to be compared.
-        s_data_1_name: string
-            The name of data_1 to be printed.
-        s_data_2_name: string
-            The name of data_2 to be printed.
-        Returns
-        -------
-        None
-        """
+    """
+    This function prints some statements to the console about how similar two dataframe series are, element by
+    element
+    ----------
+    df_data_1: dataframe
+        The dataframe of one data set to be compared.
+    df_data_2: dataframe
+        The dataframe of the other data set to be compared.
+    s_data_1_name: string
+        The name of data_1 to be printed.
+    s_data_2_name: string
+        The name of data_2 to be printed.
+    Returns
+    -------
+    None
+    """
 
-        # calculate differences
-        d_diffs = (df_data_2 - df_data_1).abs().to_numpy().max()
-        d_data_1_mean = df_data_1.mean()
-        d_data_2_mean = df_data_1.mean()
-        print("The mean for ", s_data_1_name, " is ", d_data_1_mean)
-        print("The mean for ", s_data_2_name, " is ", d_data_2_mean)
-        print("Their maximum difference is ", d_diffs)
+    # align and calculate differences
+    aligned_1, aligned_2 = df_data_1.align(df_data_2, join='inner')
+    d_diffs = (aligned_2 - aligned_1).abs().max()
+    d_data_1_mean = df_data_1.mean()
+    d_data_2_mean = df_data_1.mean()
+    print("The mean for ", s_data_1_name, " is ", d_data_1_mean)
+    print("The mean for ", s_data_2_name, " is ", d_data_2_mean)
+    print("Their maximum difference is ", d_diffs)
+
+
+def read_replication_data(ls_sheet_info, df_before, df_after):
+    """
+    This function prints some statements to the console about how similar two dataframe series are, element by
+    element
+    ----------
+    ls_sheet_info: list of lists of strings
+        each element in the main list is a list. within the inner list are three strings: a variable name to be used as
+        the column name, the path to the "before" file, and the path to the "after" file.
+    df_before: dataframe
+        The dataframe where the "before" data ends up.
+    df_after: dataframe
+        The dataframe where the "after" data ends up.
+    Returns
+    -------
+    None
+    """
+    # Custom month ordering starting with October
+    c_month_map = {
+        'Oct': 0, 'Nov': 1, 'Dec': 2,
+        'Jan': 3, 'Feb': 4, 'Mar': 5,
+        'Apr': 6, 'May': 7, 'Jun': 8,
+        'Jul': 9, 'Aug': 10, 'Sep': 11
+    }
+    for sheet in ls_sheet_info:
+        # create a column in df_before with the name of the excel sheet we're taking data from
+        df_before[sheet[0]] = np.nan
+
+        # read in the sheet
+        df_temp = pd.read_csv(sheet[1], index_col=0)
+
+        # convert index from 3 letter names to integers, Oct -> 0 ... Sep -> 11
+        df_temp.columns = (df_temp.columns.map(c_month_map))
+
+        # convert to timeseries and write into df_before
+        df_before[sheet[0]] = monthly_to_timeseries(df_temp)
+
+        # create a column in df_after with the name of the excel sheet we're taking data from
+        df_after[sheet[0]] = np.nan
+
+        # read in the sheet
+        df_temp = pd.read_csv(sheet[2], index_col=0)
+
+        # convert index from 3 letter names to integers, Oct -> 0 ... Sep -> 11
+        df_temp.columns = (df_temp.columns.map(c_month_map))
+
+        # convert to timeseries and write into df_after
+        df_after[sheet[0]] = monthly_to_timeseries(df_temp)
