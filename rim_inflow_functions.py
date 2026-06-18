@@ -1750,7 +1750,7 @@ def I_SLTSP(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SLTSP')
 
-def I_UBEAR(df_extended_data, df_rim_inflows):
+def I_UBEAR(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
     """
     Calculate the final rim inflow for CalSim. Location: I_SLTSP
 
@@ -1766,7 +1766,7 @@ def I_UBEAR(df_extended_data, df_rim_inflows):
     None
     """
     # take extended LBearSS and subtract rounded 11315000
-    df_location = df_extended_data['LBearSS'] - df_extended_data['11315000'].round(2)
+    df_location = df_extended_data_bear - df_extended_data_5000.round(2)
 
     # redistribute negatives in extended LBearSS
     df_location = remove_negatives_timeseries(df_location.to_frame('temporary'))['temporary']

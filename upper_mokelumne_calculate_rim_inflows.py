@@ -15,7 +15,7 @@ if __name__ == "__main__":
     b_compare_data = True
 
     # option to run each element using "upstream" (antecedent) SV INPUT values from sheets rather than from the values
-    # calculated within the python code.
+    # calculated within the Python code.
     b_use_upstream_sv_inputs = True
 
     # this flag initiates two things. 1) It runs the upstream code up until we reach the inputs for the s-curve
@@ -185,12 +185,13 @@ if __name__ == "__main__":
         I_SFM005(df_extended_data, df_rim_inflows)
         I_COL003(df_after_s[['COL003']].rename(columns={"COL003":"11315000"}), df_rim_inflows)
         I_SLTSP(df_after_s['SLTSP'], df_sv_inputs['I_COL003'], df_rim_inflows)
+        I_UBEAR(df_after_s['SLTSP'], df_sv_inputs['I_COL003'], df_rim_inflows)
     else:
         I_MFM008(df_full_data, df_rim_inflows)
         I_SFM005(df_extended_data, df_rim_inflows)
         I_COL003(df_extended_data, df_rim_inflows)
         I_SLTSP(df_extended_data['LBearSS'], df_extended_data['11315000'], df_rim_inflows)
-        I_UBEAR(df_extended_data, df_rim_inflows)
+        I_UBEAR(df_extended_data['LBearSS'], df_extended_data['11315000'], df_rim_inflows)
         I_NFM010(df_extended_data, df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
