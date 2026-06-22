@@ -1783,27 +1783,27 @@ def I_UBEAR(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_UBEAR')
 
-def I_NFM010(df_extended_data, df_rim_inflows):
+def I_NFM010(df_11316600, df_rim_inflows):
     """
     Calculate the final rim inflow for CalSim. Location: I_SLTSP
 
     Parameters
     ----------
-    df_extended_data: dataframe
-        Dataframe of the gauge data to pull from
+    df_11316600: dataframe
+        Dataframe of 11316600, extended with s-curve
     df_rim_inflows: dataframe
-        Dataframe of rim inflows that have been calculated already
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
 
     Returns
     -------
     None
     """
     # take extended 11316600 and subtract I_UBEAR, I_SLTSP, and I_COL003
-    temp1 = df_extended_data['11316600']
+    temp1 = df_11316600
     temp2 = df_rim_inflows['I_UBEAR'].round(2)
     temp3 = df_rim_inflows['I_SLTSP'].round(2)
     temp4 = df_rim_inflows['I_COL003'].round(2)
-    df_location = (df_extended_data['11316600'] - df_rim_inflows['I_UBEAR'].round(2)  - df_rim_inflows['I_SLTSP'].round(2)
+    df_location = (df_11316600 - df_rim_inflows['I_UBEAR'].round(2)  - df_rim_inflows['I_SLTSP'].round(2)
                    - df_rim_inflows['I_COL003'].round(2))
 
     # redistribute negatives
@@ -1825,3 +1825,76 @@ def I_NFM010(df_extended_data, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFM010')
 
+def I_TGC003(df_input, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+
+    Parameters
+    ----------
+    df_input: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+
+    Returns
+    -------
+    None
+    """
+    # take the result I_NFM010 and multiply by a watershed factor
+    df_location = df_input * ( 7.35 / (333 - 7.35 - 21 - 169 - 37.3))
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # set anything negative to zero.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_TGC003'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_TGC003')
+
+def I_MOK079(df_9500_FNF, df_NFM010, df_MFM008, df_UBEAR, df_SLTSP,
+             df_SFM005, df_TGC003, df_COL003, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+
+    Parameters
+    ----------
+    df_9500_FNF: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_NFM010: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_MFM008: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_UBEAR: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_SLTSP: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_SFM005: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_TGC003: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_COL003: dataframe
+        Dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    # take the result I_NFM010 and multiply by a watershed factor
+    df_location = df_9500_FNF - df_NFM010 - df_MFM008 - df_UBEAR - df_SLTSP - df_SFM005 - df_TGC003 - df_COL003
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # set anything negative to zero.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_MOK079'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_MOK079')

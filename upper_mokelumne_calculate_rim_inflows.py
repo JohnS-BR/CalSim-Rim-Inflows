@@ -67,7 +67,14 @@ if __name__ == "__main__":
         ls_sheet_info = [['COL003', './Inputs/s_curve_replication/col003_input_to_s_curve.csv',
                           './Inputs/s_curve_replication/col003_output_from_s_curve.csv'],
                          ['SLTSP', './Inputs/s_curve_replication/sltsp_input_to_s_curve.csv',
-                          './Inputs/s_curve_replication/sltsp_output_from_s_curve.csv']]
+                          './Inputs/s_curve_replication/sltsp_output_from_s_curve.csv'],
+                         ['UBEAR', './Inputs/s_curve_replication/ubear_input_to_s_curve.csv',
+                         './Inputs/s_curve_replication/ubear_output_from_s_curve.csv'],
+                         ['NFM010', './Inputs/s_curve_replication/nfm010_input_to_s_curve.csv',
+                         './Inputs/s_curve_replication/nfm010_output_from_s_curve.csv'],
+                         ['TGC003', './Inputs/s_curve_replication/nfm010_input_to_s_curve.csv',
+                         './Inputs/s_curve_replication/tgc003_output_from_s_curve.csv']
+                         ]
         # create the dataframes where we keep the before and after data
         df_before_s = pd.DataFrame()
         df_after_s = pd.DataFrame()
@@ -107,7 +114,9 @@ if __name__ == "__main__":
     print("Calculating unimpaired flows, round 1 ...")
 
     # see the top of this doc for details on the lbear_ss errors.
-    df_unimpaired_data['LBearSS'] = unimpaired_lbear_salt_springs_fnf(df_full_data,
+    df_unimpaired_data['LBearSS_V1'] = unimpaired_lbear_salt_springs_fnf_v1(df_full_data,
+                                            b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
+    df_unimpaired_data['LBearSS_V2'] = unimpaired_lbear_salt_springs_fnf_v2(df_full_data,
                                             b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
 
     # drop the first row which is only for calculating storage differences
@@ -143,7 +152,8 @@ if __name__ == "__main__":
     print("Calculating unimpaired flows, round 2...")
     df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
     df_unimpaired_data['11316600'] = unimpaired_11316600(df_full_data, df_extended_data, df_unimpaired_data)
-
+    df_unimpaired_data['tiger_creek_conduit_accretions'] = unimpaired_tiger_creek_conduit_accretions(df_full_data,
+                                                                                                     df_extended_data)
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
@@ -160,12 +170,19 @@ if __name__ == "__main__":
     extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'],
                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
                '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
-    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS'],
+    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS_V1'],
                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
-               'LBearSS', i_final_year=i_final_year)
+               'LBearSS_V1', i_final_year=i_final_year)
+    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS_V2'],
+                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
+                'LBearSS_V2', i_final_year=i_final_year)
     extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['11316600'],
                 df_extended_data, df_synthetic_data, 1986, i_y_end_year=2001,
                 b_use_all_y_data=False, s_name='11316600', i_final_year=i_final_year)
+# TODO remove seems to be unused by sheet
+#    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['tiger_creek_conduit_accretions'],
+#                df_extended_data, df_synthetic_data, 2002, i_y_end_year=i_final_year,
+#                b_use_all_y_data=False, s_name='tiger_creek_conduit_accretions', i_final_year=i_final_year)
 
     # copy synthetic data to extended data where extended data is NaN for 11315000 and
     df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)
@@ -185,14 +202,23 @@ if __name__ == "__main__":
         I_SFM005(df_extended_data, df_rim_inflows)
         I_COL003(df_after_s[['COL003']].rename(columns={"COL003":"11315000"}), df_rim_inflows)
         I_SLTSP(df_after_s['SLTSP'], df_sv_inputs['I_COL003'], df_rim_inflows)
-        I_UBEAR(df_after_s['SLTSP'], df_sv_inputs['I_COL003'], df_rim_inflows)
+        I_UBEAR(df_after_s['UBEAR'], df_sv_inputs['I_COL003'], df_rim_inflows)
+        I_NFM010(df_after_s['NFM010'], df_rim_inflows)
+        I_TGC003(df_sv_inputs['I_NFM010'], df_rim_inflows)
+        I_MOK079(df_full_data['11319500'], df_sv_inputs['I_NFM010'], df_sv_inputs['I_MFM008'],
+                 df_sv_inputs['I_UBEAR'], df_sv_inputs['I_SLTSP'], df_sv_inputs['I_SFM005'],
+                 df_sv_inputs['I_TGC003'], df_sv_inputs['I_COL003'], df_rim_inflows)
     else:
         I_MFM008(df_full_data, df_rim_inflows)
         I_SFM005(df_extended_data, df_rim_inflows)
         I_COL003(df_extended_data, df_rim_inflows)
-        I_SLTSP(df_extended_data['LBearSS'], df_extended_data['11315000'], df_rim_inflows)
-        I_UBEAR(df_extended_data['LBearSS'], df_extended_data['11315000'], df_rim_inflows)
-        I_NFM010(df_extended_data, df_rim_inflows)
+        I_SLTSP(df_extended_data['LBearSS_V1'], df_extended_data['11315000'], df_rim_inflows)
+        I_UBEAR(df_extended_data['LBearSS_V2'], df_extended_data['11315000'], df_rim_inflows)
+        I_NFM010(df_extended_data['11316600'], df_rim_inflows)
+        I_TGC003(df_rim_inflows['I_NFM010'], df_rim_inflows)
+        I_MOK079(df_full_data['11319500'], df_rim_inflows['I_NFM010'], df_rim_inflows['I_MFM008'],
+                 df_rim_inflows['I_UBEAR'], df_rim_inflows['I_SLTSP'], df_rim_inflows['I_SFM005'],
+                 df_rim_inflows['I_TGC003'], df_rim_inflows['I_COL003'], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
@@ -204,13 +230,21 @@ if __name__ == "__main__":
 
         # calculate differences
         df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
+
+        # Add the datetime where the max occurs per column
+        df_diff = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)
+        df_diffs['Date of Max Difference'] = df_diff.idxmax()
+
         df_diffs['Median Value - Original'] = df_reference[df_rim_inflows.columns].mean()
         df_diffs['Max Percent Difference'] = (abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)).max() / df_reference[df_rim_inflows.columns].mean()*100
 
         print("Maximum differences:")
         print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
 
-        # TODO figure out the size of the two data frames df_rim_inflows and df_reference. 
+        print("Date of maximum differences:")
+        print(df_diffs['Date of Max Difference'].to_string())
+
+        # TODO figure out the size of the two data frames df_rim_inflows and df_reference.
         # currently df_rim_inflows is 1236 rows X 2 columns and
         # df_reference is 1200 rows x 81 columns
         # I think the row difference is the problem. It has to do with the years represented on each.
