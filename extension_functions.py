@@ -1,15 +1,15 @@
 import numpy as np
 import pandas as pd
-import requests, io, time
+import io, time
 from datetime import timedelta, datetime
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from dataretrieval import waterdata
-import urllib3
+import ssl, certifi
+import urllib.error, urllib.request
 import os
 
-urllib3.disable_warnings()
 
 def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i_y_start_year,
                            i_y_end_year, b_use_all_y=False, b_is_COL003=False):
@@ -760,15 +760,17 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
         while i_num_tries <= 5:
             try:
                 i_num_tries += 1
-                o_outflow_file = requests.get(s_url, allow_redirects=True, timeout=60, verify=False)
+                ssl_context = ssl.create_default_context(cafile=certifi.where())
+                o_outflow_file = urllib.request.urlopen(s_url, timeout=60, context=ssl_context)
+                s_outflow_file = o_outflow_file.read().decode('utf-8')
                 break
-            except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
+            except urllib.error.URLError:
                 time.sleep(1)
-                o_outflow_file = ''
+                s_outflow_file = ''
                 continue
 
         # we if have something too short to be real, try again with a different url
-        if o_outflow_file == '' or len(o_outflow_file.text) < 100:
+        if s_outflow_file == '' or len(s_outflow_file) < 100:
 
             # construct the url to get the CDEC data
             s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=15&dur_code=M&Start={s_start_date}&End={s_end_date}"
@@ -780,14 +782,17 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
             while i_num_tries <= 5:
                 try:
                     i_num_tries += 1
-                    o_outflow_file = requests.get(s_url, allow_redirects=True, timeout=60, verify=False)
+                    ssl_context = ssl.create_default_context(cafile=certifi.where())
+                    o_outflow_file = urllib.request.urlopen(s_url, timeout=60, context=ssl_context)
+                    s_outflow_file = o_outflow_file.read().decode('utf-8')
                     break
-                except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
+                except urllib.error.URLError:
                     time.sleep(1)
-                    o_outflow_file = ''
+                    s_outflow_file = ''
                     continue
+
             # we if have something too short to be real, try again with a different url
-            if o_outflow_file == '' or len(o_outflow_file.text) < 100:
+            if s_outflow_file == '' or len(s_outflow_file) < 100:
 
                 # construct the url to get the CDEC data
                 s_url = f"https://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={station}&SensorNums=110&dur_code=D&Start={s_start_date}-01&End={s_end_date}-30"
@@ -799,22 +804,24 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
                 while i_num_tries <= 5:
                     try:
                         i_num_tries += 1
-                        o_outflow_file = requests.get(s_url, allow_redirects=True, timeout=60, verify=False)
+                        ssl_context = ssl.create_default_context(cafile=certifi.where())
+                        o_outflow_file = urllib.request.urlopen(s_url, timeout=60, context=ssl_context)
+                        s_outflow_file = o_outflow_file.read().decode('utf-8')
                         break
-                    except requests.exceptions.ConnectionError or requests.exceptions.Timeout:
+                    except urllib.error.URLError:
                         time.sleep(1)
-                        o_outflow_file = ''
+                        s_outflow_file = ''
                         continue
 
         # if the connection never worked, skip this station
-        if o_outflow_file == '' or len(o_outflow_file.text) < 100:
+        if s_outflow_file == '' or len(s_outflow_file) < 100:
             print(f"Failed to pull CDEC data for: {station}")
             continue
 
         print(f"Pulled CDEC data for: {station}")
 
         # read this in like a CSV with only the date and value
-        df_current = pd.read_csv(io.StringIO(o_outflow_file.text), index_col=0, parse_dates=True, sep=',', header=0, usecols=['DATE TIME', 'VALUE'])
+        df_current = pd.read_csv(io.StringIO(s_outflow_file), index_col=0, parse_dates=True, sep=',', header=0, usecols=['DATE TIME', 'VALUE'])
 
         df_gauge_data_original = df_gauge_data_original.join(df_current['VALUE'].to_frame(station), how='outer')
 
