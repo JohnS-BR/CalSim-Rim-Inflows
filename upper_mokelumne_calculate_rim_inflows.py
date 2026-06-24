@@ -117,6 +117,9 @@ if __name__ == "__main__":
                                             b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
     df_unimpaired_data['LBearSS_V2'] = unimpaired_lbear_salt_springs_fnf_v2(df_full_data,
                                             b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
+    df_unimpaired_data['11309500'] = unimpaired_11309500(df_full_data)
+    df_unimpaired_data['NF_SF_ITAS'] = unimpaired_NF_SF_ITAS(df_full_data)
+    df_unimpaired_data['NH_DAM_RELEASE'] = unimpaired_NH_DAM_RELEASE(df_full_data)
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)

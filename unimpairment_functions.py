@@ -1054,7 +1054,7 @@ def unimpaired_11316600(df_full_gauge_data, df_extended_gauge_data, df_unimpaire
     df_extended_gauge_data: dataframe
         Gauge data that contains any extended gauge data sets needed to unimpair the flows. In TAF.
     df_unimpaired_data: dataframe
-        Unimpaired gauge data from other sites used to unimpaire this flow. In TAF.
+        Unimpaired gauge data from other sites used to unimpair this flow. In TAF.
     Returns
     -------
     df_temporary: dataframe
@@ -1135,3 +1135,114 @@ def unimpaired_tiger_creek_conduit_accretions(df_full_gauge_data, df_extended_da
 
     return df_unimpaired
 
+def unimpaired_11309500(df_full_gauge_data):
+    """
+    Calculate the unimpaired flow for the Calaveras River at 11309500:
+    Follows the logic from CS3_I_NHGAN_Rev2022G.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+      Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+    # 11309500: CALAVERAS R A JENNY LIND CA
+    # OHGAN_STORAGE: OLD HOGAN END OF MONTH STORAGE
+    # NHGAN_STORAGE: NEW HOGAN DAM END OF MONTH STORAGE
+    # OHGAN_evap: Old Hogan reservoir evaporation
+    # NHGAN_evap: New Hogan reservoir evaporation
+
+    # fill in zeros in place of the negative values for both storages and both evap series
+
+    df_ohgan_storage = df_full_gauge_data['OHGAN_STORAGE'].clip(lower=0)
+    df_nhgan_storage = df_full_gauge_data['NHGAN_STORAGE'].clip(lower=0)
+    df_ohgan_evap = df_full_gauge_data['OHGAN_evap'].clip(lower=0)
+    df_nhgan_evap = df_full_gauge_data['NHGAN_evap'].clip(lower=0)
+
+    #fill NaN values with zeros for evap and storage
+    df_ohgan_storage.fillna(0, inplace=True)
+    df_nhgan_storage.fillna(0, inplace=True)
+    df_ohgan_evap.fillna(0, inplace=True)
+    df_nhgan_evap.fillna(0, inplace=True)
+
+    df_unimpaired = unimpaired_flows(df_full_gauge_data['11309500'],
+                                     fl_additions=[df_ohgan_evap, df_nhgan_evap],
+                                     fl_storages=[df_ohgan_storage, df_nhgan_storage]
+                                     )
+
+    return df_unimpaired
+
+def unimpaired_NF_SF_ITAS(df_full_gauge_data):
+    """
+    Combines three gage data sets into one:
+    Follows the logic from CS3_I_NHGAN_Rev2022G.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+      Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+    # 11308000: NF CALAVERAS R NR SAN ANDREAS CA
+    # 11306000: SF CALAVERAS R NR SAN ANDREAS CA
+    # 11306500: CALAVERITAS C NR SAN ANDREAS CA
+
+    # note: we're not really unimpairing any of these gauges, we're just adding all three
+
+    df_unimpaired = unimpaired_flows(df_full_gauge_data['11308000'],
+                                     fl_additions=[df_full_gauge_data['11306000'],
+                                                   df_full_gauge_data['11306500']]
+                                     )
+
+    return df_unimpaired
+
+
+
+
+
+def unimpaired_NH_DAM_RELEASE(df_full_gauge_data):
+    """
+    Calculate the unimpaired flow from New Hogan Dam Release (USACE) (no USGS gage):
+    Follows the logic from CS3_I_NHGAN_Rev2022G.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+      Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+    # USACE_NH_RELEASE: USACE NEW HOGAN RESERVOIR RELEASE
+    # OHGAN_STORAGE: OLD HOGAN END OF MONTH STORAGE
+    # NHGAN_STORAGE: NEW HOGAN DAM END OF MONTH STORAGE
+    # OHGAN_evap: Old Hogan reservoir evaporation
+    # NHGAN_evap: New Hogan reservoir evaporation
+
+    # fill in zeros in place of the negative values for storages, evaps, and the series we're unimpairing
+
+    df_ohgan_storage = df_full_gauge_data['OHGAN_STORAGE'].clip(lower=0)
+    df_nhgan_storage = df_full_gauge_data['NHGAN_STORAGE'].clip(lower=0)
+    df_ohgan_evap = df_full_gauge_data['OHGAN_evap'].clip(lower=0)
+    df_nhgan_evap = df_full_gauge_data['NHGAN_evap'].clip(lower=0)
+    df_nh_release = df_full_gauge_data['USACE_NH_RELEASE'].clip(lower=0)
+
+    #fill NaN values with zeros for evap and storage
+    df_ohgan_storage.fillna(0, inplace=True)
+    df_nhgan_storage.fillna(0, inplace=True)
+    df_ohgan_evap.fillna(0, inplace=True)
+    df_nhgan_evap.fillna(0, inplace=True)
+
+    df_unimpaired = unimpaired_flows(df_nh_release,
+                                     fl_additions=[df_ohgan_evap, df_nhgan_evap],
+                                     fl_storages=[df_ohgan_storage, df_nhgan_storage]
+                                     )
+
+    return df_unimpaired
