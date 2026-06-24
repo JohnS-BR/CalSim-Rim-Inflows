@@ -33,8 +33,6 @@ if __name__ == "__main__":
 
     # --- End Flags
 
-
-
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
@@ -104,7 +102,8 @@ if __name__ == "__main__":
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
-    # nothing needed yet
+    calc_evap_NHGAN(s_evap_dss_path, df_full_data)
+    calc_evap_OHGAN(s_evap_dss_path, df_full_data)
 
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
 
