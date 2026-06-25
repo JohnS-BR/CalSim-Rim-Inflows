@@ -207,9 +207,16 @@ if __name__ == "__main__":
         I_UBEAR(df_after_s['UBEAR'], df_sv_inputs['I_COL003'], df_rim_inflows)
         I_NFM010(df_after_s['NFM010'], df_rim_inflows)
         I_TGC003(df_sv_inputs['I_NFM010'], df_rim_inflows)
-        I_MOK079(df_full_data['11319500'], df_sv_inputs['I_NFM010'], df_sv_inputs['I_MFM008'],
-                 df_sv_inputs['I_UBEAR'], df_sv_inputs['I_SLTSP'], df_sv_inputs['I_SFM005'],
-                 df_sv_inputs['I_TGC003'], df_sv_inputs['I_COL003'], df_rim_inflows)
+        I_NHGAN(df_unimpaired_data[['11309500']], df_unimpaired_data[['NF_SF_ITAS']],
+                df_unimpaired_data[['NH_DAM_RELEASE']], df_rim_inflows)
+        I_PARDE(df_rim_inflows)
+        I_CMCHE(df_rim_inflows)
+
+    # TODO  MOK not done yet.
+#        I_MOK079(df_full_data['11319500'], df_sv_inputs['I_NFM010'], df_sv_inputs['I_MFM008'],
+#                 df_sv_inputs['I_UBEAR'], df_sv_inputs['I_SLTSP'], df_sv_inputs['I_SFM005'],
+#                 df_sv_inputs['I_TGC003'], df_sv_inputs['I_COL003'], df_rim_inflows)
+
     else:
         I_MFM008(df_full_data, df_rim_inflows)
         I_SFM005(df_extended_data, df_rim_inflows)
@@ -218,9 +225,15 @@ if __name__ == "__main__":
         I_UBEAR(df_extended_data['LBearSS_V2'], df_extended_data['11315000'], df_rim_inflows)
         I_NFM010(df_extended_data['11316600'], df_rim_inflows)
         I_TGC003(df_rim_inflows['I_NFM010'], df_rim_inflows)
-        I_MOK079(df_full_data['11319500'], df_rim_inflows['I_NFM010'], df_rim_inflows['I_MFM008'],
-                 df_rim_inflows['I_UBEAR'], df_rim_inflows['I_SLTSP'], df_rim_inflows['I_SFM005'],
-                 df_rim_inflows['I_TGC003'], df_rim_inflows['I_COL003'], df_rim_inflows)
+        I_NHGAN(df_unimpaired_data[['11309500']], df_unimpaired_data[['NF_SF_ITAS']],
+                df_unimpaired_data[['NH_DAM_RELEASE']], df_rim_inflows)
+        I_PARDE(df_rim_inflows)
+        I_CMCHE(df_rim_inflows)
+
+#  TODO MOD not done yet
+#        I_MOK079(df_full_data['11319500'], df_rim_inflows['I_NFM010'], df_rim_inflows['I_MFM008'],
+#                 df_rim_inflows['I_UBEAR'], df_rim_inflows['I_SLTSP'], df_rim_inflows['I_SFM005'],
+#                 df_rim_inflows['I_TGC003'], df_rim_inflows['I_COL003'], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
