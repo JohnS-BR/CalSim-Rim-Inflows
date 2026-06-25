@@ -1955,8 +1955,7 @@ def I_CMCHE(df_rim_inflows):
     df_rim_inflows['I_CMCHE'] = df_rim_inflows['I_CMCHE'].round(2)
     df_rim_inflows['I_CMCHE'] = df_rim_inflows['I_CMCHE'].clip(lower=0)
 
-
-def I_MOK079(df_9500_FNF, df_NFM010, df_MFM008, df_UBEAR, df_SLTSP,
+def I_MOK079(df_9500_FNF, df_3500, df_PARDE, df_CMCHE, df_NFM010, df_MFM008, df_UBEAR, df_SLTSP,
              df_SFM005, df_TGC003, df_COL003, df_rim_inflows):
     """
     Calculate the final rim inflow for CalSim. Location: I_MOK079
@@ -1964,38 +1963,53 @@ def I_MOK079(df_9500_FNF, df_NFM010, df_MFM008, df_UBEAR, df_SLTSP,
     Parameters
     ----------
     df_9500_FNF: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
+    df_3500: dataframe
+        Single column dataframe used as input to create the final rim inflow.
+    df_PARDE: dataframe
+        Single column dataframe used as input to create the final rim inflow.
+    df_CMCHE: dataframe
+        Single column dataframe used as input to create the final rim inflow.
     df_NFM010: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_MFM008: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_UBEAR: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_SLTSP: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_SFM005: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_TGC003: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_COL003: dataframe
-        Dataframe used as input to create the final rim inflow.
+        Single column dataframe used as input to create the final rim inflow.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
     Returns
     -------
     None
     """
-    # take the result I_NFM010 and multiply by a watershed factor
-    df_location = df_9500_FNF - df_NFM010 - df_MFM008 - df_UBEAR - df_SLTSP - df_SFM005 - df_TGC003 - df_COL003
 
-    # round to two decimal places
+    # Combine flows, giving an error if indices don't match
+    # NOTE: the version of I_CMCHE in the MOK079 sheet doesn't match the version we have from SV INPUTS from the CMCHE
+    # sheet. In our current version the SV INPUT for CMCHE is exactly the same as that for PARDE, but that's not true
+    # for the I_CMCHE inside the MOK079 sheet.
+
+    # take camanche and subtract off I_PARDE and I_CMCHE
+    df_camanche_combo = (df_3500.iloc[:, 0] - df_PARDE.iloc[:, 0] - df_CMCHE.iloc[:, 0]).to_frame()
+
+    # fill df_location with df_9500_FNF, but where df_9500_FNF is NaN, fill with df_camanche_combo
+    df_location = df_9500_FNF.iloc[:, 0].fillna(df_camanche_combo.iloc[:, 0]).to_frame()
+
+    # subtract of many SV INPUT flows
+    df_location = (df_location.iloc[:, 0] - df_NFM010.iloc[:, 0] - df_MFM008.iloc[:, 0] - df_UBEAR.iloc[:, 0]
+                   - df_SLTSP.iloc[:, 0] - df_SFM005.iloc[:, 0] - df_TGC003.iloc[:, 0] - df_COL003.iloc[:, 0]).to_frame()
+
+    # round to 2 decimal places
     df_location = df_location.round(2)
 
-    # set anything negative to zero.
-    df_location.loc[df_location < 0] = 0
+    # set negative values to zero
+    df_location = df_location.clip(lower=0)
 
-    # add into the rim inflow dataframe
-    df_rim_inflows['I_MOK079'] = df_location
-
-    # create the plots to compare the observed vs synthetic data
-    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_MOK079')
+    df_rim_inflows['I_MOK079'] = df_location.iloc[:, 0]

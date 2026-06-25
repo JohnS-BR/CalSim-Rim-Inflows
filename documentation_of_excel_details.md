@@ -12,7 +12,15 @@ in sheet "Mokelumne FNF EBMUD Mok Hill"
 
 For WY 1922-1927 calculated as FNF at Camanche minus I\_PARDE"
 
-Stopping MOK079 for now, working on NHGAN, which is needed for PARDE and CMCHE, which feed into MOK079
+
+
+Sheet Mokelumne 11319500: This data is different that the 11319500 used in COL003. It says on the README sheet that
+
+it's the USGS data. The two data sets are quite different. This may be an area to improve.
+
+
+
+I\_CMCHE sheet doesn't match SV INPUT I\_CMCHE. I don't see clues about where the MOD079 version comes from.
 
 
 
@@ -70,6 +78,10 @@ In sheet "Watershed" there is a calculation of total volume of precipitation fro
 
 
 
+Blw Camanche FNF EBMUD: UNIMPAIRED USGS 11323500 MOKELUMNE R BW CAMANCHE DAM CA
+
+&#x09;Source: UFDataset\_forSacWAM\_team.xlsx
+
 
 
 
@@ -115,4 +127,8 @@ SLTSP
 &#x20;   # denominator. The flag is set at the top of this document. Set this to false to run a more correct version of
 
 &#x20;   # I\_SLTSP.
+
+
+
+UBEAR and SLTSP use different versions of Lower Bear Salt Springs FNF. TODO clarify difference.
 

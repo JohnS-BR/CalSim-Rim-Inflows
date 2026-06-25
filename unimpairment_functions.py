@@ -824,7 +824,7 @@ def unimpaired_11319500(df_full_gauge_data, df_extended_gauge_data):
     df_11318500_rounded = df_extended_gauge_data['11318500'].round(2)
     df_11317000_rounded = df_full_gauge_data['11317000'].round(2)
 
-    df_unimpaired = unimpaired_flows(df_full_gauge_data['11319500'],
+    df_unimpaired = unimpaired_flows(df_full_gauge_data['11319500_v1'],
                                      fl_subtractions=[df_11318500_rounded, df_11317000_rounded]
                                      )
 
@@ -833,7 +833,7 @@ def unimpaired_11319500(df_full_gauge_data, df_extended_gauge_data):
 def unimpaired_lbear_salt_springs_fnf_v1(df_gauge_data, b_reproduce_error_lbear_ss):
     """
     Calculate the unimpaired flow for CALCULATED UNIMPAIRED at Lower Bear and Salt Springs. Follows the logic from
-    CS3_I_SLTSP_Rev2022G.xlsm
+    CS3_I_SLTSP_Rev2022G.xlsm Uses LB_STORAGE_V1 to match sheet.
     Parameters
     ----------
     df_gauge_data: dataframe
@@ -926,11 +926,11 @@ def unimpaired_lbear_salt_springs_fnf_v1(df_gauge_data, b_reproduce_error_lbear_
     df_gauge_data['11315030'] = df_filled_11315030
 
     # Combine flows by adding gauge data, but if any of them are NaN return Nan.
-    sum_if_all_not_nan(df_unimpaired, 'LBearSS_V1', df_gauge_data, ['11315900', '11314000', '11314500',
+    sum_if_all_not_nan(df_unimpaired, 'LBearSS_v1', df_gauge_data, ['11315900', '11314000', '11314500',
                                                 '11315030', 'SS_HIST_EVAP', 'LB_HIST_EVAP'])
 
     # Unimpair Little Bear Salt Springs
-    df_unimpaired = unimpaired_flows(df_unimpaired['LBearSS_V1'],
+    df_unimpaired = unimpaired_flows(df_unimpaired['LBearSS_v1'],
                                 fl_storages = [df_gauge_data['SS_STORAGE'], df_gauge_data['LB_STORAGE_V1'],
                                                df_gauge_data['PGE_OLD_RES']]
     )
@@ -939,7 +939,7 @@ def unimpaired_lbear_salt_springs_fnf_v1(df_gauge_data, b_reproduce_error_lbear_
 def unimpaired_lbear_salt_springs_fnf_v2(df_gauge_data, b_reproduce_error_lbear_ss):
     """
     Calculate the unimpaired flow for CALCULATED UNIMPAIRED at Lower Bear and Salt Springs. Follows the logic from
-    CS3_I_UBEAR_Rev2022G.xlsm
+    CS3_I_UBEAR_Rev2022G.xlsm. Uses LB_STORAGE_V2 to match sheet.
     Parameters
     ----------
     df_gauge_data: dataframe
@@ -1032,11 +1032,11 @@ def unimpaired_lbear_salt_springs_fnf_v2(df_gauge_data, b_reproduce_error_lbear_
     df_gauge_data['11315030'] = df_filled_11315030
 
     # Combine flows by adding gauge data, but if any of them are NaN return Nan.
-    sum_if_all_not_nan(df_unimpaired, 'LBearSS_V2', df_gauge_data, ['11315900', '11314000', '11314500',
+    sum_if_all_not_nan(df_unimpaired, 'LBearSS_v2', df_gauge_data, ['11315900', '11314000', '11314500',
                                                 '11315030', 'SS_HIST_EVAP', 'LB_HIST_EVAP'])
 
     # Unimpair Little Bear Salt Springs
-    df_unimpaired = unimpaired_flows(df_unimpaired['LBearSS_V2'],
+    df_unimpaired = unimpaired_flows(df_unimpaired['LBearSS_v2'],
                                 fl_storages = [df_gauge_data['SS_STORAGE'], df_gauge_data['LB_STORAGE_V2'],
                                                df_gauge_data['PGE_OLD_RES']]
     )
@@ -1098,8 +1098,8 @@ def unimpaired_11316600(df_full_gauge_data, df_extended_gauge_data, df_unimpaire
                                                    df_full_gauge_data['LB_HIST_EVAP'].fillna(0),
                                                    df_full_gauge_data['SS_HIST_EVAP'].fillna(0),]
                                      )
-    # take the lesser value of 1) unimpaired 6600 and 2) unimpaired 11319500 and put it in df_temporary
-    df_temporary = np.minimum(df_unimpaired_data["11319500"], df_temporary)
+    # take the lesser value of 1) unimpaired 6600 and 2) unimpaired 11319500_v1 and put it in df_temporary
+    df_temporary = np.minimum(df_unimpaired_data["11319500_v1"], df_temporary)
 
     return df_temporary
 
@@ -1135,7 +1135,7 @@ def unimpaired_tiger_creek_conduit_accretions(df_full_gauge_data, df_extended_da
 
     return df_unimpaired
 
-def unimpaired_11309500(df_full_gauge_data):
+def unimpaired_11309500_for_NHGAN(df_full_gauge_data):
     """
     Calculate the unimpaired flow for the Calaveras River at 11309500:
     Follows the logic from CS3_I_NHGAN_Rev2022G.xlsm
@@ -1202,10 +1202,6 @@ def unimpaired_NF_SF_ITAS(df_full_gauge_data):
 
     return df_unimpaired
 
-
-
-
-
 def unimpaired_NH_DAM_RELEASE(df_full_gauge_data):
     """
     Calculate the unimpaired flow from New Hogan Dam Release (USACE) (no USGS gage):
@@ -1246,3 +1242,46 @@ def unimpaired_NH_DAM_RELEASE(df_full_gauge_data):
                                      )
 
     return df_unimpaired
+
+def unimpaired_11319500_v2(df_full_gauge_data):
+    """
+      Calculate the unimpaired flow from of USGS gage 11319500, stored at 11319500_v2. Not the COL003 version of
+      11319500, which is stored as 11319500_v1.
+      Follows the logic from CS3_I_MOK079_Rev2022G.xlsm
+
+      Parameters
+      ----------
+      df_full_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+      Returns
+      -------
+      df_unimpaired: dataframe
+          Unpaired flow for current station
+      """
+
+    # set negative values to zero for the following dataframes
+    df_no_neg_salt_storage = df_full_gauge_data[['SS_STORAGE']].clip(lower=0).copy(deep=True)
+    df_no_neg_lbear_storage = df_full_gauge_data[['LB_STORAGE_V1']].clip(lower=0).copy(deep=True)
+    df_no_neg_pge_storage = df_full_gauge_data[['PGE_OLD_RES']].clip(lower=0).copy(deep=True)
+    df_no_neg_lb_hist_evap = df_full_gauge_data[['LB_HIST_EVAP']].clip(lower=0).copy(deep=True)
+    df_no_neg_ss_hist_evap = df_full_gauge_data[['SS_HIST_EVAP']].clip(lower=0).copy(deep=True)
+    df_no_neg_riv_div = df_full_gauge_data[['MOK_RIV_DIV']].clip(lower=0).copy(deep=True)
+
+    # rename the columns 'TAF' to prepare for inputting to unimpaired_flows
+    df_no_neg_salt_storage.rename(columns={df_no_neg_salt_storage.columns[0]: 'TAF'}, inplace=True)
+    df_no_neg_lbear_storage.rename(columns={df_no_neg_lbear_storage.columns[0]: 'TAF'}, inplace=True)
+    df_no_neg_pge_storage.rename(columns={df_no_neg_pge_storage.columns[0]: 'TAF'}, inplace=True)
+    df_no_neg_lb_hist_evap.rename(columns={df_no_neg_lb_hist_evap.columns[0]: 'TAF'}, inplace=True)
+    df_no_neg_ss_hist_evap.rename(columns={df_no_neg_ss_hist_evap.columns[0]: 'TAF'}, inplace=True)
+    df_no_neg_riv_div.rename(columns={df_no_neg_riv_div.columns[0]: 'TAF'}, inplace=True)
+
+    #  use those values to unimpaire the 11319500_v2 data
+    df_unimpaired = unimpaired_flows(df_full_gauge_data['11319500_v2'],
+                                     fl_additions=[df_no_neg_lb_hist_evap, df_no_neg_ss_hist_evap,
+                                                   df_no_neg_riv_div],
+                                     fl_storages=[df_no_neg_salt_storage, df_no_neg_lbear_storage,
+                                                  df_no_neg_pge_storage]
+                                     )
+
+    return df_unimpaired
+
