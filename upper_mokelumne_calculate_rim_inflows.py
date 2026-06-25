@@ -41,6 +41,8 @@ if __name__ == "__main__":
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm"
     s_prev_rim_inflow_sheet = "Inflows"
 
+    # path for some extra sv inputs
+    s_prev_rim_inflows_extra = r".\Inputs\upper_mokelumne_2022_sv_inputs.csv"
     # first if the needed output folders don't exist, create them
     os.makedirs('./Intermediate', exist_ok=True)
     os.makedirs('./Figures', exist_ok=True)
@@ -55,6 +57,7 @@ if __name__ == "__main__":
         df_sv_inputs = pd.read_excel(s_prev_rim_inflows_fn, sheet_name=s_prev_rim_inflow_sheet,
                                      skiprows=[0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], header=0, index_col=0,
                                      parse_dates=True)
+        df_extra_sv_inputs = pd.read_csv(s_prev_rim_inflows_extra, index_col=0, parse_dates=True)
 
     if b_replicate_sheets:
         # read in files that contain the sheet data from just before and just after the s-curve process, to isolate that
@@ -86,15 +89,17 @@ if __name__ == "__main__":
 
     # -- begin COL003 merge --
     # with COL003 (11319500), EBMUD is main historical gage (pre 2021) but NaN's are filled with CDEC MKM
-    df_full_data['EBMUD_11319500']= flow_from_two_unimp(df_full_data['EBMUD_11319500'], df_full_data['MKM'], 1.0)
-
-    # as a continuation of the previous operation the "filled out" EBMUD is now used as the historical
-    # data for USGS 11319500. Then the filled out USGS 11319500 is used for s-curve on the COL003
-    # gage, which is USGS 11315000
-    if '11319500' not in df_full_data.columns:
-        df_full_data['11319500'] = np.nan
-    df_full_data['11319500'] = flow_from_two_unimp(df_full_data['11319500'], df_full_data['EBMUD_11319500'], 1.0)
+    # Later the filled out USGS 11319500 is used for s-curve on the COL003
+    # gage, which is USGS 11315000. Version 1 is used for COL003
+    if '11319500_v1' not in df_full_data.columns:
+        df_full_data['11319500_v1'] = np.nan
+    df_full_data['11319500_v1'] = df_full_data['EBMUD_11319500'].fillna(df_full_data['MKM'])
     # -- end COL003 merge --
+
+    if '11319500_v2' not in df_full_data.columns:
+        df_full_data['11319500_v2'] = np.nan
+    df_full_data['11319500_v2'] = df_full_data['11319500']
+    # 11319500_v2 is created for use in MOK079. This is the USGS gage 11319500. Compare with COL003 above.
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
@@ -113,14 +118,14 @@ if __name__ == "__main__":
     print("Calculating unimpaired flows, round 1 ...")
 
     # see the top of this doc for details on the lbear_ss errors.
-    df_unimpaired_data['LBearSS_V1'] = unimpaired_lbear_salt_springs_fnf_v1(df_full_data,
+    df_unimpaired_data['LBearSS_v1'] = unimpaired_lbear_salt_springs_fnf_v1(df_full_data,
                                             b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
-    df_unimpaired_data['LBearSS_V2'] = unimpaired_lbear_salt_springs_fnf_v2(df_full_data,
+    df_unimpaired_data['LBearSS_v2'] = unimpaired_lbear_salt_springs_fnf_v2(df_full_data,
                                             b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
-    df_unimpaired_data['11309500'] = unimpaired_11309500(df_full_data)
+    df_unimpaired_data['11309500'] = unimpaired_11309500_for_NHGAN(df_full_data)
     df_unimpaired_data['NF_SF_ITAS'] = unimpaired_NF_SF_ITAS(df_full_data)
     df_unimpaired_data['NH_DAM_RELEASE'] = unimpaired_NH_DAM_RELEASE(df_full_data)
-
+    df_unimpaired_data['11319500_v2'] = unimpaired_11319500_v2(df_full_data)
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 
@@ -152,7 +157,7 @@ if __name__ == "__main__":
 
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
-    df_unimpaired_data['11319500'] = unimpaired_11319500(df_full_data, df_extended_data)
+    df_unimpaired_data['11319500_v1'] = unimpaired_11319500(df_full_data, df_extended_data)
     df_unimpaired_data['11316600'] = unimpaired_11316600(df_full_data, df_extended_data, df_unimpaired_data)
     df_unimpaired_data['tiger_creek_conduit_accretions'] = unimpaired_tiger_creek_conduit_accretions(df_full_data,
                                                                                                      df_extended_data)
@@ -164,21 +169,21 @@ if __name__ == "__main__":
 
     if b_replicate_sheets:
         print("Checking inputs to s-curve, part 2...")
-        compare_two_df(df_before_s['COL003'], df_unimpaired_data['11319500'], 'col003_before_s',
-                       '11319500')
-        compare_two_df(df_before_s['SLTSP'], df_unimpaired_data['11319500'], 'sltsp_before_s',
-                       '11319500')
+        compare_two_df(df_before_s['COL003'], df_unimpaired_data['11319500_v1'], 'col003_before_s',
+                       '11319500_v1')
+        compare_two_df(df_before_s['SLTSP'], df_unimpaired_data['11319500_v1'], 'sltsp_before_s',
+                       '11319500_v1')
 
-    extend_data(df_unimpaired_data['11319500'], df_full_data['11315000'],
+    extend_data(df_unimpaired_data['11319500_v1'], df_full_data['11315000'],
                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
                '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
-    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS_V1'],
+    extend_data(df_unimpaired_data['11319500_v1'], df_unimpaired_data['LBearSS_v1'],
                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
-               'LBearSS_V1', i_final_year=i_final_year)
-    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['LBearSS_V2'],
+               'LBearSS_v1', i_final_year=i_final_year)
+    extend_data(df_unimpaired_data['11319500_v1'], df_unimpaired_data['LBearSS_v2'],
                 df_extended_data, df_synthetic_data, 1989, i_final_year, False,
-                'LBearSS_V2', i_final_year=i_final_year)
-    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['11316600'],
+                'LBearSS_v2', i_final_year=i_final_year)
+    extend_data(df_unimpaired_data['11319500_v1'], df_unimpaired_data['11316600'],
                 df_extended_data, df_synthetic_data, 1986, i_y_end_year=2001,
                 b_use_all_y_data=False, s_name='11316600', i_final_year=i_final_year)
 # TODO remove seems to be unused by sheet
@@ -211,29 +216,24 @@ if __name__ == "__main__":
                 df_unimpaired_data[['NH_DAM_RELEASE']], df_rim_inflows)
         I_PARDE(df_rim_inflows)
         I_CMCHE(df_rim_inflows)
-
-    # TODO  MOK not done yet.
-#        I_MOK079(df_full_data['11319500'], df_sv_inputs['I_NFM010'], df_sv_inputs['I_MFM008'],
-#                 df_sv_inputs['I_UBEAR'], df_sv_inputs['I_SLTSP'], df_sv_inputs['I_SFM005'],
-#                 df_sv_inputs['I_TGC003'], df_sv_inputs['I_COL003'], df_rim_inflows)
+        I_MOK079(df_unimpaired_data[['11319500_v2']], df_full_data[['11323500']], df_sv_inputs[['I_PARDE']],
+                 df_extra_sv_inputs[['I_CMCHE_IN_MOK079']],
+                 df_sv_inputs[['I_NFM010']], df_sv_inputs[['I_MFM008']],
+                 df_sv_inputs[['I_UBEAR']], df_sv_inputs[['I_SLTSP']], df_sv_inputs[['I_SFM005']],
+                 df_sv_inputs[['I_TGC003']], df_sv_inputs[['I_COL003']], df_rim_inflows)
 
     else:
         I_MFM008(df_full_data, df_rim_inflows)
         I_SFM005(df_extended_data, df_rim_inflows)
         I_COL003(df_extended_data, df_rim_inflows)
-        I_SLTSP(df_extended_data['LBearSS_V1'], df_extended_data['11315000'], df_rim_inflows)
-        I_UBEAR(df_extended_data['LBearSS_V2'], df_extended_data['11315000'], df_rim_inflows)
+        I_SLTSP(df_extended_data['LBearSS_v1'], df_extended_data['11315000'], df_rim_inflows)
+        I_UBEAR(df_extended_data['LBearSS_v2'], df_extended_data['11315000'], df_rim_inflows)
         I_NFM010(df_extended_data['11316600'], df_rim_inflows)
         I_TGC003(df_rim_inflows['I_NFM010'], df_rim_inflows)
         I_NHGAN(df_unimpaired_data[['11309500']], df_unimpaired_data[['NF_SF_ITAS']],
                 df_unimpaired_data[['NH_DAM_RELEASE']], df_rim_inflows)
         I_PARDE(df_rim_inflows)
         I_CMCHE(df_rim_inflows)
-
-#  TODO MOD not done yet
-#        I_MOK079(df_full_data['11319500'], df_rim_inflows['I_NFM010'], df_rim_inflows['I_MFM008'],
-#                 df_rim_inflows['I_UBEAR'], df_rim_inflows['I_SLTSP'], df_rim_inflows['I_SFM005'],
-#                 df_rim_inflows['I_TGC003'], df_rim_inflows['I_COL003'], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
