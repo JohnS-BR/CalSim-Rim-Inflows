@@ -1,7 +1,5 @@
 
 
-
-
 MOK079
 
 
@@ -68,6 +66,12 @@ NOTE: evaporation rate for old hogan and area capacity table is all from new hog
 
 
 
+In sheet "Watershed" there is a calculation of total volume of precipitation from 1971-2000 on two watersheds to create a scaling factor. The watersheds are "USGS 11309500 Calaveras River at Jenny Lind" and "USGS 11308900 Calaveras River below New Hogan Dam"  It looks like the calculation was done in the early 2000s and then redone in 2020 by Sam Price, with almost no change to the watershed factor. John S is not sure how to reproduce or update this calculation (where to get the data, basically) so he's using the same watershed factor for now.
+
+
+
+
+
 
 
 NFM010
@@ -84,9 +88,9 @@ COL003
 
 added flag to extend\_data and s\_curve\_disaggreation called b\_is\_COL003.
 
-this flag makes monthly average go from 1944 to present (x watershed), 
+this flag makes monthly average go from 1944 to present (x watershed),
 
-even though we have data from 1922 - present. but because we're missing 1943, that's how the sheet did 
+even though we have data from 1922 - present. but because we're missing 1943, that's how the sheet did
 
 the monthly data.
 

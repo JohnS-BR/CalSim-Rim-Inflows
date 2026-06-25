@@ -1752,12 +1752,14 @@ def I_SLTSP(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
 
 def I_UBEAR(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
     """
-    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+    Calculate the final rim inflow for CalSim. Location: I_UBEAR
 
     Parameters
     ----------
-    df_extended_data: dataframe
-        Dataframe of the gauge data to pull from
+    df_extended_data_bear: dataframe
+        Dataframe of the extended data from Lower Bear
+    df_extended_data_5000: dataframe
+        Dataframe of the extended data from 11315000 (COL003)
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
 
@@ -1785,7 +1787,7 @@ def I_UBEAR(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
 
 def I_NFM010(df_11316600, df_rim_inflows):
     """
-    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+    Calculate the final rim inflow for CalSim. Location: I_NFM010
 
     Parameters
     ----------
@@ -1827,7 +1829,7 @@ def I_NFM010(df_11316600, df_rim_inflows):
 
 def I_TGC003(df_input, df_rim_inflows):
     """
-    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+    Calculate the final rim inflow for CalSim. Location: I_TGC003
 
     Parameters
     ----------
@@ -1855,10 +1857,109 @@ def I_TGC003(df_input, df_rim_inflows):
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_TGC003')
 
+
+def I_NHGAN(df_data_early, df_data_mid, df_data_late, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NHGAN
+
+    Parameters
+    ----------
+    df_data_early: dataframe
+        The earliest interval of data available
+    df_data_mid: dataframe
+        The middle interval of data available
+    df_data_late: dataframe
+        The latest interval of data available
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    # this watershed factor is calculated using the total volume of precipitation on two watersheds:
+    # USGS 11309500 Calaveras River at Jenny Lind and USGS 11308900 Calaveras River below New Hogan Dam
+    # from 1971 to 2000. See Excel workbook CS3_I_NHGAN_Rev2022F.xlsm , sheet "Watershed" for details.
+    d_watershed =  0.9412
+
+    # multiply each dataset by the watershed factor
+    df_data_early = df_data_early * d_watershed
+    df_data_mid = df_data_mid * d_watershed
+    df_data_late = df_data_late
+
+    # set negative values to zero for df_data_late
+    df_data_late = df_data_late.clip(lower=0)
+
+    # df_data_mid gets an additional factor applied. Origin of factor is uncertain
+    df_data_mid = df_data_mid * 1.5244
+
+    # create two cutoff dates for filtering the data
+    cutoff_1 = pd.Timestamp('1962-10-01')
+    cutoff_2 = pd.Timestamp('1963-10-01')
+
+    # we merge the three datasets, before cutoff 1 for df_data_early, between cutoff 1 and 2 for df_data_mid, and after
+    # cutoff 2 for df_data_late
+
+    df_rim_inflows['I_NHGAN'] = pd.concat([
+        df_data_early[df_data_early.index < cutoff_1].iloc[:, 0],
+        df_data_mid  [(df_data_mid.index >= cutoff_1) & (df_data_mid.index < cutoff_2)].iloc[:, 0],
+        df_data_late [df_data_late.index >= cutoff_2].iloc[:, 0],
+    ])
+
+    df_rim_inflows['I_NHGAN'] = df_rim_inflows['I_NHGAN'].round(2)
+    df_rim_inflows['I_NHGAN'] = df_rim_inflows['I_NHGAN'].clip(lower=0)
+
+def I_PARDE(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_PARDE
+
+    Parameters
+    ----------
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    # this watershed factor is calculated using the total volume of precipitation on two watersheds:
+    # "New Hogan" and "Pardee". See Excel workbook CS3_I_PARDE_Rev2022F.xlsm, sheet "Watershed" for details.
+    d_watershed =  0.0700
+
+    # multipy New Hogan by the watershed factor to create Pardee flow
+    df_rim_inflows['I_PARDE'] = df_rim_inflows['I_NHGAN'] * d_watershed
+
+    # round to 2 decimal places and set negative values to zero
+    df_rim_inflows['I_PARDE'] = df_rim_inflows['I_PARDE'].round(2)
+    df_rim_inflows['I_PARDE'] = df_rim_inflows['I_PARDE'].clip(lower=0)
+
+
+def I_CMCHE(df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CMCHE
+
+    Parameters
+    ----------
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    # this watershed factor is calculated using the total volume of precipitation on two watersheds:
+    # "New Hogan" and "Pardee". See Excel workbook CS3_I_CMCHE_Rev2022F.xlsm, sheet "Watershed" for details.
+    d_watershed =  0.0700
+
+    # multipy New Hogan by the watershed factor to create Pardee flow
+    df_rim_inflows['I_CMCHE'] = df_rim_inflows['I_NHGAN'] * d_watershed
+
+    # round to 2 decimal places and set negative values to zero
+    df_rim_inflows['I_CMCHE'] = df_rim_inflows['I_CMCHE'].round(2)
+    df_rim_inflows['I_CMCHE'] = df_rim_inflows['I_CMCHE'].clip(lower=0)
+
+
 def I_MOK079(df_9500_FNF, df_NFM010, df_MFM008, df_UBEAR, df_SLTSP,
              df_SFM005, df_TGC003, df_COL003, df_rim_inflows):
     """
-    Calculate the final rim inflow for CalSim. Location: I_SLTSP
+    Calculate the final rim inflow for CalSim. Location: I_MOK079
 
     Parameters
     ----------
