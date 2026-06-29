@@ -105,10 +105,10 @@ def calculate_evap_data(df_storage_data, df_evap_rates, df_area_capacity, b_set_
             df_evaporation_data.loc[index, 'TAF'] = 0
 
         else:
-            # linearly interpolate the capacities to get the area value for the current capacity. units are acers here
+            # linearly interpolate the capacities to get the area value for the current capacity. units are acres here
             d_pred_area = np.interp(row['Averages'], df_area_capacity['Capacity'], df_area_capacity['Area'])
 
-            # multiply but the evap rate
+            # multiply by the evap rate
             df_evaporation_data.loc[index, 'TAF'] = d_pred_area * df_evap_rates.loc[index, 'Feet'] / 1000
 
     # return the dataframe
@@ -662,7 +662,7 @@ def calc_evap_NAT(s_dss_file, df_storage_data):
 
 def calc_evap_NHGAN(s_dss_file, df_storage_data):
     """
-    Calculate the evaporation amount for USGS 11426170 LAKE VALLEY RESERVOIR NEAR CISCO  CA. Follows the logic in CS3_I_LKVLY_Rev2022F.
+    Calculate the evaporation amount for New Hogan Reservoir. Follows the logic in CS3_I_NHGAN_Rev2022F.
 
     Parameters
     ----------
@@ -710,7 +710,7 @@ def calc_evap_NHGAN(s_dss_file, df_storage_data):
 
 def calc_evap_OHGAN(s_dss_file, df_storage_data):
     """
-    Calculate the evaporation amount for USGS 11426170 LAKE VALLEY RESERVOIR NEAR CISCO  CA. Follows the logic in CS3_I_LKVLY_Rev2022F.
+    Calculate the evaporation amount for Old Hogan Reservoir. Follows the logic in CS3_I_NHGAN_Rev2022F.
 
     Parameters
     ----------
@@ -755,3 +755,60 @@ def calc_evap_OHGAN(s_dss_file, df_storage_data):
 
     # calculate and set the evaporation
     df_storage_data['OHGAN_evap'] = calculate_evap_data(df_storage_data['OHGAN_STORAGE'], df_evap_rates, df_area_capacity[['Capacity', 'Area']], True)
+
+def calc_evap_JNKSN(s_dss_file, df_storage_data):
+    """
+    Calculate the evaporation amount for Jenkinson Reservoir. Follows the logic in CS3_I_CMP001_Rev2022G.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+
+    Returns
+    -------
+    None
+    """
+
+    # get the evap rates from the dss file
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_JNKSN')
+
+    # TODO REMOVE
+    df_evap_rates.to_csv('./Intermediate/upper_mokelumne_temp_evap_rates.csv')
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/JNKSN_AC.csv")
+
+    # get the TAF capacity
+    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # the sheet gets the averages for each neighboring set of points and uses those
+    df_area_capacity['Elevation'] = (df_area_capacity['Elevation (ft)'] + df_area_capacity['Elevation (ft)'].shift(
+        1)) / 2
+    df_area_capacity['Capacity'] = (df_area_capacity['TAF'] + df_area_capacity['TAF'].shift(1)) / 2
+
+    # fill NAs with zero as the sheet does, this will populate the first row
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # area = diff in capacity/ diff in elevation (ac-ft/ft=ac)
+    df_area_capacity['Area'] = (df_area_capacity['Capacity (acre-feet)'].shift(1) - df_area_capacity[
+        'Capacity (acre-feet)']) / (
+                                       df_area_capacity['Elevation (ft)'].shift(1) - df_area_capacity['Elevation (ft)'])
+
+    # again fill first row (lowest elevation) with zeros
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # make sure none of the areas are above a maximum of 650
+    df_area_capacity.loc[df_area_capacity['Area'] > 650, 'Area'] = 650
+
+    # make sure the areas are monotonically increasing
+    df_area_capacity["Area"] = df_area_capacity["Area"].cummax()
+
+    # add a row for the maximum
+    df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [41.4, 650]
+
+    # calculate and set the evaporation
+    df_storage_data['JNKSN_evap'] = calculate_evap_data(df_storage_data['JNKSN_STORAGE'], df_evap_rates,
+                                                        df_area_capacity[['Capacity', 'Area']], True)

@@ -1,3 +1,25 @@
+CMP001
+
+
+
+Export
+
+&#x09;Source: At bottom of the table for USGS 11333000, Camp Creek near Somerset			
+
+&#x09;09/04-12/08 from reports to SWRCB, 01/09-09/21 CDEC CCN			
+
+JNKSN Storage 
+
+&#x09;Missing data: 12/65 - estimated by linear interpolation
+
+&#x09;Storage began 1955
+
+&#x09;01/55-09/55 estimate based on DWR unimpaired flow data from Cosumnes River at Michigan Bar
+
+JNKSN Evaporation
+
+&#x09;Area capacity table - the zero acre-feet elevation is labeled as "3,350 ft -- guess"
+
 
 
 MOK079
@@ -21,6 +43,10 @@ it's the USGS data. The two data sets are quite different. This may be an area t
 
 
 I\_CMCHE sheet doesn't match SV INPUT I\_CMCHE. I don't see clues about where the MOD079 version comes from.
+
+
+
+PARDE and CMCHE have a rounding difference because excel rounds down and pandas uses bankers rounding. This is the only difference.
 
 
 
@@ -90,7 +116,7 @@ NFM010
 
 
 
-The SV Input at the end of Stantec's sheet is not exactly the same as the one in CS3\_SJR\_Read...xlsm. They differ in a few locations by 0.01.
+The SV Input at the end of Stantec's sheet is not exactly the same as the one in CS3\_SJR\_Read...xlsm. They differ in a few locations by 0.01. This is the source of the difference between the python and the excel.
 
 
 

@@ -82,13 +82,17 @@ if __name__ == "__main__":
 
         read_replication_data(ls_sheet_info, df_before_s, df_after_s)
 
-    # gap fill the data sets that need it. this gap fills the location with monthly averages
-    # nothing needed yet
+    # gap fill the data sets that need it.
+    # in CMP001, fill the JNKSN_STORAGE in December 1965 with linear interpolation of the adjacent months.
+    df_full_data.loc['1965-12-31', 'JNKSN_STORAGE'] = (df_full_data.loc['1965-11-30', 'JNKSN_STORAGE']
+                                                       + df_full_data.loc['1966-01-31', 'JNKSN_STORAGE']) / 2
+
+
 
     # merge gauges that need it.
 
     # -- begin COL003 merge --
-    # with COL003 (11319500), EBMUD is main historical gage (pre 2021) but NaN's are filled with CDEC MKM
+    # with COL003 (11319500), EBMUD is main historical gage (pre-2021) but NaN's are filled with CDEC MKM
     # Later the filled out USGS 11319500 is used for s-curve on the COL003
     # gage, which is USGS 11315000. Version 1 is used for COL003
     if '11319500_v1' not in df_full_data.columns:
@@ -96,10 +100,10 @@ if __name__ == "__main__":
     df_full_data['11319500_v1'] = df_full_data['EBMUD_11319500'].fillna(df_full_data['MKM'])
     # -- end COL003 merge --
 
+    # 11319500_v2 is created for use in MOK079. This is the USGS gage 11319500. Compare with COL003 above.
     if '11319500_v2' not in df_full_data.columns:
         df_full_data['11319500_v2'] = np.nan
     df_full_data['11319500_v2'] = df_full_data['11319500']
-    # 11319500_v2 is created for use in MOK079. This is the USGS gage 11319500. Compare with COL003 above.
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_gap_filled.csv')
@@ -109,6 +113,7 @@ if __name__ == "__main__":
     # calculate the evaporation amounts for all of our reservoirs
     calc_evap_NHGAN(s_evap_dss_path, df_full_data)
     calc_evap_OHGAN(s_evap_dss_path, df_full_data)
+    calc_evap_JNKSN(s_evap_dss_path, df_full_data)
 
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
 
