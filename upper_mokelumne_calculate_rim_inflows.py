@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # relative to where they belong by 3 months to replicate sheet. 2) calculates monthly averages with an incorrect
     # denominator. The flag is set at the top of this document. Set this to false to run a more correct version of
     # I_SLTSP.
-    b_reproduce_error_lbear_ss = True
+    b_reproduce_error_lbear_ss = False
 
     # --- End Flags
 
@@ -131,6 +131,8 @@ if __name__ == "__main__":
     df_unimpaired_data['NF_SF_ITAS'] = unimpaired_NF_SF_ITAS(df_full_data)
     df_unimpaired_data['NH_DAM_RELEASE'] = unimpaired_NH_DAM_RELEASE(df_full_data)
     df_unimpaired_data['11319500_v2'] = unimpaired_11319500_v2(df_full_data)
+    df_unimpaired_data['11335000'] = unimpaired_11335000(df_full_data)                  # follows sheet CMP001
+
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 

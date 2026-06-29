@@ -1285,3 +1285,34 @@ def unimpaired_11319500_v2(df_full_gauge_data):
 
     return df_unimpaired
 
+def unimpaired_11335000(df_full_gauge_data):
+    """
+     Calculate the unimpaired flow from of USGS gage 11335000.
+     Follows the logic from CS3_I_CMP001_Rev2022G.xlsm
+
+     Parameters
+     ----------
+     df_full_gauge_data: dataframe
+       Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+     Returns
+     -------
+     df_unimpaired: dataframe
+         Unpaired flow for current station
+     """
+
+    # fill in zeros in place of the negative values for storages, evaps, and the series we're unimpairing
+    df_11335000 = df_full_gauge_data['11335000'].clip(lower=0)
+    df_export = df_full_gauge_data['CMP001_EXPORT'].clip(lower=0)
+    df_JNKSN_evap = df_full_gauge_data['JNKSN_evap'].clip(lower=0)
+    df_JNKSN_storage = df_full_gauge_data['JNKSN_STORAGE'].clip(lower=0)
+
+    # fill NaN values with zeros for evap and storage
+    df_11335000.fillna(0, inplace=True)
+    df_export.fillna(0, inplace=True)
+    df_JNKSN_evap.fillna(0, inplace=True)
+    df_JNKSN_storage.fillna(0, inplace=True)
+
+    df_unimpaired = unimpaired_flows(df_11335000, fl_additions=[df_export, df_JNKSN_evap],
+                                     fl_storages=[df_JNKSN_storage])
+
+    return df_unimpaired
