@@ -1,3 +1,15 @@
+times:
+
+20 sec - evaporation functions with nothing to execute
+
+15 sec - immediately afterwards
+
+27 sec
+
+13
+
+
+
 CMP001
 
 
