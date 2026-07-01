@@ -264,23 +264,46 @@ if __name__ == "__main__":
         # calculate differences
         df_diffs = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows).max().to_frame('Max Difference')
 
+        # calculate percentile errors: the value of error that X% of the data is better than.
+        # 1) Absolute differences per column
+        diff_abs = (df_reference[df_rim_inflows.columns] - df_rim_inflows).abs()
+
+        # 2) Choose percentiles you want (expressed as proportions)
+        percentiles = [0.50, 0.90, 0.95, 0.99]
+
+        # 3) Compute percentiles per column and give nice column names
+        q_abs = diff_abs.quantile(percentiles).T
+        q_abs.columns = [f'P{int(p * 100)} Abs Diff' for p in percentiles]
+
+        # 4) Combine with your existing "Max Difference" table
+        df_diffs = diff_abs.max().to_frame('Max Difference').join(q_abs)
+
+        df_diffs.head()
+
         # Add the datetime where the max occurs per column
         df_diff = abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)
         df_diffs['Date of Max Difference'] = df_diff.idxmax()
 
-        df_diffs['Median Value - Original'] = df_reference[df_rim_inflows.columns].mean()
         df_diffs['Max Percent Difference'] = (abs(df_reference[df_rim_inflows.columns] - df_rim_inflows)).max() / df_reference[df_rim_inflows.columns].mean()*100
+        # calculate RMSE
+        df_rmse = np.sqrt(((df_reference[df_rim_inflows.columns] - df_rim_inflows) ** 2).mean()).to_frame("RMSE")
+        df_diffs = df_diffs.join(df_rmse)
 
-        print("Maximum differences:")
-        print(df_diffs.sort_values(by='Max Difference', ascending=False).to_string())
+        # format output
 
-        print("Date of maximum differences:")
-        print(df_diffs['Date of Max Difference'].to_string())
+        cols_to_format = ["Max Difference", "P50 Abs Diff", "P90 Abs Diff", "P95 Abs Diff", "P99 Abs Diff",
+                          "Max Percent Difference", "RMSE"]
 
-        # TODO figure out the size of the two data frames df_rim_inflows and df_reference.
-        # currently df_rim_inflows is 1236 rows X 2 columns and
-        # df_reference is 1200 rows x 81 columns
-        # I think the row difference is the problem. It has to do with the years represented on each.
+        df_diffs[cols_to_format] = df_diffs[cols_to_format].apply(
+            lambda s: s.map(lambda v: f"{v:.6f}")
+        )
+
+        # space out column headers
+        df_diffs.columns = [col + "   " for col in df_diffs.columns]
+
+        # print the analysis table
+        print(df_diffs.sort_values(by='Max Difference   ', ascending=False).to_string())
+
         print('Creating comparison plots...')
 
         # drop the first row of df rim inflows trimmed so it matches the reference
