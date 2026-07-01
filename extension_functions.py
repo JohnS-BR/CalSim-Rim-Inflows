@@ -18,10 +18,11 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     This is meant to replicate what the Excel/VBA does for the S-Curve disaggregation.
     Parameters
     ----------
-    df_x_data: dataframe
-        Full timeseries of x data. This is the reference unimpaired flow data.
-    df_y_data: dataframe
-        Full timeseries of available y data. This is the data that is availiable for the location we want data for.
+    df_x_data: series
+        Full timeseries of x data. This is the reference unimpaired flow data. A pandas series.
+    df_y_data: series
+        Full timeseries of available y data. This is the data that is availiable for the location we want data for. A
+        pandas series.
     i_x_start_year: int
         Start year of x data to use
     i_x_end_year: int
@@ -886,10 +887,10 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
 
     Parameters
     ----------
-    df_reference_data: dataframe
-        Reference dataset
-    df_current_data: dataframe
-        Current dataset
+    df_reference_data: series
+        Reference pandas series
+    df_current_data: series
+        Current dataset series to be extended
     df_extended_data: dataframe
         Already extended data
     df_synthetic_data: dataframe
