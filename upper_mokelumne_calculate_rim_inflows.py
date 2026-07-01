@@ -111,9 +111,9 @@ if __name__ == "__main__":
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
-    calc_evap_NHGAN(s_evap_dss_path, df_full_data)
-    calc_evap_OHGAN(s_evap_dss_path, df_full_data)
-    calc_evap_JNKSN(s_evap_dss_path, df_full_data)
+    calc_evap_NHGAN(s_evap_dss_path, df_full_data)      # see NHGAN
+    calc_evap_OHGAN(s_evap_dss_path, df_full_data)      # see NHGAN
+    calc_evap_JNKSN(s_evap_dss_path, df_full_data)      # see CMP001
 
     df_full_data.to_csv('./Intermediate/upper_mokelumne_full_gauge_data_wevap.csv')
 
@@ -124,15 +124,15 @@ if __name__ == "__main__":
 
     # see the top of this doc for details on the lbear_ss errors.
     df_unimpaired_data['LBearSS_v1'] = unimpaired_lbear_salt_springs_fnf_v1(df_full_data,
-                                            b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
+                                            b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)      # see SLTSP
     df_unimpaired_data['LBearSS_v2'] = unimpaired_lbear_salt_springs_fnf_v2(df_full_data,
-                                            b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)
-    df_unimpaired_data['11309500'] = unimpaired_11309500_for_NHGAN(df_full_data)
-    df_unimpaired_data['NF_SF_ITAS'] = unimpaired_NF_SF_ITAS(df_full_data)
-    df_unimpaired_data['NH_DAM_RELEASE'] = unimpaired_NH_DAM_RELEASE(df_full_data)
-    df_unimpaired_data['11319500_v2'] = unimpaired_11319500_v2(df_full_data)
-    df_unimpaired_data['11335000_v1'] = unimpaired_11335000(df_full_data, b_v1=True)                  # follows sheet CMP001
-    df_unimpaired_data['11335000_v2'] = unimpaired_11335000(df_full_data, b_v1=False)                  # follows sheet JNKSN
+                                            b_reproduce_error_lbear_ss=b_reproduce_error_lbear_ss)      # see UBEAR
+    df_unimpaired_data['11309500'] = unimpaired_11309500_for_NHGAN(df_full_data)                        # see NHGAN
+    df_unimpaired_data['NF_SF_ITAS'] = unimpaired_NF_SF_ITAS(df_full_data)                              # see NHGAN
+    df_unimpaired_data['NH_DAM_RELEASE'] = unimpaired_NH_DAM_RELEASE(df_full_data)                      # see NHGAN
+    df_unimpaired_data['11319500_v2'] = unimpaired_11319500_v2(df_full_data)                            # see MOK079
+    df_unimpaired_data['11335000_v1'] = unimpaired_11335000(df_full_data, b_v1=True)                    # see CMP001
+    df_unimpaired_data['11335000_v2'] = unimpaired_11335000(df_full_data, b_v1=False)                   # see JNKSN
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -174,10 +174,11 @@ if __name__ == "__main__":
 
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
-    df_unimpaired_data['11319500_v1'] = unimpaired_11319500(df_full_data, df_extended_data)
-    df_unimpaired_data['11316600'] = unimpaired_11316600(df_full_data, df_extended_data, df_unimpaired_data)
+    df_unimpaired_data['11319500_v1'] = unimpaired_11319500(df_full_data, df_extended_data)                 # see COL003
+    df_unimpaired_data['11316600'] = unimpaired_11316600(df_full_data, df_extended_data,
+                                                         df_unimpaired_data)                                # see NFM010
     df_unimpaired_data['tiger_creek_conduit_accretions'] = unimpaired_tiger_creek_conduit_accretions(df_full_data,
-                                                                                                     df_extended_data)
+                                                                df_extended_data)                           # see TGC003
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_mokelumne_unimpaired_data.csv')
 
@@ -193,24 +194,20 @@ if __name__ == "__main__":
 
     extend_data(df_unimpaired_data['11319500_v1'], df_full_data['11315000'],
                df_extended_data, df_synthetic_data, 1928, i_final_year, False,
-               '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)
+               '11315000', i_x_start_year=1922, i_final_year=i_final_year, b_is_COL003=True)        # see COL003
     extend_data(df_unimpaired_data['11319500_v1'], df_unimpaired_data['LBearSS_v1'],
                df_extended_data, df_synthetic_data, 1989, i_final_year, False,
-               'LBearSS_v1', i_final_year=i_final_year)
+               'LBearSS_v1', i_final_year=i_final_year)                                             # see SLTSP
     extend_data(df_unimpaired_data['11319500_v1'], df_unimpaired_data['LBearSS_v2'],
                 df_extended_data, df_synthetic_data, 1989, i_final_year, False,
-                'LBearSS_v2', i_final_year=i_final_year)
+                'LBearSS_v2', i_final_year=i_final_year)                                            # see UBEAR
     extend_data(df_unimpaired_data['11319500_v1'], df_unimpaired_data['11316600'],
                 df_extended_data, df_synthetic_data, 1986, i_y_end_year=2001,
-                b_use_all_y_data=False, s_name='11316600', i_final_year=i_final_year)
-# TODO remove seems to be unused by sheet
-#    extend_data(df_unimpaired_data['11319500'], df_unimpaired_data['tiger_creek_conduit_accretions'],
-#                df_extended_data, df_synthetic_data, 2002, i_y_end_year=i_final_year,
-#                b_use_all_y_data=False, s_name='tiger_creek_conduit_accretions', i_final_year=i_final_year)
+                b_use_all_y_data=False, s_name='11316600', i_final_year=i_final_year)                       # see NFM010
 
     # copy synthetic data to extended data where extended data is NaN for 11315000 and
-    df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)
-    df_extended_data.fillna({'11316600': df_synthetic_data['11316600']}, inplace=True)
+    df_extended_data.fillna({'11315000': df_synthetic_data['11315000']}, inplace=True)                # see COL003
+    df_extended_data.fillna({'11316600': df_synthetic_data['11316600']}, inplace=True)                # see NFM010
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_mokelumne_extended_data.csv')
