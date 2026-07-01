@@ -2013,3 +2013,29 @@ def I_MOK079(df_9500_FNF, df_3500, df_PARDE, df_CMCHE, df_NFM010, df_MFM008, df_
     df_location = df_location.clip(lower=0)
 
     df_rim_inflows['I_MOK079'] = df_location.iloc[:, 0]
+
+def I_JNKSN(df_11332500, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_JNKSN
+
+    Parameters
+    ----------
+    df_11332500: dataframe
+        Single column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    # round to 2 decimals
+    df_location = df_11332500.round(2)
+
+    # set anything negative to zero.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_JNKSN'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_JNKSN')

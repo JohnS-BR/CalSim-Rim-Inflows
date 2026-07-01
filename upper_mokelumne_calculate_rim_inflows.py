@@ -131,7 +131,8 @@ if __name__ == "__main__":
     df_unimpaired_data['NF_SF_ITAS'] = unimpaired_NF_SF_ITAS(df_full_data)
     df_unimpaired_data['NH_DAM_RELEASE'] = unimpaired_NH_DAM_RELEASE(df_full_data)
     df_unimpaired_data['11319500_v2'] = unimpaired_11319500_v2(df_full_data)
-    df_unimpaired_data['11335000'] = unimpaired_11335000(df_full_data)                  # follows sheet CMP001
+    df_unimpaired_data['11335000_v1'] = unimpaired_11335000(df_full_data, b_v1=True)                  # follows sheet CMP001
+    df_unimpaired_data['11335000_v2'] = unimpaired_11335000(df_full_data, b_v1=False)                  # follows sheet JNKSN
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -158,9 +159,18 @@ if __name__ == "__main__":
 
     print("Extending flows, part 1...")
     # extend with the s-curve disaggregation, round 1
+    # for SFM005
     extend_data(df_full_data['11317000'], df_full_data['11318500'],
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,
                 '11318500', i_final_year=i_final_year)
+    # for JNKSN, create a copy of data with dropped WY1955
+    df_full_data.rename(columns={'11332500': '11332500_v1'}, inplace=True)
+    df_full_data["11332500_v2"] = df_full_data["11332500_v1"].copy()
+    df_full_data.loc["1954-10-31":"1955-10-01", "11332500_v2"] = float("nan")
+    # for JNKSN, s-curve
+    extend_data(df_unimpaired_data['11335000_v2'], df_full_data['11332500_v2'],
+                df_extended_data, df_synthetic_data, 1947, 1954, False,
+                '11332500', i_final_year=i_final_year)
 
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
@@ -228,7 +238,7 @@ if __name__ == "__main__":
                  df_sv_inputs[['I_NFM010']], df_sv_inputs[['I_MFM008']],
                  df_sv_inputs[['I_UBEAR']], df_sv_inputs[['I_SLTSP']], df_sv_inputs[['I_SFM005']],
                  df_sv_inputs[['I_TGC003']], df_sv_inputs[['I_COL003']], df_rim_inflows)
-
+        I_JNKSN(df_full_data['11332500_v2'], df_rim_inflows)
     else:
         I_MFM008(df_full_data, df_rim_inflows)
         I_SFM005(df_extended_data, df_rim_inflows)
@@ -241,6 +251,7 @@ if __name__ == "__main__":
                 df_unimpaired_data[['NH_DAM_RELEASE']], df_rim_inflows)
         I_PARDE(df_rim_inflows)
         I_CMCHE(df_rim_inflows)
+        I_JNKSN(df_full_data['11332500_v2'], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
 
