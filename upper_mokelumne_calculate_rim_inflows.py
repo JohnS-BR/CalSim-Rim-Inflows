@@ -74,7 +74,9 @@ if __name__ == "__main__":
                          ['NFM010', './Inputs/s_curve_replication/nfm010_input_to_s_curve.csv',
                          './Inputs/s_curve_replication/nfm010_output_from_s_curve.csv'],
                          ['TGC003', './Inputs/s_curve_replication/nfm010_input_to_s_curve.csv',
-                         './Inputs/s_curve_replication/tgc003_output_from_s_curve.csv']
+                         './Inputs/s_curve_replication/tgc003_output_from_s_curve.csv'],
+                         ['CMP001', './Inputs/s_curve_replication/cmp001_input_to_s_curve.csv',
+                          './Inputs/s_curve_replication/cmp001_output_from_s_curve.csv']
                          ]
         # create the dataframes where we keep the before and after data
         df_before_s = pd.DataFrame()
@@ -133,6 +135,8 @@ if __name__ == "__main__":
     df_unimpaired_data['11319500_v2'] = unimpaired_11319500_v2(df_full_data)                            # see MOK079
     df_unimpaired_data['11335000_v1'] = unimpaired_11335000(df_full_data, b_v1=True)                    # see CMP001
     df_unimpaired_data['11335000_v2'] = unimpaired_11335000(df_full_data, b_v1=False)                   # see JNKSN
+    df_unimpaired_data['11333000'] = unimpaired_11333000(df_full_data)                                  # see CMP001
+
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -156,7 +160,11 @@ if __name__ == "__main__":
         # compare rounded 11317000
         compare_two_df(df_full_data['11317000'].drop(df_full_data['11317000'].index[0]).round(2), df_sv_inputs['I_MFM008'], '11317000',
                        'SV_INPUT_MFM008')
-
+        compare_two_df(df_unimpaired_data['11335000_v1'], df_before_s['CMP001'], '11335000',
+                       'before_s_CMP001')                                                   # for CMP001, X
+        print("checking output from s-curve, part 1")
+        compare_two_df(df_unimpaired_data['11333000'], df_after_s['CMP001'], '11333000',
+                   'after_s_CMP001')                                                       # for CMP001, Y
     print("Extending flows, part 1...")
     # extend with the s-curve disaggregation, round 1
     # for SFM005
@@ -170,7 +178,10 @@ if __name__ == "__main__":
     # for JNKSN, s-curve
     extend_data(df_unimpaired_data['11335000_v2'], df_full_data['11332500_v2'],
                 df_extended_data, df_synthetic_data, 1947, 1954, False,
-                '11332500', i_final_year=i_final_year)
+                '11332500', i_final_year=i_final_year)                                               # see JNKSN
+    extend_data(df_unimpaired_data['11335000_v1'], df_unimpaired_data['11333000'],
+                df_extended_data, df_synthetic_data, 1956, 2004, False,
+                '11333000', i_final_year=i_final_year)                                               # see CMP001
 
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
