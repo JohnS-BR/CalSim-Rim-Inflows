@@ -1285,7 +1285,7 @@ def unimpaired_11319500_v2(df_full_gauge_data):
 
     return df_unimpaired
 
-def unimpaired_11335000(df_full_gauge_data):
+def unimpaired_11335000(df_full_gauge_data, b_v1=True):
     """
      Calculate the unimpaired flow from of USGS gage 11335000.
      Follows the logic from CS3_I_CMP001_Rev2022G.xlsm
@@ -1300,19 +1300,26 @@ def unimpaired_11335000(df_full_gauge_data):
          Unpaired flow for current station
      """
 
-    # fill in zeros in place of the negative values for storages, evaps, and the series we're unimpairing
-    df_11335000 = df_full_gauge_data['11335000'].clip(lower=0)
-    df_export = df_full_gauge_data['CMP001_EXPORT'].clip(lower=0)
+    df_11335000 = df_full_gauge_data['11335000'].copy()
+    df_export = df_full_gauge_data['CMP001_EXPORT']
+    # fill in zeros in place of the negative values for storages, evaps
     df_JNKSN_evap = df_full_gauge_data['JNKSN_evap'].clip(lower=0)
     df_JNKSN_storage = df_full_gauge_data['JNKSN_STORAGE'].clip(lower=0)
 
+    if not b_v1:
+        #for version 2, we use zero for the storage in december of 1965
+        df_JNKSN_storage.loc['1965-12-31'] = 0
     # fill NaN values with zeros for evap and storage
     df_11335000.fillna(0, inplace=True)
     df_export.fillna(0, inplace=True)
     df_JNKSN_evap.fillna(0, inplace=True)
     df_JNKSN_storage.fillna(0, inplace=True)
 
-    df_unimpaired = unimpaired_flows(df_11335000, fl_additions=[df_export, df_JNKSN_evap],
-                                     fl_storages=[df_JNKSN_storage])
+    # combine storage diff, evap, and export
+    df_unimpaired_temp = unimpaired_flows(df_export, fl_additions=[df_JNKSN_evap], fl_storages=[df_JNKSN_storage])
+    # clip negatives to zero
+    df_unimpaired_temp = df_unimpaired_temp.clip(lower=0)
+
+    df_unimpaired = unimpaired_flows(df_11335000, fl_additions=[df_unimpaired_temp])
 
     return df_unimpaired
