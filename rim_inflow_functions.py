@@ -1721,10 +1721,10 @@ def I_SLTSP(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
 
     Parameters
     ----------
-    df_extended_data_bear: dataframe
-        Dataframe of the unimpaired (FNF) data from L Bear Salt Springs
-    df_extended_data_5000: dataframe
-        Dataframe of the unimpaired data from 11315000 (COL003)
+    df_extended_data_bear: series
+        Series of the unimpaired (FNF) data from L Bear Salt Springs
+    df_extended_data_5000: series
+        Series of the unimpaired data from 11315000 (COL003)
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
 
@@ -1756,10 +1756,10 @@ def I_UBEAR(df_extended_data_bear, df_extended_data_5000, df_rim_inflows):
 
     Parameters
     ----------
-    df_extended_data_bear: dataframe
-        Dataframe of the extended data from Lower Bear
-    df_extended_data_5000: dataframe
-        Dataframe of the extended data from 11315000 (COL003)
+    df_extended_data_bear: series
+        Series of the extended data from Lower Bear
+    df_extended_data_5000: series
+        Series of the extended data from 11315000 (COL003)
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already
 
@@ -1791,8 +1791,8 @@ def I_NFM010(df_11316600, df_rim_inflows):
 
     Parameters
     ----------
-    df_11316600: dataframe
-        Dataframe of 11316600, extended with s-curve
+    df_11316600: series
+        Series of 11316600, extended with s-curve
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
 
@@ -1833,8 +1833,8 @@ def I_TGC003(df_input, df_rim_inflows):
 
     Parameters
     ----------
-    df_input: dataframe
-        Dataframe used as input to create the final rim inflow.
+    df_input: series
+        Series used as input to create the final rim inflow.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
 
@@ -1865,11 +1865,11 @@ def I_NHGAN(df_data_early, df_data_mid, df_data_late, df_rim_inflows):
     Parameters
     ----------
     df_data_early: dataframe
-        The earliest interval of data available
+        The earliest interval of data available, a one-column dataframe.
     df_data_mid: dataframe
-        The middle interval of data available
+        The middle interval of data available, a one-column dataframe.
     df_data_late: dataframe
-        The latest interval of data available
+        The latest interval of data available, a one-column dataframe.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
     Returns
@@ -2020,8 +2020,8 @@ def I_JNKSN(df_11332500, df_rim_inflows):
 
     Parameters
     ----------
-    df_11332500: dataframe
-        Single column dataframe used as input to create the final rim inflow.
+    df_11332500: series
+        Series used as input to create the final rim inflow.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
     Returns
