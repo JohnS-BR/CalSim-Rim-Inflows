@@ -2039,3 +2039,71 @@ def I_JNKSN(df_11332500, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_JNKSN')
+
+def I_CMP001(df_11333000, df_jnksn, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CMP001
+
+    Parameters
+    ----------
+    df_11332500: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_jnksn: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    # retrieve the first column as a series. this should be the only column
+    df_location = df_11333000.iloc[:, 0]
+
+    # retrieve the first column as a series. this should be the only column
+    df_jnksn_series = df_jnksn.iloc[:, 0]
+
+    # subtract of the final flow from Jnksn and multiply by a watershed factor
+    df_location = (df_location - df_jnksn_series) * (62.6 - 18.2 - 32.4) / (62.6 - 18.2)
+
+    # round to 2 decimals
+    df_location = df_location.round(2)
+
+    # set anything negative to zero.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_CMP001'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_CMP001')
+
+def I_CMP014(df_11331500, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CMP001
+
+    Parameters
+    ----------
+    df_11331500: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    # retrieve the first column as a series. this should be the only column
+    df_location = df_11331500.iloc[:, 0]
+
+    # round to 2 decimals
+    df_location = df_location.round(2)
+
+    # set anything negative to zero.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_CMP014'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_CMP014')

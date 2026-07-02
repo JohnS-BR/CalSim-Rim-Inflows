@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # relative to where they belong by 3 months to replicate sheet. 2) calculates monthly averages with an incorrect
     # denominator. The flag is set at the top of this document. Set this to false to run a more correct version of
     # I_SLTSP.
-    b_reproduce_error_lbear_ss = False
+    b_reproduce_error_lbear_ss = True
 
     # --- End Flags
 
@@ -76,7 +76,9 @@ if __name__ == "__main__":
                          ['TGC003', './Inputs/s_curve_replication/nfm010_input_to_s_curve.csv',
                          './Inputs/s_curve_replication/tgc003_output_from_s_curve.csv'],
                          ['CMP001', './Inputs/s_curve_replication/cmp001_input_to_s_curve.csv',
-                          './Inputs/s_curve_replication/cmp001_output_from_s_curve.csv']
+                          './Inputs/s_curve_replication/cmp001_output_from_s_curve.csv'],
+                         ['CMP014', './Inputs/s_curve_replication/cmp014_input_to_s_curve.csv',
+                         './Inputs/s_curve_replication/cmp014_output_from_s_curve.csv']
                          ]
         # create the dataframes where we keep the before and after data
         df_before_s = pd.DataFrame()
@@ -89,7 +91,13 @@ if __name__ == "__main__":
     df_full_data.loc['1965-12-31', 'JNKSN_STORAGE'] = (df_full_data.loc['1965-11-30', 'JNKSN_STORAGE']
                                                        + df_full_data.loc['1966-01-31', 'JNKSN_STORAGE']) / 2
 
-
+    # drop parts of data sets that need it.
+    # for JNKSN, create a copy of data with dropped WY1955
+    df_full_data.rename(columns={'11332500': '11332500_v1'}, inplace=True)
+    df_full_data["11332500_v2"] = df_full_data["11332500_v1"].copy()
+    df_full_data.loc["1954-10-31":"1955-10-01", "11332500_v2"] = float("nan")
+    # for CMP014, create a copy of data with dropped WY1955 and WY1956
+    df_full_data.loc["1954-10-31":"1956-10-01", "11331500"] = float("nan")
 
     # merge gauges that need it.
 
@@ -160,21 +168,22 @@ if __name__ == "__main__":
         # compare rounded 11317000
         compare_two_df(df_full_data['11317000'].drop(df_full_data['11317000'].index[0]).round(2), df_sv_inputs['I_MFM008'], '11317000',
                        'SV_INPUT_MFM008')
-        compare_two_df(df_unimpaired_data['11335000_v1'], df_before_s['CMP001'], '11335000',
-                       'before_s_CMP001')                                                   # for CMP001, X
-        print("checking output from s-curve, part 1")
-        compare_two_df(df_unimpaired_data['11333000'], df_after_s['CMP001'], '11333000',
-                   'after_s_CMP001')                                                       # for CMP001, Y
+        compare_two_df(df_unimpaired_data['11335000_v1'], df_before_s['CMP001'], '11335000_v1',
+                       'before_s_CMP001')                                                   # for CMP001
+        compare_two_df(df_unimpaired_data['11335000_v2'], df_before_s['CMP014'], '11335000_v2',
+                       'before_s_CMP014')                                                   # for CMP014
+
+    # for JNKSN, create a copy of data with dropped WY1955
+    df_full_data.rename(columns={'11332500': '11332500_v1'}, inplace=True)
+    df_full_data["11332500_v2"] = df_full_data["11332500_v1"].copy()
+    df_full_data.loc["1954-10-31":"1955-10-01", "11332500_v2"] = float("nan")
+
     print("Extending flows, part 1...")
     # extend with the s-curve disaggregation, round 1
     # for SFM005
     extend_data(df_full_data['11317000'], df_full_data['11318500'],
                 df_extended_data, df_synthetic_data, 1934, i_final_year, False,
                 '11318500', i_final_year=i_final_year)
-    # for JNKSN, create a copy of data with dropped WY1955
-    df_full_data.rename(columns={'11332500': '11332500_v1'}, inplace=True)
-    df_full_data["11332500_v2"] = df_full_data["11332500_v1"].copy()
-    df_full_data.loc["1954-10-31":"1955-10-01", "11332500_v2"] = float("nan")
     # for JNKSN, s-curve
     extend_data(df_unimpaired_data['11335000_v2'], df_full_data['11332500_v2'],
                 df_extended_data, df_synthetic_data, 1947, 1954, False,
@@ -182,6 +191,9 @@ if __name__ == "__main__":
     extend_data(df_unimpaired_data['11335000_v1'], df_unimpaired_data['11333000'],
                 df_extended_data, df_synthetic_data, 1956, 2004, False,
                 '11333000', i_final_year=i_final_year)                                               # see CMP001
+    extend_data(df_unimpaired_data['11335000_v2'], df_full_data['11331500'],
+                df_extended_data, df_synthetic_data, 1949, 1954, False,
+                '11331500', i_final_year=i_final_year)                                               # see CMP014
 
     # unimpairing the data for those that rely on previously s-curved data
     print("Calculating unimpaired flows, round 2...")
@@ -247,6 +259,8 @@ if __name__ == "__main__":
                  df_sv_inputs[['I_UBEAR']], df_sv_inputs[['I_SLTSP']], df_sv_inputs[['I_SFM005']],
                  df_sv_inputs[['I_TGC003']], df_sv_inputs[['I_COL003']], df_rim_inflows)
         I_JNKSN(df_full_data['11332500_v2'], df_rim_inflows)
+        I_CMP001(df_after_s[['CMP001']], df_extra_sv_inputs[['I_JNKSN_IN_CMP001']], df_rim_inflows)
+        I_CMP014(df_after_s[['CMP014']], df_rim_inflows)
     else:
         I_MFM008(df_full_data, df_rim_inflows)
         I_SFM005(df_extended_data, df_rim_inflows)
@@ -260,8 +274,11 @@ if __name__ == "__main__":
         I_PARDE(df_rim_inflows)
         I_CMCHE(df_rim_inflows)
         I_JNKSN(df_full_data['11332500_v2'], df_rim_inflows)
+        I_CMP001(df_extended_data[['11333000']], df_rim_inflows[['I_JNKSN']], df_rim_inflows)
+        I_CMP014(df_extended_data[['11331500']], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
+
 
     # Comparison with Previous Rim Inflow dataset
     if b_compare_data:

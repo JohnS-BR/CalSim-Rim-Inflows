@@ -1,4 +1,5 @@
 from extension_functions import *
+from extension_functions import *
 
 
 if __name__ == "__main__":

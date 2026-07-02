@@ -1,14 +1,28 @@
-times:
-
-20 sec - evaporation functions with nothing to execute
-
-15 sec - immediately afterwards
-
-27 sec
-
-13
+CMP014
 
 
+
+USGS 11335000 UNIMP
+
+&#x09;Same as JNKSN
+
+
+
+
+
+JNKSN
+
+
+
+MODELA - don't use WY55 in y data set, labeled as "impacted by dam"
+
+
+
+USGS 11335000 UNIMP
+
+&#x09;Does not use interpolated Dec 1965 Jenkinson storage. DIFFERENT from CMP001
+
+&#x09;
 
 CMP001
 
@@ -16,11 +30,11 @@ CMP001
 
 Export
 
-&#x09;Source: At bottom of the table for USGS 11333000, Camp Creek near Somerset			
+&#x09;Source: At bottom of the table for USGS 11333000, Camp Creek near Somerset
 
-&#x09;09/04-12/08 from reports to SWRCB, 01/09-09/21 CDEC CCN			
+&#x09;09/04-12/08 from reports to SWRCB, 01/09-09/21 CDEC CCN
 
-JNKSN Storage 
+JNKSN Storage
 
 &#x09;Missing data: 12/65 - estimated by linear interpolation
 
@@ -31,6 +45,20 @@ JNKSN Storage
 JNKSN Evaporation
 
 &#x09;Area capacity table - the zero acre-feet elevation is labeled as "3,350 ft -- guess"
+
+
+
+I\_JNKSN 
+
+&#x09;This version differs from our CS3\_SJR\_ReadAllInflowDatatoDSS\_05.17.23 on the following dates:
+
+&#x09;10/2012, 10/2015-09/2016, 10/2017, 10/2018-07/2019
+
+&#x09;I have added the CMP001 version of this data into upper\_mokelumne\_2022\_sv\_inputs.csv
+
+USGS 11335000 UNIMP
+
+&#x09;Uses the interpolated Dec 1965 Jenkinson storage. DIFFERENT from JNKSN and CMP014
 
 
 
