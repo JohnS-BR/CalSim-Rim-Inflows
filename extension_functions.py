@@ -131,7 +131,7 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
         df_y_year_totals.drop(index=1967, inplace=True)
     # fit a model and get the slope and intercept
     o_lin_model = LinearRegression()
-    o_lin_model.fit(df_x_year_totals.loc[df_y_year_totals.index,], df_y_year_totals)
+    o_lin_model.fit(df_x_year_totals.loc[df_y_year_totals.index], df_y_year_totals)
     d_slope = o_lin_model.coef_[0][0]
     d_intercept = o_lin_model.intercept_[0]
 
