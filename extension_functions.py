@@ -1336,3 +1336,63 @@ def two_s_curves_comparison_plots(df_final_y_dat_1, df_x_data_1,
     plt.savefig(f'./Figures/Model_Comparison/{s_current_location} Comparison of Two Models, {s_model_name_1} and {s_model_name_2}'
                 , bbox_inches='tight', dpi=300)
     plt.close()
+
+def fill_monthly_storage(df_location, i_start_year, i_start_month, i_end_year, i_end_month):
+    """
+        Fills missing storage values using monthly averages.
+
+        Parameters
+        ----------
+        df_location : DataFrame
+            One-column dataframe with DatetimeIndex.
+        i_start_year : int
+            First year of the dataset to average.
+        i_start_month : int
+            First month of the dataset to average.
+        i_end_year : int
+            Last year of the dataset to average.
+        i_end_month : int
+            Last month of the dataset to average.
+        Returns
+        -------
+        DataFrame
+            Same one-column dataframe with NaNs filled only where (year < i_start_year),
+            using monthly means computed from the specified (year, month) window.
+        """
+
+    col = df_location.columns[0]
+    ser = df_location[col]
+
+    # ---- STEP 1: build climatology start boundary ----
+    start_mask = (
+            (ser.index.year > i_start_year)
+            | ((ser.index.year == i_start_year) &
+               (ser.index.month >= i_start_month))
+    )
+
+    # ---- STEP 2: build climatology end boundary ----
+    end_mask = (
+            (ser.index.year < i_end_year)
+            | ((ser.index.year == i_end_year) &
+               (ser.index.month <= i_end_month))
+    )
+
+    # final climatology mask
+    mask_range = start_mask & end_mask
+
+    # ---- STEP 3: compute monthly averages ----
+    monthly_means = ser[mask_range].groupby(ser[mask_range].index.month).mean()
+    monthly_means = monthly_means.reindex(range(1, 13))  # ensure 1..12
+
+    # ---- STEP 4: fill only where year < i_start_year ----
+    mask_fill = (
+            ser.isna()
+            & (ser.index.year < i_start_year)
+    )
+
+    ser_filled = ser.copy()
+    ser_filled.loc[mask_fill] = (
+        ser_filled.loc[mask_fill].index.month.map(monthly_means)
+    )
+
+    return ser_filled.to_frame(col)

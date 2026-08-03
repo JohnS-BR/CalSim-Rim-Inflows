@@ -2270,7 +2270,7 @@ def I_SFS033(df_11296500, df_rim_inflows):
 
     Parameters
     ----------
-    df_11335700: dataframe
+    df_11296500: dataframe
         One-column dataframe used as input to create the final rim inflow. Model A from SFS033 sheet.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
@@ -2279,7 +2279,7 @@ def I_SFS033(df_11296500, df_rim_inflows):
     None
     """
 
-    df_location = df_11296500.iloc[:, 0]
+    df_location = df_11296500.iloc[:, 0].copy()
 
     # area factor calculated in sheet CS3_I_SFS033_Rev2022F.xlsm, tab "FINAL INFLOW"
     d_area_factor = 0.400
@@ -2296,3 +2296,123 @@ def I_SFS033(df_11296500, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SFS033')
+
+def I_PCRST(df_11296500, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_PCRST. This is an identical calculation to SFS033 above,
+    except for a different area factor
+    Parameters
+    ----------
+    df_11296500: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model A from PCRST sheet.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_11296500.iloc[:, 0].copy()
+
+    # area factor calculated in sheet CS3_I_PCRST_Rev2022F.xlsm, tab "FINAL INFLOW"
+    d_area_factor = 0.600
+    df_location = df_location * d_area_factor
+
+    # round to 2 decimals
+    df_location = df_location.round(2)
+
+    # set anything negative to zero.
+    df_location.loc[df_location < 0] = 0
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_PCRST'] = df_location
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_PCRST')
+
+def I_SFS030(df_location, df_I_SFS033, df_I_PCRST, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SFS030. Replicates logic from sheet CS3_I_SFS030_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model A from SFS030 sheet.
+    df_I_SFS033: dataframe
+        One-column dataframe, the rim inflow output from I_SFS033.
+    df_I_PCRST: dataframe
+        One-column dataframe, the rim inflow output from I_PCRST.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    # subtract the rim inflows from the other two locations
+    df_location = (df_location.iloc[:,0] - df_I_SFS033.iloc[:,0] - df_I_PCRST.iloc[:,0]).to_frame(df_location.columns[0])
+
+    # redistribute any negatives
+    df_location = remove_negatives_timeseries(df_location)
+
+    # watershed (area only) factor
+    df_location = df_location * 0.16
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SFS030'] = df_location
+
+    df_location.rename(columns={'11298000': 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SFS030')
+
+
+def I_LYONS(df_location, df_I_SFS033, df_I_PCRST, df_I_SFS030, df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_LYONS. Replicates logic from sheet CS3_I_LYONS_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model A from LYONS sheet.
+    df_I_SFS033: dataframe
+        One-column dataframe, the rim inflow output from I_SFS033.
+    df_I_PCRST: dataframe
+        One-column dataframe, the rim inflow output from I_PCRST.
+    df_I_SFS030: dataframe
+        One-column dataframe, the rim inflow output from I_SFS030.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+    if df_location.columns[0] == '11298000_v2':
+        df_location.rename(columns={'11298000_v2': '11298000'}, inplace=True)
+
+    # subtract the rim inflows from the other two locations
+    df_location = (df_location.iloc[:,0] - df_I_SFS033.iloc[:,0] - df_I_PCRST.iloc[:,0] -
+                   df_I_SFS030.iloc[:,0]).to_frame(df_location.columns[0])
+
+    # redistribute any negatives
+    df_location = remove_negatives_timeseries(df_location)
+
+    # watershed (area only) factor
+    df_location = df_location * 0.84
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_LYONS'] = df_location
+
+    df_location.rename(columns={'11298000': 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_LYONS')

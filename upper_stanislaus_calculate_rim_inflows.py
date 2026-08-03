@@ -6,6 +6,11 @@ from evaporation_functions import *
 if __name__ == "__main__":
     i_final_year = 2021
 
+    # this reproduces various errors found in the workbooks
+    b_reproduce_errors = True
+        # error 1: in LYONS,should be identical to MODELA tab in SFS030 BUT, even though it says "Run then replace Feb-
+        # Sep 1940 with historical data" the 2022F version of the sheet does not have the data replaced with historical data.
+
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
@@ -27,10 +32,18 @@ if __name__ == "__main__":
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_gap_filled.csv')
 
+    # fill storage with monthly averages
+    df_full_data['11295900_filled'] = fill_monthly_storage(df_full_data[['11295900']], i_start_year=1981, i_start_month=10,
+                                i_end_year=i_final_year, i_end_month=9)
+
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
     calc_evap_11295900(s_evap_dss_path, df_full_data)                                                   # see SFS033
+    calc_evap_11297700(s_evap_dss_path, df_full_data)                                                   # see SFS030
+    calc_evap_11293460(s_evap_dss_path, df_full_data)                                                   # see NFS033
+    calc_evap_11293350(s_evap_dss_path, df_full_data)                                                   # see NFS033
+    calc_evap_11293370(s_evap_dss_path, df_full_data)                                                   # see NFS033
 
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_wevap.csv')
 
@@ -40,6 +53,8 @@ if __name__ == "__main__":
     print("Calculating unimpaired flows...")
 
     df_unimpaired_data['11296500'] = unimpaired_11296500(df_full_data)                                  # see SFS033
+    df_unimpaired_data['11298000'] = unimpaired_11298000(df_full_data)                                  # see SFS030
+    df_unimpaired_data['11293600'] = unimpaired_11293600(df_full_data)                                  # see SFS030
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -62,7 +77,13 @@ if __name__ == "__main__":
     extend_data(df_full_data['SNS'], df_unimpaired_data['11296500'],
                 df_extended_data, df_synthetic_data, 1939, i_final_year, False,
                 '11296500', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see SFS033
-
+    extend_data(df_full_data['SNS'], df_unimpaired_data['11298000'],
+                df_extended_data, df_synthetic_data, 1941, i_final_year, False,
+                '11298000', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see SFS030
+    if b_reproduce_errors:
+        df_extended_data['11298000_v2'] = df_extended_data['11298000']
+    df_extended_data.loc['02-28-1940':'09-30-1940', '11298000'] = (
+                df_unimpaired_data.loc)['02-28-1940':'09-30-1940', '11298000']                          # see SFS030
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_stanislaus_extended_data.csv')
     df_synthetic_data.to_csv('./Intermediate/upper_stanislaus_synthetic_data.csv')
@@ -75,6 +96,14 @@ if __name__ == "__main__":
     print("Calculating rim inflows...")
 
     I_SFS033(df_extended_data[['11296500']], df_rim_inflows)
+    I_PCRST(df_extended_data[['11296500']], df_rim_inflows)
+    I_SFS030(df_extended_data[['11298000']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']], df_rim_inflows)
+    if b_reproduce_errors:
+        I_LYONS(df_extended_data[['11298000_v2']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
+                df_rim_inflows[['I_SFS030']], df_rim_inflows)
+    else:
+        I_LYONS(df_extended_data[['11298000']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
+            df_rim_inflows[['I_SFS030']], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
@@ -112,11 +141,7 @@ if __name__ == "__main__":
         df_rmse = np.sqrt(((df_reference[df_rim_inflows.columns] - df_rim_inflows) ** 2).mean()).to_frame("RMSE")
         df_diffs = df_diffs.join(df_rmse)
 
-        print("note the CMP014 will not show agreement in the following table because the python code is replicating the rev G version,")
-        print("but the CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.xlsm file has the rev F version.")
-
         # format output
-
         cols_to_format = ["Max Difference", "P50 Abs Diff", "P90 Abs Diff", "P95 Abs Diff", "P99 Abs Diff",
                           "Max Percent Difference", "RMSE"]
 
@@ -131,9 +156,6 @@ if __name__ == "__main__":
         print(df_diffs.sort_values(by='Max Difference   ', ascending=False).to_string())
 
         print('Creating comparison plots...')
-
-        # TODO remove -- drop the first row of df rim inflows trimmed so it matches the reference
-        # df_rim_inflows.drop(index=df_rim_inflows.index[0], inplace=True)
 
         # Drop the first row of df_rim_inflows if its index month is September (month == 9) to match df_reference
         if df_rim_inflows.index[0].month == 9:
