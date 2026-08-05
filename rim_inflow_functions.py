@@ -2416,3 +2416,37 @@ def I_LYONS(df_location, df_I_SFS033, df_I_PCRST, df_I_SFS030, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_LYONS')
+
+
+
+
+def I_NFS033(df_location,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NFS033. Replicates logic from sheet CS3_I_NFS033_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model B from NFS033 sheet.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    # redistribute any negatives
+    df_location = remove_negatives_timeseries(df_location)
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFS033'] = df_location
+
+    df_location.rename(columns={'11293600': 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFS033')

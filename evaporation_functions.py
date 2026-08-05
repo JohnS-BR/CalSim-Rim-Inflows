@@ -861,7 +861,7 @@ def calc_evap_11295900(s_dss_file, df_storage_data):
     df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [18.6, 300]
 
     # calculate and set the evaporation
-    df_storage_data['11295900_evap'] = calculate_evap_data(df_storage_data['11295900'], df_evap_rates,
+    df_storage_data['11295900_evap'] = calculate_evap_data(df_storage_data['11295900_filled'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)
 
 
@@ -916,11 +916,11 @@ def calc_evap_11297700(s_dss_file, df_storage_data):
     df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [6.3, 170]
 
     # calculate and set the evaporation
-    df_storage_data['11297700_evap'] = calculate_evap_data(df_storage_data['11297700'], df_evap_rates,
+    df_storage_data['11297700_evap'] = calculate_evap_data(df_storage_data['11297700_filled'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)
 
 
-def calc_evap_11293460(s_dss_file, df_storage_data):
+def calc_evap_11293460(s_dss_file, df_storage_data, b_use_old_evap):
     """
     Calculate the evaporation amount for Alpine Reservoir. Follows the logic in CS3_I_NFS033_Rev2022F.
 
@@ -930,14 +930,19 @@ def calc_evap_11293460(s_dss_file, df_storage_data):
         Path to DSS file with evaporation rates
     df_storage_data: dataframe
         Storage data containing the reservoir
-
+    b_use_old_evap: bool
+        Flag to use an older version of the Spicer Evap rate to replicate the 2021 extension in the sheets.
     Returns
     -------
     None
     """
     # get the evap rates from the dss file. Note this reservoir uses the Spicer Meadow Evaporation rate but everything
     # else pertains to this reservoir, not Spicer Meadow
-    df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
+    if b_use_old_evap:
+        df_evap_rates = df_storage_data[['11293770_evap_rate']].copy()
+        df_evap_rates.rename(columns={'11293770_evap_rate': 'IN'}, inplace=True)
+    else:
+        df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
 
     # read in the area capacity table
     df_area_capacity = pd.read_csv(r"./Area Capacities/11293460_AC.csv")
@@ -971,11 +976,11 @@ def calc_evap_11293460(s_dss_file, df_storage_data):
     df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [4.3, 179]
 
     # calculate and set the evaporation
-    df_storage_data['11293460_evap'] = calculate_evap_data(df_storage_data['11293460'], df_evap_rates,
+    df_storage_data['11293460_evap'] = calculate_evap_data(df_storage_data['11293460_filled'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)
 
 
-def calc_evap_11293350(s_dss_file, df_storage_data):
+def calc_evap_11293350(s_dss_file, df_storage_data, b_use_old_evap):
     """
     Calculate the evaporation amount for Union Reservoir. Follows the logic in CS3_I_NFS033_Rev2022F.
 
@@ -985,15 +990,20 @@ def calc_evap_11293350(s_dss_file, df_storage_data):
         Path to DSS file with evaporation rates
     df_storage_data: dataframe
         Storage data containing the reservoir
+    b_use_old_evap: bool
+        Flag to use an older version of the Spicer Evap rate to replicate the 2021 extension in the sheets.
 
     Returns
     -------
     None
     """
-    # get the evap rates from the dss file. Note this reservoir uses the Spicer Meadow Evaporation rate but everything
+    # get the evap rates from the dss file or csv file. Note this reservoir uses the Spicer Meadow Evaporation rate but everything
     # else pertains to this reservoir, not Spicer Meadow
-    df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
-
+    if b_use_old_evap:
+        df_evap_rates = df_storage_data[['11293770_evap_rate']].copy()
+        df_evap_rates.rename(columns={'11293770_evap_rate': 'IN'}, inplace=True)
+    else:
+        df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
     # read in the area capacity table
     df_area_capacity = pd.read_csv(r"./Area Capacities/11293350_AC.csv")
 
@@ -1026,11 +1036,11 @@ def calc_evap_11293350(s_dss_file, df_storage_data):
     df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [3.3, 197]
 
     # calculate and set the evaporation
-    df_storage_data['11293350_evap'] = calculate_evap_data(df_storage_data['11293350'], df_evap_rates,
+    df_storage_data['11293350_evap'] = calculate_evap_data(df_storage_data['11293350_filled'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)
 
 
-def calc_evap_11293370(s_dss_file, df_storage_data):
+def calc_evap_11293370(s_dss_file, df_storage_data, b_use_old_evap):
     """
     Calculate the evaporation amount for Utica Reservoir. Follows the logic in CS3_I_NFS033_Rev2022F.
 
@@ -1040,15 +1050,20 @@ def calc_evap_11293370(s_dss_file, df_storage_data):
         Path to DSS file with evaporation rates
     df_storage_data: dataframe
         Storage data containing the reservoir
+    b_use_old_evap: bool
+        Flag to use an older version of the Spicer Evap rate to replicate the 2021 extension in the sheets.
 
     Returns
     -------
     None
     """
-    # get the evap rates from the dss file. Note this reservoir uses the Spicer Meadow Evaporation rate but everything
+    # get the evap rates from the dss file or csv file. Note this reservoir uses the Spicer Meadow Evaporation rate but everything
     # else pertains to this reservoir, not Spicer Meadow
-    df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
-
+    if b_use_old_evap:
+        df_evap_rates = df_storage_data[['11293770_evap_rate']].copy()
+        df_evap_rates.rename(columns={'11293770_evap_rate': 'IN'}, inplace=True)
+    else:
+        df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
     # read in the area capacity table
     df_area_capacity = pd.read_csv(r"./Area Capacities/11293370_AC.csv")
 
@@ -1081,6 +1096,66 @@ def calc_evap_11293370(s_dss_file, df_storage_data):
     df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [2.6, 250]
 
     # calculate and set the evaporation
-    df_storage_data['11293370_evap'] = calculate_evap_data(df_storage_data['11293370'], df_evap_rates,
+    df_storage_data['11293370_evap'] = calculate_evap_data(df_storage_data['11293370_filled'], df_evap_rates,
+                                                        df_area_capacity[['Capacity', 'Area']], True)
+
+
+def calc_evap_11293770(s_dss_file, df_storage_data, b_use_old_evap):
+    """
+    Calculate the evaporation amount for Spicer Meadow Reservoir. Follows the logic in CS3_I_NFS033_Rev2022F.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+    b_use_old_evap: bool
+        Flag to use an older version of the Spicer Evap rate to replicate the 2021 extension in the sheets.
+
+    Returns
+    -------
+    None
+    """
+    # get the evap rates from the dss file or csv file
+    if b_use_old_evap:
+        df_evap_rates = df_storage_data[['11293770_evap_rate']].copy()
+        df_evap_rates.rename(columns={'11293770_evap_rate': 'IN'}, inplace=True)
+    else:
+        df_evap_rates = read_evap_data(s_dss_file, 'ER_SPICE')
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/11293770_AC.csv")
+
+    # get the TAF capacity
+    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # the sheet gets the averages for each neighboring set of points and uses those
+    df_area_capacity['Elevation'] = (df_area_capacity['Elevation (ft)'] + df_area_capacity['Elevation (ft)'].shift(
+        1)) / 2
+    df_area_capacity['Capacity'] = (df_area_capacity['TAF'] + df_area_capacity['TAF'].shift(1)) / 2
+
+    # fill NAs with zero as the sheet does, this will populate the first row
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # area = diff in capacity/ diff in elevation (ac-ft/ft=ac)
+    df_area_capacity['Area'] = (df_area_capacity['Capacity (acre-feet)'].shift(1) - df_area_capacity[
+        'Capacity (acre-feet)']) / (
+                                       df_area_capacity['Elevation (ft)'].shift(1) - df_area_capacity['Elevation (ft)'])
+
+    # again fill first row (lowest elevation) with zeros
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # make sure none of the areas are above a maximum of 300
+    df_area_capacity.loc[df_area_capacity['Area'] > 1998, 'Area'] = 1998
+
+    # make sure the areas are monotonically increasing
+    df_area_capacity["Area"] = df_area_capacity["Area"].cummax()
+
+    # add a row for the maximum
+    df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [189.7, 1998]
+
+    # calculate and set the evaporation
+    df_storage_data['11293770_evap'] = calculate_evap_data(df_storage_data['11293770_filled'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)
 

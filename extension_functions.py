@@ -1337,7 +1337,7 @@ def two_s_curves_comparison_plots(df_final_y_dat_1, df_x_data_1,
                 , bbox_inches='tight', dpi=300)
     plt.close()
 
-def fill_monthly_storage(df_location, i_start_year, i_start_month, i_end_year, i_end_month):
+def fill_monthly_storage(df_location, i_start_year, i_start_month, i_end_year, i_end_month, b_first_month_zero, b_round):
     """
         Fills missing storage values using monthly averages.
 
@@ -1353,6 +1353,10 @@ def fill_monthly_storage(df_location, i_start_year, i_start_month, i_end_year, i
             Last year of the dataset to average.
         i_end_month : int
             Last month of the dataset to average.
+        b_first_month_zero: bool
+            If true, set the sept 1922 value to zero. If false, set it to the oct average value.
+        b_round: bool
+            If true, round TAF values to the nearest thousandths place. If false, no rounding.
         Returns
         -------
         DataFrame
@@ -1363,31 +1367,36 @@ def fill_monthly_storage(df_location, i_start_year, i_start_month, i_end_year, i
     col = df_location.columns[0]
     ser = df_location[col]
 
-    # ---- STEP 1: build climatology start boundary ----
+    # ---- STEP 1: build start boundary ----
     start_mask = (
             (ser.index.year > i_start_year)
             | ((ser.index.year == i_start_year) &
                (ser.index.month >= i_start_month))
     )
 
-    # ---- STEP 2: build climatology end boundary ----
+    # ---- STEP 2: build end boundary ----
     end_mask = (
             (ser.index.year < i_end_year)
             | ((ser.index.year == i_end_year) &
                (ser.index.month <= i_end_month))
     )
 
-    # final climatology mask
+    # final mask
     mask_range = start_mask & end_mask
 
     # ---- STEP 3: compute monthly averages ----
     monthly_means = ser[mask_range].groupby(ser[mask_range].index.month).mean()
     monthly_means = monthly_means.reindex(range(1, 13))  # ensure 1..12
 
+    #TODO remove, debugging dataframe
+    df_oct_to_be_avgd = df_location.loc[mask_range & (df_location.index.month == 10)]
+
     # ---- STEP 4: fill only where year < i_start_year ----
     mask_fill = (
             ser.isna()
-            & (ser.index.year < i_start_year)
+            & ((ser.index.year < i_start_year) |
+               (ser.index.year == i_start_year) &
+               (ser.index.month < i_start_month))
     )
 
     ser_filled = ser.copy()
@@ -1395,4 +1404,103 @@ def fill_monthly_storage(df_location, i_start_year, i_start_month, i_end_year, i
         ser_filled.loc[mask_fill].index.month.map(monthly_means)
     )
 
+    # the two methods of filling the first month are either to fill in zero or to match it with the next month's value.
+    if b_first_month_zero:
+        ser_filled.iloc[0] = 0
+    else:
+        ser_filled.iloc[0] = ser_filled.iloc[1]
+
+    if b_round:
+        ser_filled = ser_filled.round(decimals=3)
+    return ser_filled.to_frame(col)
+
+
+def fill_monthly_storage_w_middle_gap(df_location, i_start_year_1, i_start_month_1, i_end_year_1,
+                                      i_end_month_1, i_start_year_2, i_start_month_2, i_end_year_2,
+                                      i_end_month_2, b_first_month_zero, b_round):
+    """
+        Fills missing storage values using monthly averages. The data to be averaged is in two sections, each bounded by
+        a start year and start month and and end year and end month
+
+        Parameters
+        ----------
+        df_location : DataFrame
+            One-column dataframe with DatetimeIndex.
+        i_start_year_1 : int
+            First year of the first part of the dataset to average.
+        i_start_month_1 : int
+            First month of the first part of the dataset to average.
+        i_end_year_1 : int
+            Last year of the first part of the dataset to average.
+        i_end_month_1 : int
+            Last month of the first part of the dataset to average.
+        i_start_year_2 : int
+            First year of the second part of the dataset to average.
+        i_start_month_2 : int
+            First month of the second part of the dataset to average.
+        i_end_year_2 : int
+            Last year of the second part of the dataset to average.
+        i_end_month_2 : int
+            Last month of the second part of the dataset to average.
+        b_first_month_zero: bool
+            If true, set the sept 1922 value to zero. If false, set it to the oct average value.
+        b_round: bool
+            If true, round TAF values to the nearest thousandths place. If false, no rounding.
+        Returns
+        -------
+        DataFrame
+            Same one-column dataframe with NaNs filled only outside the two-dataset window,
+            using monthly means computed from the specified (year, month) window.
+        """
+
+    # --- basic validation ---
+    if df_location.shape[1] != 1:
+        raise ValueError("df_location must be a one-column DataFrame.")
+    if not isinstance(df_location.index, pd.DatetimeIndex):
+        raise TypeError("df_location must have a DatetimeIndex.")
+
+    col = df_location.columns[0]
+    ser = df_location[col]
+
+    # --- helper: inclusive window mask (>= start and <= end) ---
+    def window_mask(s: pd.Series, sy: int, sm: int, ey: int, em: int) -> pd.Series:
+        start_ok = (s.index.year > sy) | ((s.index.year == sy) & (s.index.month >= sm))
+        end_ok   = (s.index.year < ey)  | ((s.index.year == ey) & (s.index.month <= em))
+        return start_ok & end_ok
+
+    # masks for each window and their union
+    mask_w1    = window_mask(ser, i_start_year_1, i_start_month_1, i_end_year_1, i_end_month_1)
+    mask_w2    = window_mask(ser, i_start_year_2, i_start_month_2, i_end_year_2, i_end_month_2)
+    mask_union = mask_w1 | mask_w2
+
+    # --- per-month averages built from the union ---
+    if mask_union.sum() == 0:
+        raise ValueError("The two windows contain no rows; cannot compute monthly averages.")
+
+    monthly_means = ser[mask_union].groupby(ser[mask_union].index.month).mean()
+    monthly_means = monthly_means.reindex(range(1, 13))  # ensure 1..12 present (NaN where missing)
+
+    # --- fill scope: outside the union, only for NaNs ---
+    mask_fill   = ser.isna() & (~mask_union)
+    fill_values = ser.index.month.map(monthly_means)
+
+    # vectorized fill avoids length-mismatch errors
+    ser_filled = ser.where(~mask_fill, fill_values)
+
+    # --- special rule: first month (Sep 1922) ---
+    sept_1921 = pd.Timestamp(1921, 9, 30)
+    if sept_1921 in ser_filled.index:
+        if b_first_month_zero:
+            ser_filled.loc[sept_1921] = 0.0
+        else:
+            # Prefer October average; if missing, fall back to the next row if present
+            oct_mean = monthly_means.get(10, np.nan)
+            if pd.notna(oct_mean):
+                ser_filled.loc[sept_1921] = oct_mean
+            else:
+                pos = ser_filled.index.get_loc(sept_1921)
+                if isinstance(pos, (int, np.integer)) and (pos + 1) < len(ser_filled):
+                    ser_filled.iloc[pos] = ser_filled.iloc[pos + 1]
+    if b_round:
+        ser_filled = ser_filled.round(decimals=3)
     return ser_filled.to_frame(col)
