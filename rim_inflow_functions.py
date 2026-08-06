@@ -2450,3 +2450,35 @@ def I_NFS033(df_location,df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFS033')
+
+
+def I_SPICE(df_location,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_SPICE. Replicates logic from sheet CS3_I_SPICE_Rev2022G.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model C from SPICE sheet.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    # redistribute any negatives
+    df_location = remove_negatives_timeseries(df_location)
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_SPICE'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SPICE')

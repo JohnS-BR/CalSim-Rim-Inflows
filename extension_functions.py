@@ -43,6 +43,7 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     df_y_data_synthetic: dataframe
         Full timeseries of synthetic y data.
     """
+
     # if it is a series, get it into the monthly format
     if isinstance(df_x_data, pd.Series):
         df_x_data = timeseries_to_monthly(df_x_data.to_frame('TAF'))
@@ -127,6 +128,8 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     df_x_year_totals = pd.DataFrame(df_x_data.sum(axis=1))
     df_y_year_totals = pd.DataFrame(df_y_data.sum(axis=1))
 
+    if s_strange_sheet == "SPICE":
+        df_y_year_totals = df_y_year_totals.loc[:1988]                                  #drop years after 1988
     if s_strange_sheet == "DEE023":
         df_y_year_totals.drop(index=1967, inplace=True)
     # fit a model and get the slope and intercept
@@ -876,7 +879,7 @@ def read_previous_data(s_path, df_new_data):
     df_all_data = pd.concat([df_previous_data, df_new_data], axis=0)
 
     # drop any duplicated indices, keep the first not the second
-    # this means any overlapping dates will be droped and the previous data will be kept, not the new data
+    # this means any overlapping dates will be dropped and the previous data will be kept, not the new data
     df_all_data = df_all_data.loc[~df_all_data.index.duplicated(keep='first'), :]
 
     # return the combined data

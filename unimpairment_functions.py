@@ -1539,3 +1539,91 @@ def unimpaired_11294500(df_full_gauge_data):
                     fl_storages=[df_11293350_storage, df_11293370_storage, df_11293460_storage, df_11293770_storage],)
 
     return df_unimpaired
+
+
+def unimpaired_11294500_v2(df_full_gauge_data):
+    """
+     Calculate the unimpaired flow for USGS gage 11294500.
+     Follows the logic from CS3_I_SPICE_Rev2022G.xlsm  Uses a more up-to-date version of Spicer Meadows Evap than the
+     one used in CS3_I_NFS033_Rev2022F.xlsm. This affects all four evaps.
+
+     Parameters
+     ----------
+     df_full_gauge_data: dataframe
+       Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+     Returns
+     -------
+     df_unimpaired: dataframe
+         Unpaired flow for current station
+     """
+
+    df_location = df_full_gauge_data['11294500'].copy()
+
+    # fill in zeros in place of the negative values for storages and evaps
+    df_11293460_evap = df_full_gauge_data['11293460_evap_v2'].clip(lower=0)
+    df_11293460_storage = df_full_gauge_data['11293460_filled'].clip(lower=0)
+    df_11293370_evap = df_full_gauge_data['11293370_evap_v2'].clip(lower=0)
+    df_11293370_storage = df_full_gauge_data['11293370_filled'].clip(lower=0)
+    df_11293350_evap = df_full_gauge_data['11293350_evap_v2'].clip(lower=0)
+    df_11293350_storage = df_full_gauge_data['11293350_filled'].clip(lower=0)
+    df_11293770_evap = df_full_gauge_data['11293770_evap_v2'].clip(lower=0)
+    df_11293770_storage = df_full_gauge_data['11293770_filled'].clip(lower=0)
+
+    # fill NaN values with zeros for evap and storage
+    df_11293460_evap.fillna(0, inplace=True)
+    df_11293460_storage.fillna(0, inplace=True)
+    df_11293370_evap.fillna(0, inplace=True)
+    df_11293370_storage.fillna(0, inplace=True)
+    df_11293350_evap.fillna(0, inplace=True)
+    df_11293350_storage.fillna(0, inplace=True)
+    df_11293770_evap.fillna(0, inplace=True)
+    df_11293770_storage.fillna(0, inplace=True)
+
+    # combine storage diff, evap, and export
+    df_unimpaired = unimpaired_flows(df_location, fl_additions=[df_11293460_evap, df_11293370_evap, df_11293350_evap, df_11293770_evap],
+                    fl_storages=[df_11293350_storage, df_11293370_storage, df_11293460_storage, df_11293770_storage],)
+
+    return df_unimpaired
+
+
+
+def unimpaired_11294000(df_full_gauge_data, b_errors):
+    """
+    Calculate the unimpaired flow for USGS gage 11294000.
+    Follows the logic from CS3_I_SPICE_Rev2022G.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    b_errors: bool
+        If True, reproduces an error (or oddity) in the sheets, where the data from WY 2021 was not used.
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+    if b_errors:
+        df_location = df_full_gauge_data['11294000_v2'].copy()
+    else:
+        df_location = df_full_gauge_data['11294000'].copy()
+
+    # fill in zeros in place of the negative values for storages and evaps
+    if b_errors:
+        df_11293770_evap = df_full_gauge_data['11293770_evap_v2'].clip(lower=0)
+    else:
+        df_11293770_evap = df_full_gauge_data['11293770_evap'].clip(lower=0)
+
+    df_11293770_storage = df_full_gauge_data['11293770_filled'].clip(lower=0)
+    df_11293580 = df_full_gauge_data['11293580'].clip(lower=0)
+
+    # fill NaN values with zeros for evap and 11293580
+    df_11293770_evap.fillna(0, inplace=True)
+    df_11293580.fillna(0, inplace=True)
+
+    # combine storage diff, evap, and export
+    df_unimpaired = unimpaired_flows(df_location, fl_additions=[df_11293770_evap],
+                    fl_storages=[df_11293770_storage],
+                    fl_subtractions=[df_11293580])
+
+    return df_unimpaired

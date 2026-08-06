@@ -10,7 +10,9 @@ if __name__ == "__main__":
     b_reproduce_errors = True
         # error 1: in LYONS,should be identical to MODELA tab in SFS030 BUT, even though it says "Run then replace Feb-
         # Sep 1940 with historical data" the 2022F version of the sheet does not have the data replaced with historical data.
-        # error 2: Spicer Meadows Evaporation rate is from CS3_ER_SPICE_REV1.xlsm rather than the most recent evap rate.
+        # error 2: Spicer Meadows Evaporation rate is from CS3_ER_SPICE_REV1.xlsm rather than the most recent evap rate,
+        # _except_ in SPICE, where it uses the current evap rate.
+
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
@@ -47,7 +49,7 @@ if __name__ == "__main__":
     # set pre-1930 Lyons Storage (1129770_filled) to zero, see LYONS
     df_full_data.loc[df_full_data.index < pd.Timestamp("1930-01-01"), '11297700_filled'] = 0
 
-    # set Spicer Meadow storage before Feb 1989 to (filled) Alpine Storage times a factor. See NFS033
+    # set Spicer Meadow storage before Feb 1989 to (filled) Alpine Storage times a factor. See NFS033 and SPICE
     df_full_data['11293770_filled'] = np.nan
     df_full_data.loc[df_full_data.index < pd.Timestamp("1989-02-28"), '11293770_filled'] =  \
         df_full_data.loc[df_full_data.index < pd.Timestamp("1989-02-28"), '11293460_filled'] * (4062/4231)
@@ -65,6 +67,13 @@ if __name__ == "__main__":
     calc_evap_11293350(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
     calc_evap_11293370(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
     calc_evap_11293770(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
+    if b_reproduce_errors:
+        # these are here to reproduce the correct evaps for SPICE (using up-to-date spicer meadow evap rate) when using
+        # the old evap rate for other sheets
+        calc_evap_11293770_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+        calc_evap_11293460_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+        calc_evap_11293350_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+        calc_evap_11293370_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
 
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_wevap.csv')
 
@@ -77,6 +86,9 @@ if __name__ == "__main__":
     df_unimpaired_data['11298000'] = unimpaired_11298000(df_full_data)                                  # see SFS030
     df_unimpaired_data['11293600'] = unimpaired_11293600(df_full_data)                                  # see NFS033
     df_unimpaired_data['11294500'] = unimpaired_11294500(df_full_data)                                  # see NFS033
+    df_unimpaired_data['11294000'] = unimpaired_11294000(df_full_data, b_reproduce_errors)              # see SPICE
+    if b_reproduce_errors:
+        df_unimpaired_data['11294500_v2'] = unimpaired_11294500_v2(df_full_data)                              # see SPICE
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -106,6 +118,14 @@ if __name__ == "__main__":
         df_extended_data['11298000_v2'] = df_extended_data['11298000']
     df_extended_data.loc['02-28-1940':'09-30-1940', '11298000'] = (
                 df_unimpaired_data.loc)['02-28-1940':'09-30-1940', '11298000']                          # see SFS030
+
+    if b_reproduce_errors:
+        extend_data(df_full_data['SNS'], df_unimpaired_data['11294500_v2'],
+                    df_extended_data, df_synthetic_data, 1929, i_final_year, False,
+                    '11294500_v2', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see SPICE
+        # replace extended data in 11294500 from WY 1922-1925 with observed data. See SPICE
+        df_extended_data.loc[:'09-30-1925', '11294500_v2'] = df_unimpaired_data.loc[:'09-30-1925', '11294500_v2']  # see SPICE
+
     extend_data(df_full_data['SNS'], df_unimpaired_data['11294500'],
                 df_extended_data, df_synthetic_data, 1929, i_final_year, False,
                 '11294500', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see NFS033
@@ -115,6 +135,25 @@ if __name__ == "__main__":
     extend_data(df_extended_data['11294500'], df_unimpaired_data['11293600'],
                 df_extended_data, df_synthetic_data, 1953, i_final_year, False,
                 '11293600', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see NFS033
+    if b_reproduce_errors:
+        # use the 4500_v2 to NOT replicate errors in this s-curve by using the updated spicer meadows evap rate. SPICE
+        extend_data(df_extended_data['11294500_v2'], df_unimpaired_data['11294000'],
+                df_extended_data, df_synthetic_data, 1953, 1988, False,
+                '11294000_v2', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='SPICE')  # see SPICE
+    else:
+        extend_data(df_extended_data['11294500'], df_unimpaired_data['11294000'],
+                df_extended_data, df_synthetic_data, 1953, 1988, False,
+                '11294000', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see SPICE
+    # if replicating errors, replace 1989-2020 with historical data, otherwise replace 1989-i_final_year with
+    # historical data. See SPICE MODELC tab.
+    if b_reproduce_errors:
+        s_end_hist_fill = "2020-09-30"
+        bf_mask = (df_extended_data.index >= "1988-10-01") & (df_extended_data.index <= s_end_hist_fill)
+        df_extended_data.loc[bf_mask, '11294000_v2'] = df_unimpaired_data.loc[df_extended_data.index[bf_mask], '11294000']
+    else:
+        s_end_hist_fill = str(i_final_year) + "09-30"
+        bf_mask = (df_extended_data.index >= "1988-10-01") & (df_extended_data.index <= s_end_hist_fill)
+        df_extended_data.loc[bf_mask, '11294000'] = df_unimpaired_data.loc[df_extended_data.index[bf_mask], '11294000']
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_stanislaus_extended_data.csv')
@@ -137,14 +176,20 @@ if __name__ == "__main__":
         I_LYONS(df_extended_data[['11298000']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
             df_rim_inflows[['I_SFS030']], df_rim_inflows)
     I_NFS033(df_extended_data[['11293600']], df_rim_inflows)
+    if b_reproduce_errors:
+        I_SPICE(df_extended_data[['11294000_v2']], df_rim_inflows)
+    else:
+        I_SPICE(df_extended_data[['11294000']], df_rim_inflows)
+
+
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
     # Comparison with Previous Rim Inflow dataset
     if b_compareData:
 
         # Notes on replication
-        print("The NFS033 replication differs in two months, Aug and Sept 1924, due to an s-curve bug in Excel with")
-        print("negative flows at the end of the year.")
+        print("The NFS033 and SPICE replications differ in two months, Aug and Sept 1924, due to an s-curve bug in Excel with")
+        print("negative flows at the end of the year. These two sheets use the same x watershed for s-curving.")
 
         # read in data
         df_reference = pd.read_csv(s_prev_rim_inflows_fn, index_col=0, parse_dates=True)
