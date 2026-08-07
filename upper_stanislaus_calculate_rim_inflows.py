@@ -57,6 +57,10 @@ if __name__ == "__main__":
     df_full_data = pd.read_csv('./Intermediate/upper_stanislaus_full_gauge_data.csv', index_col=0, parse_dates=True)
 
     # gap fill the data sets that need it
+    # first gap fill CDEC RLF and try to match "Relief Storage" in RLIEF sheet
+    # then gap fill the nov 1974 and sept 1984 with linear interpolation on adjacent months for 08281000
+    # them merge them
+    # then fill monthly averages from WY 1981 to 2021 and then WY 1981 to present.
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_gap_filled.csv')
@@ -94,13 +98,12 @@ if __name__ == "__main__":
     calc_evap_11293350(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
     calc_evap_11293370(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
     calc_evap_11293770(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
-    if b_reproduce_errors:
-        # these are here to reproduce the correct evaps for SPICE (using up-to-date spicer meadow evap rate) when using
-        # the old evap rate for other sheets
-        calc_evap_11293770_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
-        calc_evap_11293460_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
-        calc_evap_11293350_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
-        calc_evap_11293370_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+    # these are here to reproduce the correct evaps for SPICE (using up-to-date spicer meadow evap rate) when using
+    # the old evap rate for other sheets. If b_reproduce_errors = False, these should be the same as the evaps above
+    calc_evap_11293770_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+    calc_evap_11293460_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+    calc_evap_11293350_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
+    calc_evap_11293370_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
 
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_wevap.csv')
 
@@ -116,7 +119,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11294000'] = unimpaired_11294000(df_full_data, b_reproduce_errors)              # see SPICE
     if b_reproduce_errors:
         df_unimpaired_data['11294500_v2'] = unimpaired_11294500_v2(df_full_data)                        # see SPICE
-    df_unimpaired_data['11295210'] = df_full_data['11295210'] + df_full_data['11295230']
+    df_unimpaired_data['11295210'] = df_full_data['11295210'] + df_full_data['11295230']                # see BVC007
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -179,7 +182,7 @@ if __name__ == "__main__":
         bf_mask = (df_extended_data.index >= "1988-10-01") & (df_extended_data.index <= s_end_hist_fill)
         df_extended_data.loc[bf_mask, '11294000_v2'] = df_unimpaired_data.loc[df_extended_data.index[bf_mask], '11294000']
     else:
-        s_end_hist_fill = str(i_final_year) + "09-30"
+        s_end_hist_fill = str(i_final_year) + "-09-30"
         bf_mask = (df_extended_data.index >= "1988-10-01") & (df_extended_data.index <= s_end_hist_fill)
         df_extended_data.loc[bf_mask, '11294000'] = df_unimpaired_data.loc[df_extended_data.index[bf_mask], '11294000']
     extend_data(df_full_data['SNS'], df_unimpaired_data['11295210'],
@@ -189,13 +192,19 @@ if __name__ == "__main__":
     # (extend_data) in that sheet.
     df_rim_inflows = pd.DataFrame()
     I_BVC007(df_extended_data[['11295210']], df_rim_inflows)
-    df_unimpaired_data['11295300'] = unimpaired_11295300(df_full_data, df_rim_inflows, df_unimpaired_data)  # see NFS009
+    df_unimpaired_data['11295300'] = unimpaired_11295300(df_full_data, df_rim_inflows, df_unimpaired_data, b_reproduce_errors)  # see NFS009
     # save to csv
     df_unimpaired_data.to_csv('./Intermediate/upper_stanislaus_unimpaired_data_part_2.csv')
 
-    extend_data(df_extended_data['11294500_v2'], df_unimpaired_data['11295300'],
+    if b_reproduce_errors:
+        extend_data(df_extended_data['11294500_v2'], df_unimpaired_data['11295300'],
                 df_extended_data, df_synthetic_data, 1991, i_final_year, False,
                 '11295300', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see NFS009
+    else:
+        extend_data(df_extended_data['11294500'], df_unimpaired_data['11295300'],
+                df_extended_data, df_synthetic_data, 1991, i_final_year, False,
+                '11295300', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see NFS009
+
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_stanislaus_extended_data.csv')
@@ -208,21 +217,25 @@ if __name__ == "__main__":
     I_SFS033(df_extended_data[['11296500']], df_rim_inflows)
     I_PCRST(df_extended_data[['11296500']], df_rim_inflows)
     I_SFS030(df_extended_data[['11298000']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']], df_rim_inflows)
+    I_NFS033(df_extended_data[['11293600']], df_rim_inflows)
+    I_MIL003(df_rim_inflows[['I_BVC007']], df_rim_inflows)
+    I_ANG017(df_rim_inflows[['I_BVC007']], df_rim_inflows)
+
     if b_reproduce_errors:
         I_LYONS(df_extended_data[['11298000_v2']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
                 df_rim_inflows[['I_SFS030']], df_rim_inflows)
+        I_SPICE(df_extended_data[['11294000_v2']], df_rim_inflows)
     else:
         I_LYONS(df_extended_data[['11298000']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
             df_rim_inflows[['I_SFS030']], df_rim_inflows)
-    I_NFS033(df_extended_data[['11293600']], df_rim_inflows)
-    if b_reproduce_errors:
-        I_SPICE(df_extended_data[['11294000_v2']], df_rim_inflows)
-    else:
         I_SPICE(df_extended_data[['11294000']], df_rim_inflows)
     if b_replicate_sheets:
         I_NFS009(df_after_s[['NFS009']], df_rim_inflows)
+        I_NFS005(df_after_s[['NFS009']], df_rim_inflows)
     else:
         I_NFS009(df_extended_data[['11295300']], df_rim_inflows)
+        I_NFS005(df_extended_data[['11295300']], df_rim_inflows)
+
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
     # Comparison with Previous Rim Inflow dataset

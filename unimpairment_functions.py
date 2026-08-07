@@ -1642,7 +1642,7 @@ def unimpaired_11294000(df_full_gauge_data, b_errors):
 
     return df_unimpaired
 
-def unimpaired_11295300(df_full_gauge_data, df_inflows, df_unimpaired_data):
+def unimpaired_11295300(df_full_gauge_data, df_inflows, df_unimpaired_data, b_errors):
     """
     Calculate the unimpaired flow for USGS gage 11295300.
     Follows the logic from CS3_I_NFS009_Rev2022F.xlsm
@@ -1684,7 +1684,10 @@ def unimpaired_11295300(df_full_gauge_data, df_inflows, df_unimpaired_data):
     df_unimpaired_1 = unimpaired_flows(df_location, fl_additions=[df_11293460_evap, df_11293370_evap, df_11293350_evap,
                                                                 df_11293770_evap, df_11295240, df_11295250],
                     fl_storages=[df_11293350_storage, df_11293370_storage, df_11293460_storage, df_11293770_storage])
-    df_unimpaired_2 = df_unimpaired_data['11294500_v2'] + df_inflows['I_BVC007']
+    if b_errors:
+        df_unimpaired_2 = df_unimpaired_data['11294500_v2'] + df_inflows['I_BVC007']
+    else:
+        df_unimpaired_2 = df_unimpaired_data['11294500'] + df_inflows['I_BVC007']
 
     df_unimpaired = df_unimpaired_1.combine(df_unimpaired_2, np.maximum)
     return df_unimpaired

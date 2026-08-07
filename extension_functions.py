@@ -837,6 +837,9 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
         if s_units == 'AF':
             # this data is monthly so it just needs to be moved to the end of the month and divided by 1000
             # groupby and mean in case its more than monthly or not exactly on the first of the month but this should just move the data to the end of the month
+            # TODO remove following line after RLF CDEC PULL?
+            print("TODO REMOVE? in pull_cdec_data, line to coerce numeric values to avoid crash on CDEC RLF")
+            df_current['VALUE'] = pd.to_numeric(df_current['VALUE'], errors='coerce')
             df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current.groupby(pd.Grouper(freq='ME')).mean()['VALUE'] / 1000).to_frame(station), how='outer')
 
         elif s_units == 'CFS':
