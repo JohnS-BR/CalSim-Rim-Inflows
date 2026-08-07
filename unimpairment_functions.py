@@ -1497,32 +1497,46 @@ def unimpaired_11293600(df_full_gauge_data):
     return df_unimpaired
 
 
-def unimpaired_11294500(df_full_gauge_data):
+def unimpaired_11294500(df_full_gauge_data, b_errors):
     """
-     Calculate the unimpaired flow for USGS gage 11294500.
-     Follows the logic from CS3_I_NFS033_Rev2022F.xlsm
+    Calculate the unimpaired flow for USGS gage 11294500.
+    Follows the logic from CS3_I_NFS033_Rev2022F.xlsm
 
-     Parameters
-     ----------
-     df_full_gauge_data: dataframe
-       Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
-     Returns
-     -------
-     df_unimpaired: dataframe
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    b_errors: bool
+       If True, reproduces an error (or oddity) in the sheets, where an older version of Spicer Meadows Evap rate is
+       used for 4 reservoirs.
+    Returns
+    -------
+    df_unimpaired: dataframe
          Unpaired flow for current station
-     """
+    """
 
     df_location = df_full_gauge_data['11294500'].copy()
 
-    # fill in zeros in place of the negative values for storages and evaps
-    df_11293460_evap = df_full_gauge_data['11293460_evap'].clip(lower=0)
-    df_11293460_storage = df_full_gauge_data['11293460_filled'].clip(lower=0)
-    df_11293370_evap = df_full_gauge_data['11293370_evap'].clip(lower=0)
-    df_11293370_storage = df_full_gauge_data['11293370_filled'].clip(lower=0)
-    df_11293350_evap = df_full_gauge_data['11293350_evap'].clip(lower=0)
-    df_11293350_storage = df_full_gauge_data['11293350_filled'].clip(lower=0)
-    df_11293770_evap = df_full_gauge_data['11293770_evap'].clip(lower=0)
-    df_11293770_storage = df_full_gauge_data['11293770_filled'].clip(lower=0)
+    if b_errors:
+        # fill in zeros in place of the negative values for storages and evaps
+        df_11293460_evap = df_full_gauge_data['11293460_evap'].clip(lower=0)
+        df_11293460_storage = df_full_gauge_data['11293460_filled'].clip(lower=0)
+        df_11293370_evap = df_full_gauge_data['11293370_evap'].clip(lower=0)
+        df_11293370_storage = df_full_gauge_data['11293370_filled'].clip(lower=0)
+        df_11293350_evap = df_full_gauge_data['11293350_evap'].clip(lower=0)
+        df_11293350_storage = df_full_gauge_data['11293350_filled'].clip(lower=0)
+        df_11293770_evap = df_full_gauge_data['11293770_evap'].clip(lower=0)
+        df_11293770_storage = df_full_gauge_data['11293770_filled'].clip(lower=0)
+    else:
+        # fill in zeros in place of the negative values for storages and evaps
+        df_11293460_evap = df_full_gauge_data['11293460_evap_v2'].clip(lower=0)
+        df_11293460_storage = df_full_gauge_data['11293460_filled'].clip(lower=0)
+        df_11293370_evap = df_full_gauge_data['11293370_evap_v2'].clip(lower=0)
+        df_11293370_storage = df_full_gauge_data['11293370_filled'].clip(lower=0)
+        df_11293350_evap = df_full_gauge_data['11293350_evap_v2'].clip(lower=0)
+        df_11293350_storage = df_full_gauge_data['11293350_filled'].clip(lower=0)
+        df_11293770_evap = df_full_gauge_data['11293770_evap_v2'].clip(lower=0)
+        df_11293770_storage = df_full_gauge_data['11293770_filled'].clip(lower=0)
 
     # fill NaN values with zeros for evap and storage
     df_11293460_evap.fillna(0, inplace=True)
@@ -1626,4 +1640,51 @@ def unimpaired_11294000(df_full_gauge_data, b_errors):
                     fl_storages=[df_11293770_storage],
                     fl_subtractions=[df_11293580])
 
+    return df_unimpaired
+
+def unimpaired_11295300(df_full_gauge_data, df_inflows, df_unimpaired_data):
+    """
+    Calculate the unimpaired flow for USGS gage 11295300.
+    Follows the logic from CS3_I_NFS009_Rev2022F.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+    df_location = df_full_gauge_data['11295300'].copy()
+
+    # fill in zeros in place of the negative values for storages and evaps and some gages
+    df_11293460_evap = df_full_gauge_data['11293460_evap_v2'].clip(lower=0)
+    df_11293460_storage = df_full_gauge_data['11293460_filled'].clip(lower=0)
+    df_11293370_evap = df_full_gauge_data['11293370_evap_v2'].clip(lower=0)
+    df_11293370_storage = df_full_gauge_data['11293370_filled'].clip(lower=0)
+    df_11293350_evap = df_full_gauge_data['11293350_evap_v2'].clip(lower=0)
+    df_11293350_storage = df_full_gauge_data['11293350_filled'].clip(lower=0)
+    df_11293770_evap = df_full_gauge_data['11293770_evap_v2'].clip(lower=0)
+    df_11293770_storage = df_full_gauge_data['11293770_filled'].clip(lower=0)
+    df_11295240 = df_full_gauge_data['11295240'].clip(lower=0)
+    df_11295250 = df_full_gauge_data['11295250'].clip(lower=0)
+
+    # fill NaN values with zeros for evap and storage
+    df_11293460_evap.fillna(0, inplace=True)
+    df_11293460_storage.fillna(0, inplace=True)
+    df_11293370_evap.fillna(0, inplace=True)
+    df_11293370_storage.fillna(0, inplace=True)
+    df_11293350_evap.fillna(0, inplace=True)
+    df_11293350_storage.fillna(0, inplace=True)
+    df_11293770_evap.fillna(0, inplace=True)
+    df_11293770_storage.fillna(0, inplace=True)
+
+    # combine storage diff, evap, and additions
+    df_unimpaired_1 = unimpaired_flows(df_location, fl_additions=[df_11293460_evap, df_11293370_evap, df_11293350_evap,
+                                                                df_11293770_evap, df_11295240, df_11295250],
+                    fl_storages=[df_11293350_storage, df_11293370_storage, df_11293460_storage, df_11293770_storage])
+    df_unimpaired_2 = df_unimpaired_data['11294500_v2'] + df_inflows['I_BVC007']
+
+    df_unimpaired = df_unimpaired_1.combine(df_unimpaired_2, np.maximum)
     return df_unimpaired

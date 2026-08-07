@@ -13,13 +13,40 @@ if __name__ == "__main__":
         # error 2: Spicer Meadows Evaporation rate is from CS3_ER_SPICE_REV1.xlsm rather than the most recent evap rate,
         # _except_ in SPICE, where it uses the current evap rate.
 
+    # this isolates the s-curve from the rest of the calculation by reading in the sheet inputs and outputs to the
+    # s-curve and using the output value to move forward in the calculation.
+    b_replicate_sheets = True
+
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
     # option to plot comparison
     b_compareData = True
+
+    # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflows_fn = "CS3_SJR_ReadAllInflowDatatoDSS_05.17.23.csv" # file path and name must be provided to plot/calculate comparison
     s_prev_rim_inflow_sheet = "Inflows"
+
+    if b_reproduce_errors:
+        # use this to check the code after the s-curve. The Excel s-curve suffers from the bug that arises when water
+        # years end with negative values.
+        df_nfs009_post_s_curve = pd.read_csv('./Inputs/s_curve_replication/nfs009_output_from_s_curve.csv')
+
+    if b_replicate_sheets:
+        # read in files that contain the sheet data from just before and just after the s-curve process, to isolate that
+        # factor. The "after s" files are the data from the sheets after merging the synthetic output into the gaps in
+        # the data.
+
+        # create a list of lists. inner elements are ['column_name', 'path to before csv', 'path to after csv']
+        ls_sheet_info = [['NFS009', './Inputs/s_curve_replication/nfs009_input_to_s_curve.csv',
+                          './Inputs/s_curve_replication/nfs009_output_from_s_curve.csv'],
+                         ]
+        # create the dataframes where we keep the before and after data
+        df_before_s = pd.DataFrame()
+        df_after_s = pd.DataFrame()
+
+        read_replication_data(ls_sheet_info, df_before_s, df_after_s)
+
 
     # first if the needed output folders don't exist, create them
     os.makedirs('./Intermediate', exist_ok=True)
@@ -85,10 +112,11 @@ if __name__ == "__main__":
     df_unimpaired_data['11296500'] = unimpaired_11296500(df_full_data)                                  # see SFS033
     df_unimpaired_data['11298000'] = unimpaired_11298000(df_full_data)                                  # see SFS030
     df_unimpaired_data['11293600'] = unimpaired_11293600(df_full_data)                                  # see NFS033
-    df_unimpaired_data['11294500'] = unimpaired_11294500(df_full_data)                                  # see NFS033
+    df_unimpaired_data['11294500'] = unimpaired_11294500(df_full_data, b_reproduce_errors)              # see NFS033
     df_unimpaired_data['11294000'] = unimpaired_11294000(df_full_data, b_reproduce_errors)              # see SPICE
     if b_reproduce_errors:
-        df_unimpaired_data['11294500_v2'] = unimpaired_11294500_v2(df_full_data)                              # see SPICE
+        df_unimpaired_data['11294500_v2'] = unimpaired_11294500_v2(df_full_data)                        # see SPICE
+    df_unimpaired_data['11295210'] = df_full_data['11295210'] + df_full_data['11295230']
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
@@ -143,7 +171,7 @@ if __name__ == "__main__":
     else:
         extend_data(df_extended_data['11294500'], df_unimpaired_data['11294000'],
                 df_extended_data, df_synthetic_data, 1953, 1988, False,
-                '11294000', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see SPICE
+                '11294000', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see SPICE
     # if replicating errors, replace 1989-2020 with historical data, otherwise replace 1989-i_final_year with
     # historical data. See SPICE MODELC tab.
     if b_reproduce_errors:
@@ -154,15 +182,26 @@ if __name__ == "__main__":
         s_end_hist_fill = str(i_final_year) + "09-30"
         bf_mask = (df_extended_data.index >= "1988-10-01") & (df_extended_data.index <= s_end_hist_fill)
         df_extended_data.loc[bf_mask, '11294000'] = df_unimpaired_data.loc[df_extended_data.index[bf_mask], '11294000']
+    extend_data(df_full_data['SNS'], df_unimpaired_data['11295210'],
+                df_extended_data, df_synthetic_data, 1991, i_final_year, False,
+                '11295210', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see BVC007
+    # BVC007 rim inflow must be calculated early because it is part of an unimpairment step in NFS009 before the s-curve
+    # (extend_data) in that sheet.
+    df_rim_inflows = pd.DataFrame()
+    I_BVC007(df_extended_data[['11295210']], df_rim_inflows)
+    df_unimpaired_data['11295300'] = unimpaired_11295300(df_full_data, df_rim_inflows, df_unimpaired_data)  # see NFS009
+    # save to csv
+    df_unimpaired_data.to_csv('./Intermediate/upper_stanislaus_unimpaired_data_part_2.csv')
+
+    extend_data(df_extended_data['11294500_v2'], df_unimpaired_data['11295300'],
+                df_extended_data, df_synthetic_data, 1991, i_final_year, False,
+                '11295300', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see NFS009
 
     # save to csv
     df_extended_data.to_csv('./Intermediate/upper_stanislaus_extended_data.csv')
     df_synthetic_data.to_csv('./Intermediate/upper_stanislaus_synthetic_data.csv')
 
-    df_lake_valley_watershed = calculate_watershed_factors("./Inputs/lake_valley_watershed.csv")
-
     # final rim inflows
-    df_rim_inflows = pd.DataFrame()
 
     print("Calculating rim inflows...")
 
@@ -180,16 +219,19 @@ if __name__ == "__main__":
         I_SPICE(df_extended_data[['11294000_v2']], df_rim_inflows)
     else:
         I_SPICE(df_extended_data[['11294000']], df_rim_inflows)
-
-
+    if b_replicate_sheets:
+        I_NFS009(df_after_s[['NFS009']], df_rim_inflows)
+    else:
+        I_NFS009(df_extended_data[['11295300']], df_rim_inflows)
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
     # Comparison with Previous Rim Inflow dataset
     if b_compareData:
 
         # Notes on replication
-        print("The NFS033 and SPICE replications differ in two months, Aug and Sept 1924, due to an s-curve bug in Excel with")
-        print("negative flows at the end of the year. These two sheets use the same x watershed for s-curving.")
+        print("The NFS033 and SPICE replications differ from Excel workbooks in two months, Aug and Sept 1924, due to ")
+        print("an s-curve bug in Excel with negative flows at the end of the year. These two sheets ")
+        print("use the same x watershed for s-curving.")
 
         # read in data
         df_reference = pd.read_csv(s_prev_rim_inflows_fn, index_col=0, parse_dates=True)

@@ -2482,3 +2482,73 @@ def I_SPICE(df_location,df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_SPICE')
+
+
+def I_BVC007(df_location,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_BVC007. Replicates logic from sheet CS3_I_BVC007_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model C from BVC007 sheet.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_BVC007'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_BVC007')
+
+
+def I_NFS009(df_location_2,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_NFS009. Replicates logic from sheet CS3_I_NFS009_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow. Model B from NFS009 sheet.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_location_2.copy()
+    df_location = (df_location.iloc[:, 0] - df_rim_inflows['I_NFS033'] - df_rim_inflows['I_SPICE'] -
+                     df_rim_inflows['I_BVC007']).to_frame()
+
+    # rename column
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+    # redistribute any negatives
+    df_location = remove_negatives_timeseries(df_location)
+
+    # multiply by the watershed factor
+    df_location = df_location * 0.94670
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_NFS009'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_NFS009')
