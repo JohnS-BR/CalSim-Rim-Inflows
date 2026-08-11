@@ -12,12 +12,12 @@ if __name__ == "__main__":
 
     df_station_list = pd.read_csv(s_station_list, header=0)
 
-    # USGS stations to pull data for
+    # stations to pull data for
     sl_usgs_stations = df_station_list[df_station_list['Source'] == 'USGS']['Station ID'].to_list()
     sl_cdec_stations = df_station_list[df_station_list['Source'] == 'CDEC']['Station ID'].to_list()
     sl_other_stations = df_station_list[df_station_list['Source'] == 'Other']['Station ID'].to_list()
 
-    # time range to pull USGS data for
+    # time range to pull data for
     s_start_date = '2021-10-01'
     s_end_date = '2024-09-30'
 

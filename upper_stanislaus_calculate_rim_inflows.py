@@ -57,6 +57,16 @@ if __name__ == "__main__":
 
     # gap fill the data sets that need it
     gap_fill_08281000(df_full_data, i_final_year, b_reproduce_errors)                                       # see RLIEF
+    df_full_data.loc['1957-02-01':'1957-09-30', '11292600'] =  \
+        df_full_data.loc['1957-02-01':'1957-09-30', '11292600_COMP_MODEL']                                  # see DONLL
+    df_full_data.loc['2006-10-01':'2007-09-30', '11292600'] =  \
+        df_full_data.loc['2006-10-01':'2007-09-30', 'DON']                                                  # see DONLL
+    if b_reproduce_errors:
+        # see DONLL, tab "Donnell Storage"
+        df_full_data.loc['1957-11-30':'1958-08-31', '11292600'] = df_full_data.loc['1957-11-30':'1958-08-31', '11292600'].round(1)
+        df_full_data.loc['2008-04-30':'2009-12-31', '11292600'] = df_full_data.loc['2008-04-30':'2009-12-31', '11292600'].round(1)
+        df_full_data.loc['1964-01-31', '11292600'] = 17.633
+        df_full_data.loc['2006-09-30', '11292600'] = df_full_data.loc['2006-09-30', 'DON'].round(1)
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_gap_filled.csv')
@@ -102,6 +112,7 @@ if __name__ == "__main__":
     calc_evap_11293370_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
 
     calc_evap_11291000(s_evap_dss_path, df_full_data, b_replicate_sheets)                              # see RLIEF
+    calc_evap_11292600(s_evap_dss_path, df_full_data, b_replicate_sheets)                              # see DONLL
 
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_wevap.csv')
 
@@ -119,6 +130,7 @@ if __name__ == "__main__":
         df_unimpaired_data['11294500_v2'] = unimpaired_11294500_v2(df_full_data)                        # see SPICE
     df_unimpaired_data['11295210'] = df_full_data['11295210'] + df_full_data['11295230']                # see BVC007
     df_unimpaired_data['11292000'] = unimpaired_11292000(df_full_data, b_replicate_sheets)              # see RLIEF
+    df_unimpaired_data['11292700'] = unimpaired_11292700(df_full_data, b_replicate_sheets)              # see DONLL
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 
@@ -191,6 +203,16 @@ if __name__ == "__main__":
                 '11292000', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')      # see RLIEF
     df_extended_data.loc['1938-10-31':'1945-09-30', '11292000'] = (
                 df_unimpaired_data.loc)['1938-10-31':'1945-09-30', '11292000']                              # see RLIEF
+    extend_data(df_full_data['SNS'], df_full_data['11292500'],
+                df_extended_data, df_synthetic_data, 1951, 1994, False,
+                '11292500', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see CFS001
+    extend_data(df_full_data['SNS'], df_unimpaired_data['11292700'],
+                df_extended_data, df_synthetic_data, 1973, 2010, False,
+                '11292700', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see DONLL
+    df_extended_data.loc['2011-10-01':'2015-09-30', '11292700'] = (
+        df_unimpaired_data.loc)['2011-10-01':'2015-09-30', '11292700']                                      # see DONLL
+    df_extended_data.loc['2016-10-01': str(i_final_year)+'-09-30', '11292700'] = (
+        df_unimpaired_data.loc)['2016-10-01': str(i_final_year)+'-09-30', '11292700']                        # see DONLL
 
 
     # BVC007 rim inflow must be calculated early because it is part of an unimpairment step in NFS009 before the s-curve
@@ -227,6 +249,7 @@ if __name__ == "__main__":
     I_ANG017(df_rim_inflows[['I_BVC007']], df_rim_inflows)
     I_RLIEF(df_extended_data[['11292000']], df_rim_inflows)
     I_MFS047(df_extended_data[['11292000']], df_rim_inflows)
+    I_CFS001(df_extended_data[['11292500']], df_rim_inflows)
     if b_reproduce_errors:
         I_LYONS(df_extended_data[['11298000_v2']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
                 df_rim_inflows[['I_SFS030']], df_rim_inflows)

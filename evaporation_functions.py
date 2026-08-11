@@ -1437,3 +1437,58 @@ def calc_evap_11291000(s_dss_file, df_storage_data, b_replicate):
     else:
         df_storage_data['11291000_evap'] = calculate_evap_data(df_storage_data['11291000_filled_2'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)
+
+
+def calc_evap_11292600(s_dss_file, df_storage_data, b_replicate):
+    """
+    Calculate the evaporation amount for Donnell Reservoir. Follows the logic in CS3_I_DONLL_Rev2022F.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+    b_replicate: bool
+        A flag to replicate sheets, in this case storage values from an unknown data source.
+    Returns
+    -------
+    None
+    """
+    # get the evap rates from the dss file
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_DONLL')
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/11292600_AC.csv")
+
+    # get the TAF capacity
+    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # the sheet gets the averages for each neighboring set of points and uses those
+    df_area_capacity['Elevation'] = (df_area_capacity['Elevation (ft)'] + df_area_capacity['Elevation (ft)'].shift(
+        1)) / 2
+    df_area_capacity['Capacity'] = (df_area_capacity['TAF'] + df_area_capacity['TAF'].shift(1)) / 2
+
+    # fill NAs with zero as the sheet does, this will populate the first row
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # area = diff in capacity/ diff in elevation (ac-ft/ft=ac)
+    df_area_capacity['Area'] = (df_area_capacity['Capacity (acre-feet)'].shift(1) - df_area_capacity[
+        'Capacity (acre-feet)']) / (
+                                       df_area_capacity['Elevation (ft)'].shift(1) - df_area_capacity['Elevation (ft)'])
+
+    # again fill first row (lowest elevation) with zeros
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # make sure none of the areas are above the maximum
+    df_area_capacity.loc[df_area_capacity['Area'] > 401, 'Area'] = 401
+
+    # make sure the areas are monotonically increasing
+    df_area_capacity["Area"] = df_area_capacity["Area"].cummax()
+
+    # add a row for the maximum
+    df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [64.9, 401]
+
+    # calculate and set the evaporation
+    df_storage_data['11292600_evap'] = calculate_evap_data(df_storage_data['11292600'], df_evap_rates,
+                                                        df_area_capacity[['Capacity', 'Area']], True)

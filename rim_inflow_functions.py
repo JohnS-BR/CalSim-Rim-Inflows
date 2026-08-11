@@ -2518,7 +2518,7 @@ def I_NFS009(df_location_2,df_rim_inflows):
     Calculate the final rim inflow for CalSim. Location: I_NFS009. Replicates logic from sheet CS3_I_NFS009_Rev2022F.xlsm
     Parameters
     ----------
-    df_location: dataframe
+    df_location_2: dataframe
         One-column dataframe used as input to create the final rim inflow. Model B from NFS009 sheet.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
@@ -2560,7 +2560,7 @@ def I_NFS005(df_location_2,df_rim_inflows):
     The only difference between this calculation and the NFS009 calculation is the watershed factor.
     Parameters
     ----------
-    df_location: dataframe
+    df_location_2: dataframe
         One-column dataframe used as input to create the final rim inflow. Model B from NFS005 sheet, identical to model
         B in NFS009.
     df_rim_inflows: dataframe
@@ -2602,7 +2602,7 @@ def I_MIL003(df_location_2,df_rim_inflows):
     Calculate the final rim inflow for CalSim. Location: I_MIL003. Replicates logic from sheet CS3_I_MIL003_Rev2022F.xlsm
     Parameters
     ----------
-    df_location: dataframe
+    df_location_2: dataframe
         One-column dataframe used as input to create the final rim inflow. Uses the rim inflow from I_BVC007
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
@@ -2639,7 +2639,7 @@ def I_ANG017(df_location_2,df_rim_inflows):
     Calculate the final rim inflow for CalSim. Location: I_ANG017. Replicates logic from sheet CS3_I_ANG017_Rev2022F.xlsm
     Parameters
     ----------
-    df_location: dataframe
+    df_location_2: dataframe
         One-column dataframe used as input to create the final rim inflow. Uses the rim inflow from I_BVC007
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
@@ -2676,7 +2676,7 @@ def I_RLIEF(df_location_2,df_rim_inflows):
     Calculate the final rim inflow for CalSim. Location: I_RLIEF. Replicates logic from sheet CS3_I_RLIEF_Rev2022F.xlsm
     Parameters
     ----------
-    df_location: dataframe
+    df_location_2: dataframe
         One-column dataframe used as input to create the final rim inflow.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
@@ -2713,7 +2713,7 @@ def I_MFS047(df_location_2,df_rim_inflows):
     Calculate the final rim inflow for CalSim. Location: I_MFS047. Replicates logic from sheet CS3_I_MFS047_Rev2022F.xlsm
     Parameters
     ----------
-    df_location: dataframe
+    df_location_2: dataframe
         One-column dataframe used as input to create the final rim inflow.
     df_rim_inflows: dataframe
         Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
@@ -2743,3 +2743,37 @@ def I_MFS047(df_location_2,df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_MFS047')
+
+
+def I_CFS001(df_location_2,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_CFS001. Replicates logic from sheet CS3_I_CFS001_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location_2: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_location_2.copy()
+
+    # rename column
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_CFS001'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_CFS001')
