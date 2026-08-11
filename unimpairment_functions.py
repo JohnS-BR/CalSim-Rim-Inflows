@@ -1651,6 +1651,12 @@ def unimpaired_11295300(df_full_gauge_data, df_inflows, df_unimpaired_data, b_er
     ----------
     df_full_gauge_data: dataframe
         Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    df_inflows: dataframe
+        Previously calculated rim inflows
+    df_unimpaired_data: dataframe
+        Previously unimpaired flows
+    b_errors: bool
+        Used to reproduce errors or quirks in the Excel workbook
     Returns
     -------
     df_unimpaired: dataframe
@@ -1691,3 +1697,36 @@ def unimpaired_11295300(df_full_gauge_data, df_inflows, df_unimpaired_data, b_er
 
     df_unimpaired = df_unimpaired_1.combine(df_unimpaired_2, np.maximum)
     return df_unimpaired
+
+def unimpaired_11292000(df_full_gauge_data, b_replicate):
+    """
+    Calculate the unimpaired flow for USGS gage 11292000.
+    Follows the logic from CS3_I_RLIEF_Rev2022F.xlsm
+
+    Parameters
+    ----------
+    df_full_gauge_data: dataframe
+        Gauge data that contains the current station and all needed to unimpair the flows. In TAF. This is full dataset
+    Returns
+    -------
+    df_unimpaired: dataframe
+        Unpaired flow for current station
+    """
+    df_location = df_full_gauge_data['11292000'].copy()
+
+    # fill in zeros in place of the negative values for storages and evap
+    df_11291000_evap = df_full_gauge_data['11291000_evap'].clip(lower=0)
+    if b_replicate:
+        df_11291000_storage = df_full_gauge_data['RLF_REPLICATION'].clip(lower=0)
+    else:
+        df_11291000_storage = df_full_gauge_data['11291000_filled_2'].clip(lower=0)
+
+    # fill NaN values with zeros for evap and storage
+    df_11291000_evap.fillna(0, inplace=True)
+    df_11291000_storage.fillna(0, inplace=True)
+
+    # combine storage diff and evap
+    df_unimpaired = unimpaired_flows(df_location, fl_additions=[df_11291000_evap], fl_storages=[df_11291000_storage])
+
+    return df_unimpaired
+

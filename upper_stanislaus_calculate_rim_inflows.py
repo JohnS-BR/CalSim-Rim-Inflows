@@ -47,7 +47,6 @@ if __name__ == "__main__":
 
         read_replication_data(ls_sheet_info, df_before_s, df_after_s)
 
-
     # first if the needed output folders don't exist, create them
     os.makedirs('./Intermediate', exist_ok=True)
     os.makedirs('./Figures', exist_ok=True)
@@ -57,10 +56,7 @@ if __name__ == "__main__":
     df_full_data = pd.read_csv('./Intermediate/upper_stanislaus_full_gauge_data.csv', index_col=0, parse_dates=True)
 
     # gap fill the data sets that need it
-    # first gap fill CDEC RLF and try to match "Relief Storage" in RLIEF sheet
-    # then gap fill the nov 1974 and sept 1984 with linear interpolation on adjacent months for 08281000
-    # them merge them
-    # then fill monthly averages from WY 1981 to 2021 and then WY 1981 to present.
+    gap_fill_08281000(df_full_data, i_final_year, b_reproduce_errors)                                       # see RLIEF
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_gap_filled.csv')
@@ -105,6 +101,8 @@ if __name__ == "__main__":
     calc_evap_11293350_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
     calc_evap_11293370_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
 
+    calc_evap_11291000(s_evap_dss_path, df_full_data, b_replicate_sheets)                              # see RLIEF
+
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_wevap.csv')
 
     ### unimpairing the data
@@ -120,7 +118,7 @@ if __name__ == "__main__":
     if b_reproduce_errors:
         df_unimpaired_data['11294500_v2'] = unimpaired_11294500_v2(df_full_data)                        # see SPICE
     df_unimpaired_data['11295210'] = df_full_data['11295210'] + df_full_data['11295230']                # see BVC007
-
+    df_unimpaired_data['11292000'] = unimpaired_11292000(df_full_data, b_replicate_sheets)              # see RLIEF
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 
@@ -188,6 +186,13 @@ if __name__ == "__main__":
     extend_data(df_full_data['SNS'], df_unimpaired_data['11295210'],
                 df_extended_data, df_synthetic_data, 1991, i_final_year, False,
                 '11295210', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see BVC007
+    extend_data(df_full_data['SNS'], df_unimpaired_data['11292000'],
+                df_extended_data, df_synthetic_data, 1947, i_final_year, False,
+                '11292000', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')      # see RLIEF
+    df_extended_data.loc['1938-10-31':'1945-09-30', '11292000'] = (
+                df_unimpaired_data.loc)['1938-10-31':'1945-09-30', '11292000']                              # see RLIEF
+
+
     # BVC007 rim inflow must be calculated early because it is part of an unimpairment step in NFS009 before the s-curve
     # (extend_data) in that sheet.
     df_rim_inflows = pd.DataFrame()
@@ -220,7 +225,8 @@ if __name__ == "__main__":
     I_NFS033(df_extended_data[['11293600']], df_rim_inflows)
     I_MIL003(df_rim_inflows[['I_BVC007']], df_rim_inflows)
     I_ANG017(df_rim_inflows[['I_BVC007']], df_rim_inflows)
-
+    I_RLIEF(df_extended_data[['11292000']], df_rim_inflows)
+    I_MFS047(df_extended_data[['11292000']], df_rim_inflows)
     if b_reproduce_errors:
         I_LYONS(df_extended_data[['11298000_v2']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
                 df_rim_inflows[['I_SFS030']], df_rim_inflows)

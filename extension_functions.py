@@ -1510,3 +1510,64 @@ def fill_monthly_storage_w_middle_gap(df_location, i_start_year_1, i_start_month
     if b_round:
         ser_filled = ser_filled.round(decimals=3)
     return ser_filled.to_frame(col)
+
+def gap_fill_08281000(df_data, i_final_year, b_errors):
+    """
+    Fills missing storage values for Relief Reservoir. Follows the logic of CS3_I_RLIEF_Rev2022F.xlsm
+
+    Parameters
+    ----------
+    df_data : DataFrame
+        The full set of gage data needed to fill this location. Also the location of the filled output column.
+    i_final_year: int
+        The last year for the calculation
+    b_errors: bool
+        Flag to reproduce errors in the Excel workbooks.
+    Returns
+    -------
+    None
+    """
+    # first gap fill CDEC RLF and try to match "Relief Storage" in RLIEF sheet
+    # then gap fill the nov 1974 and sept 1984 with linear interpolation on adjacent months for 08281000
+    # them merge them
+    # then fill monthly averages from WY 1981 to 2021 and then WY 1981 to present.
+
+    # TODO think about whether to use RLF_REPLICATION or the data assembly below.
+    # if b_errors:
+    #     df_rlf_final_data = df_data[['RLF_REPLICATION']].copy()
+    # else:
+
+    # make a copy of the RLF data and fill in nan's for the zero values of storage (which are unphysical)
+    df_rlf_no_zeros = df_data[['RLF']].copy()
+    df_rlf_no_zeros.replace(0, np.nan, inplace=True)
+    # use linear interpolation to fill the nan's
+    df_rlf_interpolated = df_rlf_no_zeros.interpolate(method='linear', limit_area='inside')
+    # crop from WY1959 to present
+    df_rlf_cropped = df_rlf_interpolated.loc['1958-10-31':]
+    df_rlf_cropped.to_csv('./Intermediate/RLF_interpolated.csv')
+    # remove data from Jan 1974 to Sept 1980
+    df_rlf_cropped.loc['1974-01-31':'1980-09-30'] = np.nan
+
+    # make a copy of the RLF_TRIDAM data and fill in nan's for the zero values of storage (which are unphysical)
+    df_tridam_no_zeros = df_data[['RLF_TRIDAM']].copy()
+    df_tridam_no_zeros.replace(0, np.nan, inplace=True)
+    # use linear interpolation to fill the nan's
+    df_tridam_interpolated = df_tridam_no_zeros.interpolate(method='linear', limit_area='inside')
+    # crop from Jan 1974 to Sept 1980 to present
+    df_tridam_cropped = df_tridam_interpolated.loc['1974-01-31':'1980-09-30']
+
+    # fill the tridam values into rlf
+    df_rlf_cropped.loc['1974-01-31':'1980-09-30'] = df_tridam_cropped.loc['1974-01-31':'1980-09-30']
+
+    # fill the nan values in the USGS gage with the CDEC plus TRIDAM data
+
+    df_data['11291000_filled'] = df_data['11291000'].fillna(df_rlf_cropped['RLF'])
+
+    # set these three months to zero because the sheet does
+    df_data.loc['1976-07-31':'1976-09-30', '11291000_filled'] = 0
+
+    df_data['11291000_filled_2'] = fill_monthly_storage(df_data[['11291000_filled']], i_start_year=1980,
+                                                           i_start_month=10,
+                                                           i_end_year=i_final_year, i_end_month=9,
+                                                           b_first_month_zero=True,
+                                                           b_round=True)

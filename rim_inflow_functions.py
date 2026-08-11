@@ -2669,3 +2669,77 @@ def I_ANG017(df_location_2,df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_ANG017')
+
+
+def I_RLIEF(df_location_2,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_RLIEF. Replicates logic from sheet CS3_I_RLIEF_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_location_2.copy()
+
+    # multiply by a watershed factor
+    df_location = (df_location.iloc[:, 0] * (.56)).to_frame()
+
+    # rename column
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_RLIEF'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_RLIEF')
+
+
+def I_MFS047(df_location_2,df_rim_inflows):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_MFS047. Replicates logic from sheet CS3_I_MFS047_Rev2022F.xlsm
+    Parameters
+    ----------
+    df_location: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_location_2.copy()
+
+    # multiply by a watershed factor
+    df_location = (df_location.iloc[:, 0] * (.44)).to_frame()
+
+    # rename column
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # set anything negative to zero
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_MFS047'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_MFS047')
