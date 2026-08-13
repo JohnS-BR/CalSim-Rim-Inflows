@@ -1439,6 +1439,68 @@ def calc_evap_11291000(s_dss_file, df_storage_data, b_replicate):
                                                         df_area_capacity[['Capacity', 'Area']], True)
 
 
+def calc_evap_11291000_v2(s_dss_file, df_storage_data, b_replicate):
+    """
+    Calculate the evaporation amount for Relief Reservoir including a unit coversion error. Follows the logic in CS3_I_BEARD_Rev2022F.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+    b_replicate: bool
+        A flag to replicate sheets, in this case storage values from an unknown data source.
+    Returns
+    -------
+    None
+    """
+    # get the evap rates from the dss file
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_RLIEF')
+
+    # reproduce unit-conversion error in CS3_I_BEARD_Rev2022F sheet "Relief Evaporation" Column D, where the formula
+    # should end with 1000) instead of 12000)
+    df_evap_rates = df_evap_rates / 12.0
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/11291000_AC.csv")
+
+    # get the TAF capacity
+    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # the sheet gets the averages for each neighboring set of points and uses those
+    df_area_capacity['Elevation'] = (df_area_capacity['Elevation (ft)'] + df_area_capacity['Elevation (ft)'].shift(
+        1)) / 2
+    df_area_capacity['Capacity'] = (df_area_capacity['TAF'] + df_area_capacity['TAF'].shift(1)) / 2
+
+    # fill NAs with zero as the sheet does, this will populate the first row
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # area = diff in capacity/ diff in elevation (ac-ft/ft=ac)
+    df_area_capacity['Area'] = (df_area_capacity['Capacity (acre-feet)'].shift(1) - df_area_capacity[
+        'Capacity (acre-feet)']) / (
+                                       df_area_capacity['Elevation (ft)'].shift(1) - df_area_capacity['Elevation (ft)'])
+
+    # again fill first row (lowest elevation) with zeros
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # make sure none of the areas are above the maximum
+    df_area_capacity.loc[df_area_capacity['Area'] > 401, 'Area'] = 401
+
+    # make sure the areas are monotonically increasing
+    df_area_capacity["Area"] = df_area_capacity["Area"].cummax()
+
+    # add a row for the maximum
+    df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [64.9, 401]
+
+    # calculate and set the evaporation
+    if b_replicate:
+        df_storage_data['11291000_evap_v2'] = calculate_evap_data(df_storage_data['RLF_REPLICATION'], df_evap_rates,
+                                                        df_area_capacity[['Capacity', 'Area']], True)
+    else:
+        df_storage_data['11291000_evap_v2'] = calculate_evap_data(df_storage_data['11291000_filled_2'], df_evap_rates,
+                                                        df_area_capacity[['Capacity', 'Area']], True)
+
 def calc_evap_11292600(s_dss_file, df_storage_data, b_replicate):
     """
     Calculate the evaporation amount for Donnell Reservoir. Follows the logic in CS3_I_DONLL_Rev2022F.
@@ -1491,4 +1553,57 @@ def calc_evap_11292600(s_dss_file, df_storage_data, b_replicate):
 
     # calculate and set the evaporation
     df_storage_data['11292600_evap'] = calculate_evap_data(df_storage_data['11292600'], df_evap_rates,
+                                                        df_area_capacity[['Capacity', 'Area']], True)
+
+
+def calc_evap_11292800(s_dss_file, df_storage_data):
+    """
+    Calculate the evaporation amount for Beardsley Reservoir. Follows the logic in CS3_I_BEARD_Rev2022G.
+
+    Parameters
+    ----------
+    s_dss_file: str
+        Path to DSS file with evaporation rates
+    df_storage_data: dataframe
+        Storage data containing the reservoir
+    Returns
+    -------
+    None
+    """
+    # get the evap rates from the dss file
+    df_evap_rates = read_evap_data(s_dss_file, 'ER_BEARD')
+
+    # read in the area capacity table
+    df_area_capacity = pd.read_csv(r"./Area Capacities/11292800_AC.csv")
+
+    # get the TAF capacity
+    df_area_capacity['TAF'] = df_area_capacity['Capacity (acre-feet)'] / 1000
+
+    # the sheet gets the averages for each neighboring set of points and uses those
+    df_area_capacity['Elevation'] = (df_area_capacity['Elevation (ft)'] + df_area_capacity['Elevation (ft)'].shift(
+        1)) / 2
+    df_area_capacity['Capacity'] = (df_area_capacity['TAF'] + df_area_capacity['TAF'].shift(1)) / 2
+
+    # fill NAs with zero as the sheet does, this will populate the first row
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # area = diff in capacity/ diff in elevation (ac-ft/ft=ac)
+    df_area_capacity['Area'] = (df_area_capacity['Capacity (acre-feet)'].shift(1) - df_area_capacity[
+        'Capacity (acre-feet)']) / (
+                                       df_area_capacity['Elevation (ft)'].shift(1) - df_area_capacity['Elevation (ft)'])
+
+    # again fill first row (lowest elevation) with zeros
+    df_area_capacity.iloc[0, :] = df_area_capacity.iloc[0].fillna(0)
+
+    # make sure none of the areas are above the maximum
+    df_area_capacity.loc[df_area_capacity['Area'] > 650, 'Area'] = 650
+
+    # make sure the areas are monotonically increasing
+    df_area_capacity["Area"] = df_area_capacity["Area"].cummax()
+
+    # add a row for the maximum
+    df_area_capacity.loc[len(df_area_capacity), ['Capacity', 'Area']] = [98.5, 650]
+
+    # calculate and set the evaporation
+    df_storage_data['11292800_evap'] = calculate_evap_data(df_storage_data['11292800'], df_evap_rates,
                                                         df_area_capacity[['Capacity', 'Area']], True)

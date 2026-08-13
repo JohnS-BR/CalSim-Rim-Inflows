@@ -17,6 +17,9 @@ if __name__ == "__main__":
     # s-curve and using the output value to move forward in the calculation.
     b_replicate_sheets = True
 
+    # this keeps all the data in the MODELA s-curve in DONLL sheet. The sheet discards data after 2011.
+    b_donll_all_data = False
+
     # this holds the already extended evap rates
     s_evap_dss_path = r".\Inputs\evaporation_rates.dss"
 
@@ -56,22 +59,36 @@ if __name__ == "__main__":
     df_full_data = pd.read_csv('./Intermediate/upper_stanislaus_full_gauge_data.csv', index_col=0, parse_dates=True)
 
     # gap fill the data sets that need it
-    gap_fill_08281000(df_full_data, i_final_year, b_reproduce_errors)                                       # see RLIEF
+    gap_fill_11291000(df_full_data, i_final_year, b_reproduce_errors)                                       # see RLIEF
     df_full_data.loc['1957-02-01':'1957-09-30', '11292600'] =  \
         df_full_data.loc['1957-02-01':'1957-09-30', '11292600_COMP_MODEL']                                  # see DONLL
     df_full_data.loc['2006-10-01':'2007-09-30', '11292600'] =  \
         df_full_data.loc['2006-10-01':'2007-09-30', 'DON']                                                  # see DONLL
     if b_reproduce_errors:
         # see DONLL, tab "Donnell Storage"
-        df_full_data.loc['1957-11-30':'1958-08-31', '11292600'] = df_full_data.loc['1957-11-30':'1958-08-31', '11292600'].round(1)
-        df_full_data.loc['2008-04-30':'2009-12-31', '11292600'] = df_full_data.loc['2008-04-30':'2009-12-31', '11292600'].round(1)
+        df_full_data.loc['1957-11-30':'1958-08-31', '11292600'] = df_full_data.loc['1957-11-30':'1958-08-31', '11292600'].apply(lambda v: round_half_up(v, 1))
+        df_full_data.loc['2008-04-30':'2009-12-31', '11292600'] = df_full_data.loc['2008-04-30':'2009-12-31', '11292600'].apply(lambda v: round_half_up(v, 1))
         df_full_data.loc['1964-01-31', '11292600'] = 17.633
-        df_full_data.loc['2006-09-30', '11292600'] = df_full_data.loc['2006-09-30', 'DON'].round(1)
+        df_full_data.loc['2006-09-30', '11292600'] = round_half_up(df_full_data.loc['2006-09-30', 'DON'], 1)
+    if b_reproduce_errors:
+        # round Donnell Storage from Oct 2006 to Aug 2015 to the nearest 0.1, always rounding up at 0.05  to match excel.
+        df_full_data.loc['2006-10-01':'2015-08-31', '11292600'] = df_full_data.loc['2006-10-01':'2015-08-31', '11292600'].apply(lambda v: round_half_up(v, 1))
+    # fill Beardsley storage gap with CDEC
+    df_full_data.loc['2006-10-01':'2007-09-30', '11292800'] = df_full_data.loc['2006-10-01':'2007-09-30', 'BRD'] #see BEARD
+
+    # fill gap in 11292860 using 11292901 minus 11292900, see BEARD
+    df_full_data.loc['1986-05-01':'1986-09-30', '11292860'] = (
+        df_full_data.loc['1986-05-01':'1986-09-30', '11292901']
+        - df_full_data.loc['1986-05-01':'1986-09-30', '11292900'])
+    # fill gap in 11292860 using 11292820 minus 11292900, see BEARD, from 10/31/2020 to 9/30/i_final_year
+    df_full_data.loc['2020-10-01':str(i_final_year)+'-09-30', '11292860'] = (
+        df_full_data.loc['2020-10-01':str(i_final_year)+'-09-30', '11292820'] -
+        df_full_data.loc['2020-10-01':str(i_final_year)+'-09-30', '11292900'])
 
     # save to csv
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_gap_filled.csv')
 
-    # fill storage with monthly averages
+    # fill gages with monthly averages
     df_full_data['11295900_filled'] = fill_monthly_storage(df_full_data[['11295900']], i_start_year=1980, i_start_month=10,
                                 i_end_year=i_final_year, i_end_month=9, b_first_month_zero=True, b_round=True)            # see PCRST and SFS033
     df_full_data['11297700_filled'] = fill_monthly_storage(df_full_data[['11297700']], i_start_year=1980, i_start_month=10,
@@ -82,7 +99,8 @@ if __name__ == "__main__":
             10, 2006, 9, 2010, 10, i_final_year, 9, False , b_round=True)  # see NFS033
     df_full_data['11293370_filled'] = fill_monthly_storage(df_full_data[['11293370']], i_start_year=1980, i_start_month=10,
                                 i_end_year=i_final_year, i_end_month=9, b_first_month_zero=False, b_round=True)            # see NFS033
-
+    df_full_data['11297000_filled'] = fill_monthly_storage(df_full_data[['11297000']], i_start_year=1939, i_start_month=10,
+                                i_end_year=i_final_year, i_end_month=9, b_first_month_zero=False, b_round=False)            # see BEARD
     # set pre-1930 Lyons Storage (1129770_filled) to zero, see LYONS
     df_full_data.loc[df_full_data.index < pd.Timestamp("1930-01-01"), '11297700_filled'] = 0
 
@@ -95,6 +113,7 @@ if __name__ == "__main__":
         df_full_data.loc[df_full_data.index >= pd.Timestamp("1989-02-28"), '11293770']
 
 
+
     print("Calculating evaporation...")
 
     # calculate the evaporation amounts for all of our reservoirs
@@ -104,7 +123,7 @@ if __name__ == "__main__":
     calc_evap_11293350(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
     calc_evap_11293370(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
     calc_evap_11293770(s_evap_dss_path, df_full_data, b_reproduce_errors)                               # see NFS033
-    # these are here to reproduce the correct evaps for SPICE (using up-to-date spicer meadow evap rate) when using
+    # evaps below (v2) are here to reproduce the correct evaps for SPICE (using up-to-date spicer meadow evap rate) when using
     # the old evap rate for other sheets. If b_reproduce_errors = False, these should be the same as the evaps above
     calc_evap_11293770_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
     calc_evap_11293460_v2(s_evap_dss_path, df_full_data)                                               # see SPICE
@@ -113,6 +132,9 @@ if __name__ == "__main__":
 
     calc_evap_11291000(s_evap_dss_path, df_full_data, b_replicate_sheets)                              # see RLIEF
     calc_evap_11292600(s_evap_dss_path, df_full_data, b_replicate_sheets)                              # see DONLL
+    calc_evap_11292800(s_evap_dss_path, df_full_data)                                                  # see BEARD
+    if b_reproduce_errors:
+        calc_evap_11291000_v2(s_evap_dss_path, df_full_data, b_replicate_sheets)                       # see BEARD
 
     df_full_data.to_csv('./Intermediate/upper_stanislaus_full_gauge_data_wevap.csv')
 
@@ -131,6 +153,12 @@ if __name__ == "__main__":
     df_unimpaired_data['11295210'] = df_full_data['11295210'] + df_full_data['11295230']                # see BVC007
     df_unimpaired_data['11292000'] = unimpaired_11292000(df_full_data, b_replicate_sheets)              # see RLIEF
     df_unimpaired_data['11292700'] = unimpaired_11292700(df_full_data, b_replicate_sheets)              # see DONLL
+    df_unimpaired_data['11292900'] = unimpaired_11292900(df_full_data, b_replicate_sheets, b_reproduce_errors) # see BEARD
+    df_unimpaired_data['11293000'] =  unimpaired_11293000(df_full_data, b_replicate_sheets, b_reproduce_errors) # see BEARD
+    # merge two unimpaired gauges. see BEARD, sheet MF Stanislaus UNIMP
+    df_unimpaired_data['mf_stanislaus'] = df_unimpaired_data['11293000'].fillna(df_unimpaired_data['11292900'] * 1.028)
+    df_unimpaired_data['goodwin_fnf'] = unimpaired_goodwin_fnf(df_full_data)        # see STS072
+
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
 
@@ -206,14 +234,23 @@ if __name__ == "__main__":
     extend_data(df_full_data['SNS'], df_full_data['11292500'],
                 df_extended_data, df_synthetic_data, 1951, 1994, False,
                 '11292500', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see CFS001
-    extend_data(df_full_data['SNS'], df_unimpaired_data['11292700'],
-                df_extended_data, df_synthetic_data, 1973, 2010, False,
-                '11292700', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')     # see DONLL
-    df_extended_data.loc['2011-10-01':'2015-09-30', '11292700'] = (
-        df_unimpaired_data.loc)['2011-10-01':'2015-09-30', '11292700']                                      # see DONLL
-    df_extended_data.loc['2016-10-01': str(i_final_year)+'-09-30', '11292700'] = (
-        df_unimpaired_data.loc)['2016-10-01': str(i_final_year)+'-09-30', '11292700']                        # see DONLL
+    extend_data(df_full_data['SNS'], df_unimpaired_data.loc['1981-10-01':str(i_final_year)+'-09-30','mf_stanislaus'],
+                df_extended_data, df_synthetic_data, 1982, i_final_year, False,
+                '11293000', i_x_start_year=1922, i_final_year=i_final_year)     # see BEARD
 
+    if b_donll_all_data:
+        # see DONLL, improvement without discarding data
+        extend_data(df_full_data['SNS'], df_unimpaired_data['11292700'],
+                    df_extended_data, df_synthetic_data, 1973, 2010, True,
+                    '11292700', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='DONLL')
+    else:
+        extend_data(df_full_data['SNS'], df_unimpaired_data['11292700'],
+                    df_extended_data, df_synthetic_data, 1973, 2010, False,
+                    '11292700', i_x_start_year=1922, i_final_year=i_final_year, s_strange_sheet='')  # see DONLL
+        df_extended_data.loc['2011-10-01':'2015-09-30', '11292700'] = (
+            df_unimpaired_data.loc)['2011-10-01':'2015-09-30', '11292700']  # see DONLL
+        df_extended_data.loc['2016-10-01': str(i_final_year) + '-09-30', '11292700'] = (
+            df_unimpaired_data.loc)['2016-10-01': str(i_final_year) + '-09-30', '11292700']  # see DONLL
 
     # BVC007 rim inflow must be calculated early because it is part of an unimpairment step in NFS009 before the s-curve
     # (extend_data) in that sheet.
@@ -250,6 +287,10 @@ if __name__ == "__main__":
     I_RLIEF(df_extended_data[['11292000']], df_rim_inflows)
     I_MFS047(df_extended_data[['11292000']], df_rim_inflows)
     I_CFS001(df_extended_data[['11292500']], df_rim_inflows)
+    I_DONLL(df_extended_data[['11292700']], df_rim_inflows[['I_RLIEF']], df_rim_inflows[['I_MFS047']],
+                df_rim_inflows[['I_CFS001']], df_rim_inflows)
+    I_MFS022(df_extended_data[['11292700']], df_rim_inflows[['I_RLIEF']], df_rim_inflows[['I_MFS047']],
+                df_rim_inflows[['I_CFS001']], df_rim_inflows)
     if b_reproduce_errors:
         I_LYONS(df_extended_data[['11298000_v2']], df_rim_inflows[['I_SFS033']], df_rim_inflows[['I_PCRST']],
                 df_rim_inflows[['I_SFS030']], df_rim_inflows)
@@ -264,6 +305,11 @@ if __name__ == "__main__":
     else:
         I_NFS009(df_extended_data[['11295300']], df_rim_inflows)
         I_NFS005(df_extended_data[['11295300']], df_rim_inflows)
+    I_BEARD(df_extended_data[['11293000']], df_rim_inflows[['I_RLIEF']], df_rim_inflows[['I_MFS047']],
+                df_rim_inflows[['I_CFS001']], df_rim_inflows[['I_DONLL']], df_rim_inflows[['I_MFS022']], df_rim_inflows)
+    I_MFS013(df_extended_data[['11293000']], df_rim_inflows[['I_RLIEF']], df_rim_inflows[['I_MFS047']],
+                df_rim_inflows[['I_CFS001']], df_rim_inflows[['I_DONLL']], df_rim_inflows[['I_MFS022']], df_rim_inflows)
+
 
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 

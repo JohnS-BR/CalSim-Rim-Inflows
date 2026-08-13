@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import pandas as pd
 import io, time
 from datetime import timedelta, datetime
@@ -63,6 +64,9 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     # if working on COL003 (11315000), we need to use only 1944 to 2021 for monthly averages
     if (s_strange_sheet == 'COL003'):
         dl_x_month_avgs = [0] + df_x_data.loc[1944:i_y_end_year, :].mean(axis=0).tolist()
+    elif s_strange_sheet == 'DONLL':
+        # use all months for average instead of the 1973-2010 that Excel does
+        dl_x_month_avgs = [0] + df_x_data.loc[df_y_data.index, :].mean(axis=0).tolist()
     else:
         dl_x_month_avgs = [0] + df_x_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
 
@@ -88,6 +92,9 @@ def s_curve_disaggregation(df_x_data, df_y_data, i_x_start_year, i_x_end_year, i
     elif(s_strange_sheet == 'DEE023'):
         # if doing DEE023, do the standard calculation for this step
         dl_y_month_avgs = [0] + df_y_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
+    elif(s_strange_sheet == 'DONLL'):
+        # use all months for average instead of the 1973-2010 that Excel does
+        dl_y_month_avgs = [0] + df_y_data.mean(axis=0).tolist()
     else:
         dl_y_month_avgs = [0] + df_y_data.loc[i_y_start_year:i_y_end_year, :].mean(axis=0).tolist()
 
@@ -837,9 +844,23 @@ def pull_cdec_data(sl_stations, s_start_date, s_end_date):
         if s_units == 'AF':
             # this data is monthly so it just needs to be moved to the end of the month and divided by 1000
             # groupby and mean in case its more than monthly or not exactly on the first of the month but this should just move the data to the end of the month
-            # TODO remove following line after RLF CDEC PULL?
-            print("TODO REMOVE? in pull_cdec_data, line to coerce numeric values to avoid crash on CDEC RLF")
-            df_current['VALUE'] = pd.to_numeric(df_current['VALUE'], errors='coerce')
+
+            # Check if there are any non-numeric values, and if so, coerce them to NaN
+            # Save the original values
+            df_original_value = df_current['VALUE']
+
+            # Convert to numeric with coercion
+            df_converted_value = pd.to_numeric(df_original_value, errors='coerce')
+
+            # Assign back
+            df_current['VALUE'] = df_converted_value
+
+            # Identify newly-coerced non-numeric values
+            bf_non_numeric_mask = df_original_value.notna() & df_converted_value.isna()
+
+            # Print only if true non-numeric values were found
+            if bf_non_numeric_mask.any():
+                print("Non-numeric values detected in ", station, " — coercing to NaN.")
             df_gauge_data_monthly_taf = df_gauge_data_monthly_taf.join((df_current.groupby(pd.Grouper(freq='ME')).mean()['VALUE'] / 1000).to_frame(station), how='outer')
 
         elif s_units == 'CFS':
@@ -922,6 +943,7 @@ def extend_data(df_reference_data, df_current_data, df_extended_data, df_synthet
     -------
     None
     """
+
     # do the s-curve disaggregation
     df_curr_final_data, df_curr_synthetic_data = s_curve_disaggregation(df_reference_data,
                                                                         df_current_data,
@@ -1511,7 +1533,7 @@ def fill_monthly_storage_w_middle_gap(df_location, i_start_year_1, i_start_month
         ser_filled = ser_filled.round(decimals=3)
     return ser_filled.to_frame(col)
 
-def gap_fill_08281000(df_data, i_final_year, b_errors):
+def gap_fill_11291000(df_data, i_final_year, b_errors):
     """
     Fills missing storage values for Relief Reservoir. Follows the logic of CS3_I_RLIEF_Rev2022F.xlsm
 
@@ -1571,3 +1593,25 @@ def gap_fill_08281000(df_data, i_final_year, b_errors):
                                                            i_end_year=i_final_year, i_end_month=9,
                                                            b_first_month_zero=True,
                                                            b_round=True)
+
+
+def round_half_up(x, n):
+    """
+    Rounds a numeric value using the half-up rule to a specified number of
+    decimal places.
+
+    Parameters
+    ----------
+    x : float or int
+        The numeric value to be rounded.
+    n : int
+        The number of decimal places to round to.
+
+    Returns
+    -------
+    float
+    The value of `x` rounded half-up to `n` decimal places.
+    """
+
+    factor = 10 ** n
+    return math.floor(x * factor + 0.5) / factor

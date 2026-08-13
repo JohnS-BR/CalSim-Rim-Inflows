@@ -3,7 +3,7 @@ from extension_functions import *
 
 if __name__ == "__main__":
 
-    # this file reads in the upper american USGS and CDEC data amd combines it with the previous data
+    # this file reads in Upper Stanislaus USGS and CDEC data amd combines it with the previous data
 
     # this holds the USGS data (sometimes gap filled) from the previous extension
     s_previous_data = r".\Inputs\upper_stanislaus_2022_extension_data.csv"
