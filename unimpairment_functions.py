@@ -1877,7 +1877,7 @@ def unimpaired_11293000(df_full_gauge_data, b_replicate, b_errors):
 
     return df_unimpaired
 
-def unimpaired_goodwin_fnf(df_full_gauge_data):
+def unimpaired_goodwin_fnf(df_full_gauge_data, b_errors):
     """
     Calculate the unimpaired flow for Goodwin FNF (CDEC SNS).
     Follows the logic from CS3_I_STS072_Rev2022H.xlsm
@@ -1897,7 +1897,7 @@ def unimpaired_goodwin_fnf(df_full_gauge_data):
     sl_evap_gages = ['11293770', '11293460', '11293350', '11293370', '11292800', '11292600', '11291000', '11295900', '11297700']
     sl_evaps = [s +"_evap" for s in sl_evap_gages]
 
-    sl_storage = ['11293460','11293350','11293370','11295900']
+    sl_storage = ['11293460_filled','11293350_filled','11293370_filled','11295900_filled']
 
     # fill in zeros in place of the negative values and replace NaN's with zeros for evaps
     df_evaps = pd.DataFrame()
@@ -1912,6 +1912,19 @@ def unimpaired_goodwin_fnf(df_full_gauge_data):
         df_storage[storage_gage] = df_full_gauge_data[storage_gage].copy()
         df_storage[storage_gage] = df_storage[storage_gage].clip(lower=0)
         df_storage.loc[:, storage_gage] = df_storage[storage_gage].fillna(0)
+
+    if b_errors:
+        # in Beardsley evaporation, there is an extra division by 12, incorrectly converting inches to feet.
+        df_evaps['11292800_evap'] = df_evaps['11292800_evap'] / 12.0
+
+    # TODO REMOVE debugging print
+    date_to_print = '1958-09-30'
+    print(
+        "loc",
+        df_location[date_to_print],
+        [round(float(df_evaps.loc[date_to_print, g]), 4) for g in sl_evaps],
+        [round(float(df_storage.loc[date_to_print, s]), 4) for s in sl_storage]
+    )
 
     # combine storage diff and evap
     df_unimpaired = unimpaired_flows(df_location, fl_additions=[df_evaps[col] for col in df_evaps.columns],

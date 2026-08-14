@@ -157,7 +157,7 @@ if __name__ == "__main__":
     df_unimpaired_data['11293000'] =  unimpaired_11293000(df_full_data, b_replicate_sheets, b_reproduce_errors) # see BEARD
     # merge two unimpaired gauges. see BEARD, sheet MF Stanislaus UNIMP
     df_unimpaired_data['mf_stanislaus'] = df_unimpaired_data['11293000'].fillna(df_unimpaired_data['11292900'] * 1.028)
-    df_unimpaired_data['goodwin_fnf'] = unimpaired_goodwin_fnf(df_full_data)        # see STS072
+    df_unimpaired_data['goodwin_fnf'] = unimpaired_goodwin_fnf(df_full_data, b_reproduce_errors)          # see STS072
 
     # drop the first row which is only for calculating storage differences
     df_unimpaired_data.drop(index=df_unimpaired_data.index[0], inplace=True)
