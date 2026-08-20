@@ -1894,7 +1894,8 @@ def unimpaired_goodwin_fnf(df_full_gauge_data, b_errors):
 
     df_location = df_full_gauge_data['SNS'].copy()
 
-    sl_evap_gages = ['11293770', '11293460', '11293350', '11293370', '11292800', '11292600', '11291000', '11295900', '11297700']
+    sl_evap_gages = ['11293770', '11293460', '11293350', '11293370', '11292800', '11292600', '11291000', '11295900',
+                     '11297700', 'TUL']
     sl_evaps = [s +"_evap" for s in sl_evap_gages]
 
     sl_storage = ['11293460_filled','11293350_filled','11293370_filled','11295900_filled']
@@ -1920,11 +1921,13 @@ def unimpaired_goodwin_fnf(df_full_gauge_data, b_errors):
     # TODO REMOVE debugging print
     date_to_print = '1958-09-30'
     print(
-        "loc",
+        "in unimpaired_goodwin_fnf, ",
         df_location[date_to_print],
         [round(float(df_evaps.loc[date_to_print, g]), 4) for g in sl_evaps],
         [round(float(df_storage.loc[date_to_print, s]), 4) for s in sl_storage]
     )
+    print("beardsley evap is ", round(float(df_evaps.loc[date_to_print, '11292800_evap']), 4),
+ )
 
     # combine storage diff and evap
     df_unimpaired = unimpaired_flows(df_location, fl_additions=[df_evaps[col] for col in df_evaps.columns],

@@ -6,6 +6,9 @@ from evaporation_functions import *
 if __name__ == "__main__":
     i_final_year = 2021
 
+    # first run the upper_mokelumne_data_read.py and then upper_mokelumne_calculate_rim_inflows.py to provide a file
+    # that this calculation needs (NHGAN from Outputs/upper_mokelumne_rim_inflows.csv).
+
     # this reproduces various errors found in the workbooks
     b_reproduce_errors = True
         # error 1: in LYONS,should be identical to MODELA tab in SFS030 BUT, even though it says "Run then replace Feb-
@@ -57,6 +60,12 @@ if __name__ == "__main__":
 
     # read in the data that we already read in
     df_full_data = pd.read_csv('./Intermediate/upper_stanislaus_full_gauge_data.csv', index_col=0, parse_dates=True)
+
+    # read in the rim inflow from upper mokelumne (mokelumne/consumnes) for NHGAN
+    df_temp = pd.read_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
+    df_temp = df_temp.set_index(df_temp.columns[0])
+    df_temp.index = pd.to_datetime(df_temp.index)
+    df_full_data['I_NHGAN'] = df_temp['I_NHGAN'].copy()
 
     # gap fill the data sets that need it
     gap_fill_11291000(df_full_data, i_final_year, b_reproduce_errors)                                       # see RLIEF
@@ -309,7 +318,8 @@ if __name__ == "__main__":
                 df_rim_inflows[['I_CFS001']], df_rim_inflows[['I_DONLL']], df_rim_inflows[['I_MFS022']], df_rim_inflows)
     I_MFS013(df_extended_data[['11293000']], df_rim_inflows[['I_RLIEF']], df_rim_inflows[['I_MFS047']],
                 df_rim_inflows[['I_CFS001']], df_rim_inflows[['I_DONLL']], df_rim_inflows[['I_MFS022']], df_rim_inflows)
-
+    I_TULOC(df_full_data[['I_NHGAN']], df_rim_inflows)
+    I_STS059(df_full_data[['I_NHGAN']], df_rim_inflows)
 
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
