@@ -6,6 +6,9 @@ from evaporation_functions import *
 if __name__ == "__main__":
     i_final_year = 2021
 
+    # flag to output additional information to console
+    b_verbose = True
+
     # first run the upper_mokelumne_data_read.py and then upper_mokelumne_calculate_rim_inflows.py to provide a file
     # that this calculation needs (NHGAN from Outputs/upper_mokelumne_rim_inflows.csv).
 
@@ -320,16 +323,16 @@ if __name__ == "__main__":
                 df_rim_inflows[['I_CFS001']], df_rim_inflows[['I_DONLL']], df_rim_inflows[['I_MFS022']], df_rim_inflows)
     I_TULOC(df_full_data[['I_NHGAN']], df_rim_inflows)
     I_STS059(df_full_data[['I_NHGAN']], df_rim_inflows)
-
+    I_STS072(df_unimpaired_data[['goodwin_fnf']], df_rim_inflows)
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
     # Comparison with Previous Rim Inflow dataset
     if b_compareData:
-
-        # Notes on replication
-        print("The NFS033 and SPICE replications differ from Excel workbooks in two months, Aug and Sept 1924, due to ")
-        print("an s-curve bug in Excel with negative flows at the end of the year. These two sheets ")
-        print("use the same x watershed for s-curving.")
+        if b_verbose:
+            # Notes on replication
+            print("The NFS033 and SPICE replications differ from Excel workbooks in two months, Aug and Sept 1924, due to ")
+            print("an s-curve bug in Excel with negative flows at the end of the year. These two sheets ")
+            print("use the same x watershed for s-curving.")
 
         # read in data
         df_reference = pd.read_csv(s_prev_rim_inflows_fn, index_col=0, parse_dates=True)
@@ -381,9 +384,13 @@ if __name__ == "__main__":
         df_rmse = np.sqrt(((df_reference[df_rim_inflows.columns] - df_rim_inflows) ** 2).mean()).to_frame("RMSE")
         df_diffs = df_diffs.join(df_rmse)
 
+        # calculate RMSE divided by average value of inflow
+        df_rmse_over_avg = (df_rmse['RMSE']/df_rim_inflows.mean()).to_frame('RMSE over Avg')
+        df_diffs = df_diffs.join(df_rmse_over_avg)
+
         # format output
         cols_to_format = ["Max Difference", "P50 Abs Diff", "P90 Abs Diff", "P95 Abs Diff", "P99 Abs Diff",
-                          "Max Percent Difference", "RMSE"]
+                          "Max Percent Difference", "RMSE", "RMSE over Avg"]
 
         df_diffs[cols_to_format] = df_diffs[cols_to_format].apply(
             lambda s: s.map(lambda v: f"{v:.6f}")
