@@ -3107,3 +3107,46 @@ def I_STS072(df_location_2, df_rim_inflows):
 
     # create the plots to compare the observed vs synthetic data
     create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_STS072')
+
+
+def I_STS072_v2(df_location_2, df_rim_inflows, df_data):
+    """
+    Calculate the final rim inflow for CalSim. Location: I_STS072. Replicates logic from sheet CS3_I_STS072_Rev2022G.xlsm
+    This version exists to replicate the excel sheet using rim inflows from that sheet.
+    Parameters
+    ----------
+    df_location_2: dataframe
+        One-column dataframe used as input to create the final rim inflow.
+    df_rim_inflows: dataframe
+        Dataframe of rim inflows that have been calculated already. Also target dataframe for newly created rim inflow.
+    Returns
+    -------
+    None
+    """
+
+    df_location = df_location_2.copy()
+
+    # rename column
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # subtract many previously calculated rim inflows
+    df_location['TAF'] = df_location['TAF'] - df_data['I_STS059']-df_data['I_TULOC']-df_data['I_RLIEF']- \
+                  df_data['I_MFS047']- df_data['I_CFS001']- df_data['I_DONLL']- df_data['I_MFS022']- \
+                  df_data['I_NFS033']- df_data['I_SPICE']-  df_data['I_NFS009']-df_data['I_BVC007']- \
+                  df_data['I_MIL003']- df_data['I_NFS005']- df_data['I_ANG017']-df_data['I_MFS013']- \
+                  df_data['I_BEARD']-  df_data['I_SFS033']- df_data['I_LYONS']- df_data['I_SFS030']- \
+                  df_data['I_PCRST']
+
+    # set anything negative to zero (note, this step is on the "REDISTRIBUTION" sheet in Excel workbook)
+    df_location[df_location.columns[0]] = df_location[df_location.columns[0]].clip(lower=0)
+
+    # round to two decimal places
+    df_location = df_location.round(2)
+
+    # add into the rim inflow dataframe
+    df_rim_inflows['I_STS072'] = df_location
+
+    df_location.rename(columns={df_location.columns[0]: 'TAF'}, inplace=True)
+
+    # create the plots to compare the observed vs synthetic data
+    create_final_flow_plots(df_location, list(range(1922, 2025)), 'I_STS072')

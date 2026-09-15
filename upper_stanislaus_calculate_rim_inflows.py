@@ -56,6 +56,8 @@ if __name__ == "__main__":
 
         read_replication_data(ls_sheet_info, df_before_s, df_after_s)
 
+        # read in the rim inflows from 20 sheets that are used in STS072
+        df_inflows_for_sts072 = pd.read_csv('./inputs/upper_stanislaus_2022_extra_data_for_replication.csv', index_col=0, parse_dates=True)
     # first if the needed output folders don't exist, create them
     os.makedirs('./Intermediate', exist_ok=True)
     os.makedirs('./Figures', exist_ok=True)
@@ -63,6 +65,10 @@ if __name__ == "__main__":
 
     # read in the data that we already read in
     df_full_data = pd.read_csv('./Intermediate/upper_stanislaus_full_gauge_data.csv', index_col=0, parse_dates=True)
+
+    if b_replicate_sheets:
+        # merge the rim inflow data for STS072 into df_full_data
+        df_full_data = pd.concat([df_full_data, df_inflows_for_sts072], axis=1)
 
     # read in the rim inflow from upper mokelumne (mokelumne/consumnes) for NHGAN
     df_temp = pd.read_csv('./Outputs/upper_mokelumne_rim_inflows.csv')
@@ -323,7 +329,10 @@ if __name__ == "__main__":
                 df_rim_inflows[['I_CFS001']], df_rim_inflows[['I_DONLL']], df_rim_inflows[['I_MFS022']], df_rim_inflows)
     I_TULOC(df_full_data[['I_NHGAN']], df_rim_inflows)
     I_STS059(df_full_data[['I_NHGAN']], df_rim_inflows)
-    I_STS072(df_unimpaired_data[['goodwin_fnf']], df_rim_inflows)
+    if b_replicate_sheets:
+        I_STS072_v2(df_unimpaired_data[['goodwin_fnf']], df_rim_inflows, df_full_data)
+    else:
+        I_STS072(df_unimpaired_data[['goodwin_fnf']], df_rim_inflows)
     df_rim_inflows.to_csv('./Outputs/upper_stanislaus_rim_inflows.csv')
 
     # Comparison with Previous Rim Inflow dataset

@@ -1594,7 +1594,6 @@ def gap_fill_11291000(df_data, i_final_year, b_errors):
                                                            b_first_month_zero=True,
                                                            b_round=True)
 
-
 def round_half_up(x, n):
     """
     Rounds a numeric value using the half-up rule to a specified number of
