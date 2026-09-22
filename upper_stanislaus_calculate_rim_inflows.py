@@ -7,10 +7,7 @@ if __name__ == "__main__":
     i_final_year = 2021
 
     # flag to output additional information to console
-    b_verbose = True
-
-    # first run the upper_mokelumne_data_read.py and then upper_mokelumne_calculate_rim_inflows.py to provide a file
-    # that this calculation needs (NHGAN from Outputs/upper_mokelumne_rim_inflows.csv).
+    b_verbose = False
 
     # this reproduces various errors or issues found in the workbooks
     b_reproduce_errors = True
