@@ -1533,7 +1533,7 @@ def fill_monthly_storage_w_middle_gap(df_location, i_start_year_1, i_start_month
         ser_filled = ser_filled.round(decimals=3)
     return ser_filled.to_frame(col)
 
-def gap_fill_11291000(df_data, i_final_year, b_errors):
+def gap_fill_11291000(df_data, i_final_year):
     """
     Fills missing storage values for Relief Reservoir. Follows the logic of CS3_I_RLIEF_Rev2022F.xlsm
 
@@ -1543,8 +1543,6 @@ def gap_fill_11291000(df_data, i_final_year, b_errors):
         The full set of gage data needed to fill this location. Also the location of the filled output column.
     i_final_year: int
         The last year for the calculation
-    b_errors: bool
-        Flag to reproduce errors in the Excel workbooks.
     Returns
     -------
     None
@@ -1553,11 +1551,6 @@ def gap_fill_11291000(df_data, i_final_year, b_errors):
     # then gap fill the nov 1974 and sept 1984 with linear interpolation on adjacent months for 08281000
     # them merge them
     # then fill monthly averages from WY 1981 to 2021 and then WY 1981 to present.
-
-    # TODO think about whether to use RLF_REPLICATION or the data assembly below.
-    # if b_errors:
-    #     df_rlf_final_data = df_data[['RLF_REPLICATION']].copy()
-    # else:
 
     # make a copy of the RLF data and fill in nan's for the zero values of storage (which are unphysical)
     df_rlf_no_zeros = df_data[['RLF']].copy()
