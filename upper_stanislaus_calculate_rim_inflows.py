@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # first run the upper_mokelumne_data_read.py and then upper_mokelumne_calculate_rim_inflows.py to provide a file
     # that this calculation needs (NHGAN from Outputs/upper_mokelumne_rim_inflows.csv).
 
-    # this reproduces various errors found in the workbooks
+    # this reproduces various errors or issues found in the workbooks
     b_reproduce_errors = True
         # error 1: in LYONS,should be identical to MODELA tab in SFS030 BUT, even though it says "Run then replace Feb-
         # Sep 1940 with historical data" the 2022F version of the sheet does not have the data replaced with historical data.
